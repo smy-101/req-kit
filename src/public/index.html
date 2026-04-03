@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>req-kit</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <h2>req-kit</h2>
+        <div class="sidebar-actions">
+          <button id="btn-import" title="Import">↓</button>
+          <button id="btn-new-collection" title="New Collection">+</button>
+        </div>
+      </div>
+      <div id="env-selector">
+        <select id="active-env">
+          <option value="">No Environment</option>
+        </select>
+        <button id="btn-manage-env" title="Manage Environments">⚙</button>
+      </div>
+      <div id="collection-tree"></div>
+    </aside>
+
+    <!-- Main content -->
+    <main id="main-content">
+      <!-- URL Bar -->
+      <div id="url-bar">
+        <select id="method-select">
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+          <option value="PUT">PUT</option>
+          <option value="PATCH">PATCH</option>
+          <option value="DELETE">DELETE</option>
+          <option value="HEAD">HEAD</option>
+          <option value="OPTIONS">OPTIONS</option>
+        </select>
+        <input type="text" id="url-input" placeholder="Enter request URL or paste curl...">
+        <button id="send-btn">Send</button>
+        <button id="save-btn" title="Save Request">💾</button>
+      </div>
+
+      <!-- Request/Response panels -->
+      <div id="request-response">
+        <!-- Request tabs -->
+        <div id="request-panel">
+          <div class="tab-bar">
+            <button class="tab active" data-tab="headers">Headers</button>
+            <button class="tab" data-tab="params">Params</button>
+            <button class="tab" data-tab="body">Body</button>
+            <button class="tab" data-tab="auth">Auth</button>
+            <button class="tab" data-tab="script">Pre-request Script</button>
+          </div>
+          <div class="tab-content" id="tab-headers"></div>
+          <div class="tab-content hidden" id="tab-params"></div>
+          <div class="tab-content hidden" id="tab-body"></div>
+          <div class="tab-content hidden" id="tab-auth"></div>
+          <div class="tab-content hidden" id="tab-script"></div>
+        </div>
+
+        <!-- Response panel -->
+        <div id="response-panel">
+          <div class="response-header">
+            <span id="response-status"></span>
+            <span id="response-time"></span>
+            <span id="response-size"></span>
+          </div>
+          <div class="tab-bar">
+            <button class="tab active" data-response-tab="body">Body</button>
+            <button class="tab" data-response-tab="headers">Headers</button>
+          </div>
+          <div class="tab-content" id="response-body"></div>
+          <div class="tab-content hidden" id="response-headers"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modals -->
+  <div id="modal-overlay" class="hidden">
+    <div id="modal"></div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/js/utils/json-format.js"></script>
+  <script src="/js/utils/curl-parser.js"></script>
+  <script src="/js/utils/template.js"></script>
+  <script src="/js/store.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/components/url-bar.js"></script>
+  <script src="/js/components/tab-panel.js"></script>
+  <script src="/js/components/headers-editor.js"></script>
+  <script src="/js/components/body-editor.js"></script>
+  <script src="/js/components/response-viewer.js"></script>
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/env-manager.js"></script>
+  <script src="/js/components/auth-panel.js"></script>
+  <script src="/js/components/import-export.js"></script>
+  <script src="/js/components/script-editor.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

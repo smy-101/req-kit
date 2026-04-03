@@ -1,20 +1,22 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  技术栈: Bun 运行时, Hono (HTTP 框架), bun:sqlite, 纯 HTML + Vanilla JS
+  前端: 零框架, 事件驱动 Store + 模块化组件
+  数据库: SQLite via bun:sqlite
+  无构建工具, 无打包器, 无前端框架
+  语言: 后端 TypeScript, 前端 JavaScript
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  proposal:
+    - 文档使用中文编写
+    - 包含"非目标"章节
+  design:
+    - 文档使用中文编写
+  specs:
+    - 文档使用中文编写
+    - 每个场景必须可测试
+  tasks:
+    - 文档使用中文编写
+    - 后端每个任务必须包含对应的红绿测试（先写失败测试，再实现功能）
+    - 测试框架: bun:test
