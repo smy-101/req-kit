@@ -104,6 +104,11 @@ const store = {
     return this.state.tabs.find(t => t.requestId === requestId) || null;
   },
 
+  // Find an existing tab with the same method + URL
+  findTabByMethodUrl(method, url) {
+    return this.state.tabs.find(t => t.method === method && t.url === url) || null;
+  },
+
   // Update state — request fields go to active tab, global fields go to state
   setState(updates) {
     const tabFields = new Set([

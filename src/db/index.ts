@@ -20,6 +20,21 @@ export class Database {
     for (const stmt of statements) {
       this.db.run(stmt);
     }
+
+    // Incremental migrations — add columns that may be missing from older databases
+    const migrations: [string, string][] = [
+      ['body_type', 'ALTER TABLE history ADD COLUMN body_type TEXT DEFAULT \'json\''],
+      ['pre_request_script', 'ALTER TABLE history ADD COLUMN pre_request_script TEXT'],
+      ['auth_type', 'ALTER TABLE history ADD COLUMN auth_type TEXT DEFAULT \'none\''],
+      ['auth_config', 'ALTER TABLE history ADD COLUMN auth_config TEXT'],
+    ];
+    const existing = this.db.prepare("PRAGMA table_info(history)").all() as { name: string }[];
+    const columns = new Set(existing.map(c => c.name));
+    for (const [col, sql] of migrations) {
+      if (!columns.has(col)) {
+        this.db.run(sql);
+      }
+    }
   }
 
   query<T>(sql: string, params?: unknown[]): T[] {

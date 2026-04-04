@@ -196,6 +196,13 @@
         size: record.response_size,
       } : null;
 
+      // Switch to existing tab if one has the same method + URL
+      const existing = store.findTabByMethodUrl(record.method || 'GET', record.url || '');
+      if (existing) {
+        store.switchTab(existing.id);
+        return;
+      }
+
       store.createTab({
         method: record.method || 'GET',
         url: record.url || '',
@@ -229,6 +236,14 @@
   function escapeAttr(str) {
     return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
+
+  // Auto-refresh when a request completes
+  store.on('request:complete', () => {
+    if (containerEl) HistoryPanel.refresh();
+  });
+  store.on('request:error', () => {
+    if (containerEl) HistoryPanel.refresh();
+  });
 
   // Public API for sidebar to call
   window.HistoryPanel = {

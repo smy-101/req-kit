@@ -160,10 +160,10 @@
   }
 
   function loadRequest(req, collectionId) {
-    // Check if this request already has an open tab
-    const existingTab = store.findTabByRequestId(req.id);
-    if (existingTab) {
-      store.switchTab(existingTab.id);
+    // Switch to existing tab if one has the same method + URL
+    const existing = store.findTabByMethodUrl(req.method, req.url);
+    if (existing) {
+      store.switchTab(existing.id);
       return;
     }
 

@@ -1696,18 +1696,8 @@ body {
 
 /* ── Confirm Dialog ───────────────────────── */
 .confirm-dialog {
-  background:
-    var(--noise),
-    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
-  border: 1px solid var(--border-1);
-  border-radius: var(--radius-lg);
-  padding: 28px;
   min-width: 360px;
   max-width: 440px;
-  box-shadow:
-    var(--shadow-xl),
-    0 0 0 1px rgba(229, 168, 25, 0.05) inset;
-  animation: modalIn 280ms var(--ease-spring);
 }
 
 .confirm-dialog-title {
