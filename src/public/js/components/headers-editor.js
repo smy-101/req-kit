@@ -49,8 +49,7 @@ function createKVEditor(containerId, storeKey) {
 
     // Add row button
     const addBtn = document.createElement('button');
-    addBtn.className = 'modal-btn modal-btn-secondary';
-    addBtn.style.cssText = 'margin-top:4px;font-size:11px;padding:4px 12px;';
+    addBtn.className = 'modal-btn modal-btn-secondary kv-add-btn';
     addBtn.textContent = '+ Add Row';
     addBtn.addEventListener('click', () => {
       rows.push({ key: '', value: '', enabled: true });

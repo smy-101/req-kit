@@ -63,18 +63,12 @@
       input.type = 'text';
       input.placeholder = placeholder || '';
       input.value = defaultValue != null ? defaultValue : '';
-      input.style.cssText =
-        'width:100%;margin-top:16px;padding:9px 12px;border-radius:5px;' +
-        'border:1px solid var(--border-0);background:var(--bg-2);' +
-        'color:var(--text-0);font-family:var(--font-mono);font-size:12.5px;' +
-        'outline:none;transition:border-color 180ms cubic-bezier(0.4,0,0.2,1),' +
-        'box-shadow 180ms cubic-bezier(0.4,0,0.2,1);';
+      input.className = 'dialog-input';
       dialog.appendChild(input);
 
       // Actions
       var actions = document.createElement('div');
-      actions.className = 'confirm-dialog-actions';
-      actions.style.marginTop = '22px';
+      actions.className = 'confirm-dialog-actions dialog-actions-gap';
 
       var cancelBtn = document.createElement('button');
       cancelBtn.className = 'modal-btn modal-btn-secondary';
@@ -101,16 +95,6 @@
 
       cancelBtn.addEventListener('click', cancel);
       okBtn.addEventListener('click', submit);
-
-      // Focus styling
-      input.addEventListener('focus', function () {
-        input.style.borderColor = 'var(--accent)';
-        input.style.boxShadow = '0 0 0 3px var(--accent-bg)';
-      });
-      input.addEventListener('blur', function () {
-        input.style.borderColor = 'var(--border-0)';
-        input.style.boxShadow = 'none';
-      });
 
       // Keyboard: Enter to submit, Escape to cancel
       activeKeyHandler = function (e) {

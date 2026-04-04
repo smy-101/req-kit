@@ -1801,6 +1801,14 @@ body {
   to { transform: rotate(360deg); }
 }
 
+/* -- Send button loading spinner -- */
+.send-spinner {
+  animation: spin .6s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
 @keyframes slideInLeft {
   from {
     opacity: 0;
@@ -1970,10 +1978,13 @@ textarea:focus-visible {
 }
 
 .history-panel {
-  padding: 6px 8px 8px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 250ms var(--ease-out), padding 250ms var(--ease-out);
+  padding: 0 8px;
 }
 
 .history-search-input {
@@ -2326,3 +2337,265 @@ textarea:focus-visible {
 }
 
 
+/* ================================================
+   Component Utility Classes — extracted from inline styles
+   ================================================ */
+
+/* -- Sidebar: history header label -- */
+.history-header-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* -- Sidebar: empty collection message -- */
+.tree-empty-msg {
+  color: var(--text-3);
+  font-size: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+/* -- Sidebar: save modal collection select -- */
+.save-modal-select {
+  width: 100%;
+  margin-top: 14px;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-0);
+  background: var(--bg-2);
+  color: var(--text-0);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 150ms var(--ease);
+}
+.save-modal-select:focus {
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 2px var(--accent-bg);
+}
+
+/* -- Sidebar: save modal request name input -- */
+.save-modal-name-input {
+  width: 100%;
+  margin-top: 14px;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-0);
+  background: var(--bg-2);
+  color: var(--text-0);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 150ms var(--ease), box-shadow 150ms var(--ease);
+}
+.save-modal-name-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+/* -- Sidebar: save modal actions spacing -- */
+.save-modal-actions {
+  margin-top: 20px;
+}
+
+/* -- Env manager: new environment name input -- */
+.env-new-input {
+  background: var(--bg-2);
+  border: 1px solid var(--border-0);
+  color: var(--text-1);
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  width: 60%;
+  outline: none;
+  transition: border-color 150ms var(--ease);
+}
+.env-new-input:focus {
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 2px var(--accent-bg);
+}
+
+/* -- Env manager: section spacing -- */
+.env-section-gap { margin-top: 12px; }
+.env-section-gap-lg { margin-top: 16px; }
+
+/* -- Env manager: variable editor heading -- */
+.env-var-heading {
+  font-size: 13px;
+  margin-bottom: 8px;
+  color: var(--text-0);
+  font-weight: 600;
+}
+
+/* -- Shared: KV editor "add row" button -- */
+.kv-add-btn {
+  margin-top: 4px;
+  font-size: 11px;
+  padding: 4px 12px;
+}
+
+/* -- Shared: KV editor "save variables" button -- */
+.kv-save-btn {
+  margin-top: 8px;
+}
+
+/* -- Shared: modal description paragraph -- */
+.modal-desc {
+  color: var(--text-3);
+  font-size: 11px;
+  margin: 4px 0 12px;
+  line-height: 1.55;
+}
+
+/* -- Shared: modal actions with tight top margin -- */
+.modal-actions-compact {
+  margin-top: 16px;
+}
+
+/* -- Import/export: inner tab bar override -- */
+.imex-tab-bar {
+  padding: 0;
+  margin-bottom: 12px;
+}
+
+/* -- Import/export: import type select -- */
+.import-type-select {
+  background: var(--bg-3);
+  border: 1px solid var(--border-0);
+  color: var(--text-1);
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  margin-bottom: 8px;
+  outline: none;
+  font-family: var(--font-ui);
+  transition: border-color 150ms var(--ease);
+}
+.import-type-select:focus {
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 2px var(--accent-bg);
+}
+
+/* -- Import/export: export hint text -- */
+.export-hint {
+  color: var(--text-2);
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+/* -- Import/export: export collection list item -- */
+.export-list-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-0);
+  border-radius: var(--radius);
+  margin-bottom: 4px;
+  transition: border-color 150ms var(--ease);
+}
+.export-list-item:hover {
+  border-color: var(--border-1);
+}
+.export-list-item-name {
+  flex: 1;
+  font-size: 13px;
+}
+
+/* -- Response: error pre -- */
+.response-error {
+  color: var(--red);
+}
+
+/* -- Response: loading state spacing -- */
+.response-loading {
+  padding: 40px 20px;
+}
+.response-loading .spinner {
+  margin-bottom: 12px;
+}
+.response-loading .empty-state-title {
+  font-size: 12px;
+}
+
+/* -- Dialog: prompt input -- */
+.dialog-input {
+  width: 100%;
+  margin-top: 16px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-0);
+  background: var(--bg-2);
+  color: var(--text-0);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  outline: none;
+  transition: border-color 180ms var(--ease),
+              box-shadow 180ms var(--ease);
+}
+.dialog-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+/* -- Dialog: actions spacing -- */
+.dialog-actions-gap {
+  margin-top: 22px;
+}
+
+/* -- Script editor: description -- */
+.script-desc {
+  margin-bottom: 8px;
+  font-size: 11px;
+  color: var(--text-3);
+  line-height: 1.6;
+}
+
+/* -- Variable preview: title -- */
+.var-preview-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* -- Variable preview: manage button -- */
+.var-preview-manage-btn {
+  font-size: 11px;
+  padding: 4px 12px;
+}
+
+/* -- Variable preview: empty states -- */
+.var-empty-msg {
+  color: var(--text-3);
+  font-size: 12px;
+  padding: 16px;
+  text-align: center;
+}
+.var-empty-msg-compact {
+  color: var(--text-3);
+  font-size: 12px;
+  padding: 8px;
+  text-align: center;
+}
+
+/* -- Variable scope colors (preview + autocomplete) -- */
+.var-scope-runtime { color: var(--accent); }
+.var-scope-collection { color: var(--yellow); }
+.var-scope-environment { color: var(--green); }
+.var-scope-global { color: var(--text-3); }
+
+/* -- History panel: expand/collapse transition -- */
+.history-panel {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 250ms var(--ease-out), padding 250ms var(--ease-out);
+  padding: 0 8px;
+  flex-direction: column;
+  gap: 6px;
+}
+.history-panel.expanded {
+  max-height: 600px;
+  padding: 6px 8px 8px;
+}

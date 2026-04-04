@@ -21,7 +21,7 @@
     const historyHeader = document.createElement('div');
     historyHeader.className = 'history-header';
     historyHeader.innerHTML = `
-      <span style="display:flex;align-items:center;gap:8px">
+      <span class="history-header-label">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <span>History</span>
       </span>
@@ -37,14 +37,14 @@
 
       if (expanded && !historyPanelEl) {
         historyPanelEl = document.createElement('div');
-        historyPanelEl.className = 'history-panel';
+        historyPanelEl.className = 'history-panel expanded';
         historySection.appendChild(historyPanelEl);
         HistoryPanel.mount(historyPanelEl);
       } else if (expanded && historyPanelEl) {
-        historyPanelEl.style.display = '';
+        historyPanelEl.classList.add('expanded');
         HistoryPanel.refresh();
       } else if (historyPanelEl) {
-        historyPanelEl.style.display = 'none';
+        historyPanelEl.classList.remove('expanded');
       }
     });
 
@@ -58,7 +58,7 @@
 
     if (collections.length === 0) {
       const empty = document.createElement('div');
-      empty.style.cssText = 'color:var(--text-3);font-size:12px;padding:16px;text-align:center';
+      empty.className = 'tree-empty-msg';
       empty.textContent = 'No collections yet';
       treeEl.appendChild(empty);
     }
@@ -76,7 +76,6 @@
       varBadge.className = 'coll-var-indicator';
       varBadge.textContent = `{${node.variables.length}}`;
       varBadge.title = `${node.variables.length} collection variables`;
-      varBadge.style.cssText = 'font-size:9px;color:var(--text-3);margin-left:4px;font-family:var(--font-mono)';
       item.querySelector('.name')?.after(varBadge);
     }
 
@@ -247,12 +246,12 @@
 
         dialog.innerHTML = `
           <div class="confirm-dialog-title">Save Request</div>
-          <select id="save-col-select" style="width:100%;margin-top:14px;padding:9px 12px;border-radius:7px;
-            border:1px solid var(--border-0);background:var(--bg-2);color:var(--text-0);
-            font-family:var(--font-ui);font-size:13px;outline:none;cursor:pointer">
+          <input type="text" id="save-req-name" class="save-modal-name-input"
+            value="${escapeHtml(tab.method + ' ' + tab.url)}" placeholder="Request name">
+          <select id="save-col-select" class="save-modal-select">
             ${items}
           </select>
-          <div class="confirm-dialog-actions" style="margin-top:20px">
+          <div class="confirm-dialog-actions save-modal-actions">
             <button class="modal-btn modal-btn-secondary" id="save-cancel">Cancel</button>
             <button class="modal-btn modal-btn-primary" id="save-confirm">Save</button>
           </div>
@@ -264,7 +263,10 @@
 
         dialog.querySelector('#save-confirm').onclick = () => {
           overlay.classList.add('hidden');
-          resolve(dialog.querySelector('#save-col-select').value);
+          resolve({
+            collectionId: dialog.querySelector('#save-col-select').value,
+            name: dialog.querySelector('#save-req-name').value.trim(),
+          });
         };
         dialog.querySelector('#save-cancel').onclick = () => {
           overlay.classList.add('hidden');
@@ -276,11 +278,13 @@
       });
 
       if (!choice) return;
-      const col = cols.find(c => c.id == choice);
+      const col = cols.find(c => c.id == choice.collectionId);
       if (!col) return;
 
+      const reqName = choice.name || `${tab.method} ${tab.url}`;
+
       const savedReq = await api.addRequest(col.id, {
-        name: `${tab.method} ${tab.url}`,
+        name: reqName,
         method: tab.method,
         url: tab.url,
         headers: JSON.stringify(kvToArray(tab.headers)),

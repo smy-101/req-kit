@@ -14,9 +14,9 @@
     function renderModal() {
       modal.innerHTML = `
         <h3>集合变量: ${escapeHtml(collectionName)}</h3>
-        <p style="color:var(--text-3);font-size:11px;margin:4px 0 12px">这些变量对该集合下的所有请求生效，优先级高于环境变量和全局变量。</p>
+        <p class="modal-desc">这些变量对该集合下的所有请求生效，优先级高于环境变量和全局变量。</p>
         <div id="coll-var-editor" class="kv-editor"></div>
-        <div class="modal-actions" style="margin-top:16px">
+        <div class="modal-actions modal-actions-compact">
           <button id="close-coll-var-modal" class="modal-btn modal-btn-secondary">取消</button>
           <button id="save-coll-vars" class="modal-btn modal-btn-primary">保存</button>
         </div>
@@ -41,8 +41,7 @@
       });
 
       const addBtn = document.createElement('button');
-      addBtn.className = 'modal-btn modal-btn-secondary';
-      addBtn.style.cssText = 'margin-top:4px;font-size:11px;padding:4px 12px;';
+      addBtn.className = 'modal-btn modal-btn-secondary kv-add-btn';
       addBtn.textContent = '+ 添加变量';
       addBtn.addEventListener('click', () => { vars.push({ key: '', value: '', enabled: 1 }); renderModal(); });
       editor.appendChild(addBtn);

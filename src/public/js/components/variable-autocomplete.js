@@ -83,21 +83,21 @@
     popup.classList.remove('hidden');
   }
 
-  function renderPopup() {
-    const scopeColors = {
-      Runtime: 'var(--accent)',
-      Collection: 'var(--yellow)',
-      Environment: 'var(--green)',
-      Global: 'var(--text-3)',
-    };
+  const SCOPE_CSS_CLASS = {
+    Runtime: 'var-scope-runtime',
+    Collection: 'var-scope-collection',
+    Environment: 'var-scope-environment',
+    Global: 'var-scope-global',
+  };
 
+  function renderPopup() {
     popup.innerHTML = '';
     filteredItems.forEach((item, idx) => {
       const el = document.createElement('div');
       el.className = `var-autocomplete-item${idx === selectedIndex ? ' selected' : ''}`;
       el.innerHTML = `
         <span class="var-autocomplete-key">${escapeHtml(item.key)}</span>
-        <span class="var-autocomplete-scope" style="color:${scopeColors[item.scope] || 'var(--text-3)'}">${item.scope}</span>
+        <span class="var-autocomplete-scope ${SCOPE_CSS_CLASS[item.scope] || 'var-scope-global'}">${item.scope}</span>
       `;
       el.addEventListener('mousedown', (e) => {
         e.preventDefault();

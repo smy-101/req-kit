@@ -11,9 +11,9 @@
     function renderModal() {
       modal.innerHTML = `
         <h3>管理全局变量</h3>
-        <p style="color:var(--text-3);font-size:11px;margin:4px 0 12px">全局变量始终生效，优先级最低。当其他作用域存在同名变量时会被覆盖。</p>
+        <p class="modal-desc">全局变量始终生效，优先级最低。当其他作用域存在同名变量时会被覆盖。</p>
         <div id="global-var-editor" class="kv-editor"></div>
-        <div class="modal-actions" style="margin-top:16px">
+        <div class="modal-actions modal-actions-compact">
           <button id="close-global-var-modal" class="modal-btn modal-btn-secondary">取消</button>
           <button id="save-global-vars" class="modal-btn modal-btn-primary">保存</button>
         </div>
@@ -38,8 +38,7 @@
       });
 
       const addBtn = document.createElement('button');
-      addBtn.className = 'modal-btn modal-btn-secondary';
-      addBtn.style.cssText = 'margin-top:4px;font-size:11px;padding:4px 12px;';
+      addBtn.className = 'modal-btn modal-btn-secondary kv-add-btn';
       addBtn.textContent = '+ 添加变量';
       addBtn.addEventListener('click', () => { vars.push({ key: '', value: '', enabled: 1 }); renderModal(); });
       editor.appendChild(addBtn);

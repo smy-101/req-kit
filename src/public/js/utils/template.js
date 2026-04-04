@@ -7,6 +7,17 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;');
 }
 
+// 空状态 HTML — 响应面板初始/空状态
+function emptyStateHTML() {
+  return `<div class="empty-state">
+    <div class="empty-state-icon">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+    </div>
+    <div class="empty-state-title">Send a Request</div>
+    <div class="empty-state-desc">Enter a URL and press Send, or use <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span></div>
+  </div>`;
+}
+
 // 输入防抖工具 — 统一管理所有防抖定时器，支持发送前 flush
 const InputDebounce = {
   _timers: {},
@@ -76,13 +87,14 @@ const TemplateHighlighter = {
 
   // Get all unique variable names from the current request state
   getUsedVariables() {
-    const state = store.getState();
+    const tab = store.getActiveTab();
+    if (!tab) return new Set();
     const vars = new Set();
     const texts = [
-      state.url,
-      state.body,
-      ...state.headers.map(h => h.key + h.value),
-      ...state.params.map(p => p.key + p.value),
+      tab.url,
+      tab.body,
+      ...(tab.headers || []).map(h => h.key + h.value),
+      ...(tab.params || []).map(p => p.key + p.value),
     ];
 
     for (const text of texts) {

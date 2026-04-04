@@ -113,14 +113,7 @@
       statusEl.className = '';
       timeEl.textContent = '';
       sizeEl.textContent = '';
-      bodyEl.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-state-icon">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
-          </div>
-          <div class="empty-state-title">Send a Request</div>
-          <div class="empty-state-desc">Enter a URL and press Send, or use <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span></div>
-        </div>`;
+      bodyEl.innerHTML = emptyStateHTML();
       headersEl.innerHTML = '';
       return;
     }
@@ -132,7 +125,7 @@
       statusEl.className = 'status-5xx';
       timeEl.textContent = '-';
       sizeEl.textContent = '-';
-      bodyEl.innerHTML = `<pre style="color:var(--red)">${escapeHtml(data.error || 'Request failed')}</pre>`;
+      bodyEl.innerHTML = `<pre class="response-error">${escapeHtml(data.error || 'Request failed')}</pre>`;
       headersEl.innerHTML = '';
       return;
     }
@@ -212,7 +205,7 @@
     statusEl.className = 'status-5xx';
     timeEl.textContent = '-';
     sizeEl.textContent = '-';
-    bodyEl.innerHTML = `<pre style="color:var(--red)">${escapeHtml(err.message || 'Request failed')}</pre>`;
+    bodyEl.innerHTML = `<pre class="response-error">${escapeHtml(err.message || 'Request failed')}</pre>`;
   });
 
   store.on('request:start', () => {
@@ -222,9 +215,9 @@
     timeEl.textContent = '';
     sizeEl.textContent = '';
     bodyEl.innerHTML = `
-      <div class="empty-state" style="padding:40px 20px">
-        <div class="spinner" style="margin-bottom:12px"></div>
-        <div class="empty-state-title" style="font-size:12px">Sending request...</div>
+      <div class="empty-state response-loading">
+        <div class="spinner"></div>
+        <div class="empty-state-title">Sending request...</div>
       </div>`;
     headersEl.innerHTML = '';
   });
@@ -251,4 +244,7 @@
       return `<span class="${cls}">${match}</span>`;
     });
   }
+
+  // Render initial state (tab:switch already fired before this script loads)
+  restoreFromTab();
 })();

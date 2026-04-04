@@ -71,7 +71,7 @@
       <!-- Request/Response panels -->
       <div id="request-response">
         <!-- Request tabs -->
-        <div id="request-panel" style="flex: 0 0 45%;">
+        <div id="request-panel">
           <div class="tab-bar">
             <button class="tab active" data-tab="headers">Headers</button>
             <button class="tab" data-tab="params">Params</button>
@@ -100,15 +100,7 @@
             <button class="tab active" data-response-tab="body">Body</button>
             <button class="tab" data-response-tab="headers">Headers</button>
           </div>
-          <div class="tab-content" id="response-body">
-            <div class="empty-state">
-              <div class="empty-state-icon">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
-              </div>
-              <div class="empty-state-title">Send a Request</div>
-              <div class="empty-state-desc">Enter a URL and press Send, or use <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span></div>
-            </div>
-          </div>
+          <div class="tab-content" id="response-body"></div>
           <div class="tab-content hidden" id="response-headers"></div>
         </div>
       </div>

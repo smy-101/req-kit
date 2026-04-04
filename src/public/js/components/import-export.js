@@ -10,12 +10,12 @@
 
     modal.innerHTML = `
       <h3>Import / Export</h3>
-      <div class="tab-bar" style="padding:0;margin-bottom:12px">
+      <div class="tab-bar imex-tab-bar">
         <button class="tab active" data-imex-tab="import">Import</button>
         <button class="tab" data-imex-tab="export">Export</button>
       </div>
       <div id="imex-import">
-        <select id="import-type" style="background:var(--bg-3);border:1px solid var(--border-0);color:var(--text-1);padding:6px 12px;border-radius:var(--radius);font-size:12px;margin-bottom:8px;outline:none;font-family:var(--font-ui)">
+        <select id="import-type" class="import-type-select">
           <option value="curl">curl Command</option>
           <option value="postman">Postman Collection v2.1</option>
         </select>
@@ -25,10 +25,10 @@
         </div>
       </div>
       <div id="imex-export" class="hidden">
-        <p style="color:var(--text-2);font-size:12px;margin-bottom:8px">Select a collection to export:</p>
+        <p class="export-hint">Select a collection to export:</p>
         <div id="export-list"></div>
       </div>
-      <div class="modal-actions" style="margin-top:16px">
+      <div class="modal-actions modal-actions-compact">
         <button id="close-imex-modal" class="modal-btn modal-btn-secondary">Close</button>
       </div>
     `;
@@ -85,9 +85,9 @@
 
     for (const col of collections) {
       const item = document.createElement('div');
-      item.style.cssText = 'display:flex;gap:8px;align-items:center;padding:10px 12px;background:var(--bg-2);border:1px solid var(--border-0);border-radius:var(--radius);margin-bottom:4px';
+      item.className = 'export-list-item';
       item.innerHTML = `
-        <span style="flex:1;font-size:13px">${escapeHtml(col.name)}</span>
+        <span class="export-list-item-name">${escapeHtml(col.name)}</span>
         <button class="modal-btn modal-btn-secondary export-col-btn" data-id="${col.id}">Postman</button>
       `;
       exportList.appendChild(item);

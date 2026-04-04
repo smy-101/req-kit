@@ -34,12 +34,12 @@
     modal.innerHTML = `
       <h3>Manage Environments</h3>
       <div id="env-list-modal" class="env-list"></div>
-      <div style="margin-top:12px">
+      <div class="env-section-gap">
         <input type="text" id="new-env-name" placeholder="New environment name"
-          style="background:var(--bg-2);border:1px solid var(--border-0);color:var(--text-1);padding:6px 10px;border-radius:var(--radius);font-size:12px;width:60%">
+          class="env-new-input">
         <button id="create-env-btn" class="modal-btn modal-btn-primary">Create</button>
       </div>
-      <div id="env-vars-editor" style="margin-top:16px"></div>
+      <div id="env-vars-editor" class="env-section-gap-lg"></div>
       <div class="modal-actions">
         <button id="close-env-modal" class="modal-btn modal-btn-secondary">Close</button>
       </div>
@@ -52,7 +52,7 @@
       item.innerHTML = `
         <span class="env-name">${escapeHtml(env.name)}</span>
         <button class="modal-btn modal-btn-secondary edit-env-btn" data-id="${env.id}">Edit</button>
-        <button class="modal-btn modal-btn-secondary delete-env-btn" data-id="${env.id}" style="color:var(--red)">Delete</button>
+        <button class="modal-btn modal-btn-secondary delete-env-btn btn-danger-text" data-id="${env.id}">Delete</button>
       `;
       listEl.appendChild(item);
     }
@@ -100,7 +100,7 @@
     let vars = env.variables ? [...env.variables] : [];
 
     function renderVars() {
-      varsEl.innerHTML = `<h4 style="font-size:13px;margin-bottom:8px;color:var(--text-0);font-weight:600">Variables for ${escapeHtml(env.name)}</h4>`;
+      varsEl.innerHTML = `<h4 class="env-var-heading">Variables for ${escapeHtml(env.name)}</h4>`;
 
       const editor = document.createElement('div');
       editor.className = 'kv-editor';
@@ -122,15 +122,13 @@
       });
 
       const addBtn = document.createElement('button');
-      addBtn.className = 'modal-btn modal-btn-secondary';
-      addBtn.style.cssText = 'margin-top:4px;font-size:11px;padding:4px 12px;';
+      addBtn.className = 'modal-btn modal-btn-secondary kv-add-btn';
       addBtn.textContent = '+ Add Variable';
       addBtn.addEventListener('click', () => { vars.push({ key: '', value: '', enabled: true }); renderVars(); });
       editor.appendChild(addBtn);
 
       const saveBtn = document.createElement('button');
-      saveBtn.className = 'modal-btn modal-btn-primary';
-      saveBtn.style.cssText = 'margin-top:8px;';
+      saveBtn.className = 'modal-btn modal-btn-primary kv-save-btn';
       saveBtn.textContent = 'Save Variables';
       saveBtn.addEventListener('click', async () => {
         await api.updateVariables(env.id, vars.filter(v => v.key));
