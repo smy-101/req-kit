@@ -63,10 +63,10 @@ const CurlParser = {
     if (!parsed) return 'Invalid curl command';
     let preview = `<strong style="color:var(--green)">${parsed.method}</strong> ${parsed.url}`;
     if (Object.keys(parsed.headers).length > 0) {
-      preview += '<br><span style="color:var(--text-dim);font-size:11px">Headers: ' + Object.keys(parsed.headers).join(', ') + '</span>';
+      preview += '<br><span style="color:var(--text-3);font-size:11px">Headers: ' + Object.keys(parsed.headers).join(', ') + '</span>';
     }
     if (parsed.body) {
-      preview += '<br><span style="color:var(--text-dim);font-size:11px">Body: ' + parsed.body.slice(0, 50) + (parsed.body.length > 50 ? '...' : '') + '</span>';
+      preview += '<br><span style="color:var(--text-3);font-size:11px">Body: ' + parsed.body.slice(0, 50) + (parsed.body.length > 50 ? '...' : '') + '</span>';
     }
     return preview;
   }

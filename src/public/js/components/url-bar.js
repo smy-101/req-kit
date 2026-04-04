@@ -38,7 +38,8 @@
     }
 
     sendBtn.disabled = true;
-    sendBtn.textContent = 'Sending...';
+    sendBtn.dataset.loading = 'true';
+    sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="animation:spin .6s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Sending';
 
     store.emit('request:start');
 
@@ -62,6 +63,7 @@
       store.emit('request:error', err);
     } finally {
       sendBtn.disabled = false;
+      sendBtn.dataset.loading = 'false';
       sendBtn.textContent = 'Send';
     }
   });
@@ -75,7 +77,7 @@
 
   function updateMethodColor() {
     const colors = { GET: 'var(--green)', POST: 'var(--yellow)', PUT: 'var(--accent)', PATCH: 'var(--orange)', DELETE: 'var(--red)' };
-    methodSelect.style.color = colors[methodSelect.value] || 'var(--text)';
+    methodSelect.style.color = colors[methodSelect.value] || 'var(--text-1)';
   }
   updateMethodColor();
 

@@ -25,7 +25,7 @@
 
     if (collections.length === 0) {
       const empty = document.createElement('div');
-      empty.style.cssText = 'color:var(--text-dim);font-size:12px;padding:16px;text-align:center';
+      empty.style.cssText = 'color:var(--text-3);font-size:12px;padding:16px;text-align:center';
       empty.textContent = 'No collections yet';
       treeEl.appendChild(empty);
     }
@@ -66,14 +66,21 @@
     item.className = 'tree-item';
     item.style.paddingLeft = `${8 + depth * 16}px`;
 
-    const icon = type === 'history' ? '📋' : '📁';
+    const icons = {
+      history: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+      folder: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
+    };
+    const icon = type === 'history' ? icons.history : icons.folder;
     item.innerHTML = `<span class="icon">${icon}</span><span class="name">${escapeHtml(name)}</span>`;
 
     if (type === 'collection') {
-      item.addEventListener('contextmenu', (e) => {
+      item.addEventListener('contextmenu', async (e) => {
         e.preventDefault();
-        if (confirm(`Delete collection "${name}"?`)) {
-          api.deleteCollection(id).then(refreshCollections);
+        const yes = await Dialogs.confirmDanger('Delete Collection', `Delete collection "${name}" and all its requests?`);
+        if (yes) {
+          await api.deleteCollection(id);
+          Toast.info('Collection deleted');
+          refreshCollections();
         }
       });
     }
@@ -95,10 +102,13 @@
       loadRequest(req, collectionId);
     });
 
-    item.addEventListener('contextmenu', (e) => {
+    item.addEventListener('contextmenu', async (e) => {
       e.preventDefault();
-      if (confirm(`Delete request "${req.name}"?`)) {
-        api.deleteRequest(collectionId, req.id).then(refreshCollections);
+      const yes = await Dialogs.confirmDanger('Delete Request', `Delete request "${req.name}"?`);
+      if (yes) {
+        await api.deleteRequest(collectionId, req.id);
+        Toast.info('Request deleted');
+        refreshCollections();
       }
     });
 
@@ -149,9 +159,10 @@
 
   // New collection button
   newColBtn.addEventListener('click', async () => {
-    const name = prompt('Collection name:');
+    const name = await Dialogs.prompt('New Collection', 'Collection name');
     if (name) {
       await api.createCollection(name);
+      Toast.success('Collection created');
       refreshCollections();
     }
   });
@@ -174,19 +185,59 @@
         auth_config: JSON.stringify(state.authConfig),
         pre_request_script: state.preRequestScript,
       });
+      Toast.success('Request updated');
     } else {
       // Save new - need to pick a collection
       const collections = state.collections;
       if (collections.length === 0) {
-        const name = prompt('Create a collection first. Name:');
+        const name = await Dialogs.prompt('Create a Collection', 'Collection name');
         if (!name) return;
         await api.createCollection(name);
         await refreshCollections();
       }
-      const colNames = store.getState().collections.map(c => `${c.id}: ${c.name}`);
-      const choice = prompt(`Save to collection (enter number):\n${colNames.map((n, i) => `${i + 1}. ${n}`).join('\n')}`);
+      const cols = store.getState().collections;
+      const items = cols.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+      const { ModalOverrides } = window;
+
+      const choice = await new Promise((resolve) => {
+        const overlay = document.getElementById('modal-overlay');
+        const modal = document.getElementById('modal');
+        const dialog = document.createElement('div');
+        dialog.className = 'confirm-dialog';
+        dialog.addEventListener('click', e => e.stopPropagation());
+
+        dialog.innerHTML = `
+          <div class="confirm-dialog-title">Save Request</div>
+          <select id="save-col-select" style="width:100%;margin-top:14px;padding:9px 12px;border-radius:7px;
+            border:1px solid var(--border-0);background:var(--bg-2);color:var(--text-0);
+            font-family:var(--font-ui);font-size:13px;outline:none;cursor:pointer">
+            ${items}
+          </select>
+          <div class="confirm-dialog-actions" style="margin-top:20px">
+            <button class="modal-btn modal-btn-secondary" id="save-cancel">Cancel</button>
+            <button class="modal-btn modal-btn-primary" id="save-confirm">Save</button>
+          </div>
+        `;
+
+        modal.innerHTML = '';
+        modal.appendChild(dialog);
+        overlay.classList.remove('hidden');
+
+        dialog.querySelector('#save-confirm').onclick = () => {
+          overlay.classList.add('hidden');
+          resolve(dialog.querySelector('#save-col-select').value);
+        };
+        dialog.querySelector('#save-cancel').onclick = () => {
+          overlay.classList.add('hidden');
+          resolve(null);
+        };
+        overlay.onclick = (e) => {
+          if (e.target === overlay) { overlay.classList.add('hidden'); resolve(null); }
+        };
+      });
+
       if (!choice) return;
-      const col = store.getState().collections[parseInt(choice) - 1];
+      const col = cols.find(c => c.id == choice);
       if (!col) return;
 
       await api.addRequest(col.id, {
@@ -201,6 +252,7 @@
         auth_config: JSON.stringify(state.authConfig),
         pre_request_script: state.preRequestScript,
       });
+      Toast.success('Request saved');
     }
     refreshCollections();
   });

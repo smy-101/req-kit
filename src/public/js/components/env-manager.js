@@ -36,7 +36,7 @@
       <div id="env-list-modal" class="env-list"></div>
       <div style="margin-top:12px">
         <input type="text" id="new-env-name" placeholder="New environment name"
-          style="background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:4px;font-size:12px;width:60%">
+          style="background:var(--bg-2);border:1px solid var(--border-0);color:var(--text-1);padding:6px 10px;border-radius:var(--radius);font-size:12px;width:60%">
         <button id="create-env-btn" class="modal-btn modal-btn-primary">Create</button>
       </div>
       <div id="env-vars-editor" style="margin-top:16px"></div>
@@ -78,8 +78,10 @@
     // Delete environment
     listEl.querySelectorAll('.delete-env-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
-        if (confirm('Delete this environment and all its variables?')) {
+        const yes = await Dialogs.confirmDanger('Delete Environment', 'Delete this environment and all its variables?');
+        if (yes) {
           await api.deleteEnvironment(parseInt(btn.dataset.id));
+          Toast.info('Environment deleted');
           await refreshEnvironments();
           showEnvModal();
         }
@@ -98,7 +100,7 @@
     let vars = env.variables ? [...env.variables] : [];
 
     function renderVars() {
-      varsEl.innerHTML = `<h4 style="font-size:13px;margin-bottom:8px;color:var(--text-bright)">Variables for ${escapeHtml(env.name)}</h4>`;
+      varsEl.innerHTML = `<h4 style="font-size:13px;margin-bottom:8px;color:var(--text-0);font-weight:600">Variables for ${escapeHtml(env.name)}</h4>`;
 
       const editor = document.createElement('div');
       editor.className = 'kv-editor';

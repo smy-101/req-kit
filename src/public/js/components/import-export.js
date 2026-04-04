@@ -15,7 +15,7 @@
         <button class="tab" data-imex-tab="export">Export</button>
       </div>
       <div id="imex-import">
-        <select id="import-type" style="background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:4px;font-size:12px;margin-bottom:8px">
+        <select id="import-type" style="background:var(--bg-3);border:1px solid var(--border-0);color:var(--text-1);padding:6px 12px;border-radius:var(--radius);font-size:12px;margin-bottom:8px;outline:none;font-family:var(--font-ui)">
           <option value="curl">curl Command</option>
           <option value="postman">Postman Collection v2.1</option>
         </select>
@@ -25,7 +25,7 @@
         </div>
       </div>
       <div id="imex-export" class="hidden">
-        <p style="color:var(--text-dim);font-size:12px;margin-bottom:8px">Select a collection to export:</p>
+        <p style="color:var(--text-2);font-size:12px;margin-bottom:8px">Select a collection to export:</p>
         <div id="export-list"></div>
       </div>
       <div class="modal-actions" style="margin-top:16px">
@@ -61,16 +61,18 @@
         }
         const result = await api.importCurl(content, colId);
         if (result.error) {
-          alert(result.error);
+          Toast.error(result.error);
         } else {
+          Toast.success('Imported successfully');
           await window.refreshCollections();
           overlay.classList.add('hidden');
         }
       } else if (type === 'postman') {
         const result = await api.importPostman(content);
         if (result.error) {
-          alert(result.error);
+          Toast.error(result.error);
         } else {
+          Toast.success('Postman collection imported');
           await window.refreshCollections();
           overlay.classList.add('hidden');
         }
@@ -83,7 +85,7 @@
 
     for (const col of collections) {
       const item = document.createElement('div');
-      item.style.cssText = 'display:flex;gap:8px;align-items:center;padding:8px;background:var(--bg-tertiary);border-radius:4px;margin-bottom:4px';
+      item.style.cssText = 'display:flex;gap:8px;align-items:center;padding:10px 12px;background:var(--bg-2);border:1px solid var(--border-0);border-radius:var(--radius);margin-bottom:4px';
       item.innerHTML = `
         <span style="flex:1;font-size:13px">${escapeHtml(col.name)}</span>
         <button class="modal-btn modal-btn-secondary export-col-btn" data-id="${col.id}">Postman</button>

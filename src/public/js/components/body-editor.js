@@ -33,8 +33,9 @@
       const parsed = JSON.parse(textarea.value);
       textarea.value = JSON.stringify(parsed, null, 2);
       store.setState({ body: textarea.value });
+      Toast.success('JSON formatted');
     } catch (e) {
-      alert('Invalid JSON: ' + e.message);
+      Toast.error('Invalid JSON: ' + e.message);
     }
   });
 

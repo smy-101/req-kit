@@ -36,13 +36,12 @@
 
     // Truncated warning
     if (data.truncated) {
-      bodyEl.innerHTML = '<div style="color:var(--yellow);margin-bottom:8px;font-size:12px">⚠ Response truncated (exceeded 50MB)</div>' + bodyEl.innerHTML;
+      bodyEl.innerHTML = '<div style="color:var(--yellow);margin-bottom:8px;font-size:11px;font-family:var(--font-mono);padding:6px 10px;background:var(--yellow-bg);border-radius:var(--radius)">⚠ Response truncated (exceeded 50MB)</div>' + bodyEl.innerHTML;
     }
 
-    // Script logs
     if (data.script_logs && data.script_logs.length > 0) {
-      const logsHtml = data.script_logs.map(l => `<div style="color:var(--text-dim);font-size:11px;font-family:var(--font-mono)">> ${escapeHtml(l)}</div>`).join('');
-      bodyEl.innerHTML = '<div style="margin-bottom:8px;padding:8px;background:var(--bg-tertiary);border-radius:4px"><strong style="font-size:11px;color:var(--text-dim)">Script Logs</strong>' + logsHtml + '</div>' + bodyEl.innerHTML;
+      const logsHtml = data.script_logs.map(l => `<div style="color:var(--text-2);font-size:11px;font-family:var(--font-mono);line-height:1.6">> ${escapeHtml(l)}</div>`).join('');
+      bodyEl.innerHTML = '<div style="margin-bottom:10px;padding:10px 12px;background:var(--bg-2);border:1px solid var(--border-0);border-radius:var(--radius)"><strong style="font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px">Script Logs</strong><div style="margin-top:6px">' + logsHtml + '</div></div>' + bodyEl.innerHTML;
     }
   });
 
@@ -55,11 +54,15 @@
   });
 
   store.on('request:start', () => {
-    statusEl.textContent = 'Loading...';
+    statusEl.textContent = '';
     statusEl.className = '';
     timeEl.textContent = '';
     sizeEl.textContent = '';
-    bodyEl.innerHTML = '<div style="color:var(--text-dim);padding:20px;text-align:center">Sending request...</div>';
+    bodyEl.innerHTML = `
+      <div class="empty-state" style="padding:40px 20px">
+        <div class="spinner" style="margin-bottom:12px"></div>
+        <div class="empty-state-title" style="font-size:12px">Sending request...</div>
+      </div>`;
     headersEl.innerHTML = '';
   });
 
