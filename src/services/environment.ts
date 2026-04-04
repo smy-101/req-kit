@@ -41,13 +41,20 @@ export class EnvService {
     const envs = this.db.query<{ id: number; name: string; created_at: string }>(
       'SELECT * FROM environments ORDER BY id'
     );
-    return envs.map(env => {
-      const vars = this.db.query<EnvVariable>(
-        'SELECT * FROM env_variables WHERE environment_id = ?',
-        [env.id]
-      );
-      return { ...env, variables: vars };
-    });
+    const allVars = this.db.query<EnvVariable & { environment_id: number }>(
+      'SELECT * FROM env_variables ORDER BY environment_id'
+    );
+    // 按 environment_id 分组
+    const varsByEnv = new Map<number, EnvVariable[]>();
+    for (const v of allVars) {
+      const list = varsByEnv.get(v.environment_id) || [];
+      list.push(v);
+      varsByEnv.set(v.environment_id, list);
+    }
+    return envs.map(env => ({
+      ...env,
+      variables: varsByEnv.get(env.id) || [],
+    }));
   }
 
   getVariables(environmentId: number): EnvVariable[] {

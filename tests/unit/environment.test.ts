@@ -25,15 +25,33 @@ describe('EnvService', () => {
     });
 
     test('gets all environments with variables', () => {
-      const env = service.createEnvironment('dev');
-      service.replaceVariables(env.id!, [
+      const env1 = service.createEnvironment('dev');
+      const env2 = service.createEnvironment('staging');
+      service.replaceVariables(env1.id!, [
         { key: 'base_url', value: 'http://localhost:3000' },
         { key: 'token', value: 'abc123' },
       ]);
+      service.replaceVariables(env2.id!, [
+        { key: 'base_url', value: 'https://staging.example.com' },
+      ]);
 
       const envs = service.getAllEnvironments();
-      expect(envs.length).toBe(1);
+      expect(envs.length).toBe(2);
+      expect(envs[0].name).toBe('dev');
       expect(envs[0].variables!.length).toBe(2);
+      expect(envs[1].name).toBe('staging');
+      expect(envs[1].variables!.length).toBe(1);
+      expect(envs[1].variables![0].key).toBe('base_url');
+    });
+
+    test('getAllEnvironments returns empty variables for env without vars', () => {
+      service.createEnvironment('dev');
+      service.createEnvironment('staging');
+
+      const envs = service.getAllEnvironments();
+      expect(envs.length).toBe(2);
+      expect(envs[0].variables).toEqual([]);
+      expect(envs[1].variables).toEqual([]);
     });
 
     test('updates environment name', () => {

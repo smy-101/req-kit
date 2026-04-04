@@ -1385,7 +1385,7 @@ body {
   border-radius: var(--radius-xl);
   padding: 32px;
   min-width: 440px;
-  max-width: 620px;
+  max-width: 800px;
   max-height: 80vh;
   overflow-y: auto;
   box-shadow:
@@ -1488,27 +1488,68 @@ body {
 
 
 /* ── Env Manager ──────────────────────────── */
+.env-split-panel {
+  display: flex;
+  gap: 16px;
+  min-height: 400px;
+}
+
+/* 环境管理弹窗需要更宽的容器 */
+#modal:has(.env-split-panel) {
+  min-width: 680px;
+}
+
+.env-panel-left {
+  width: 200px;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.env-panel-right {
+  flex: 1;
+  min-width: 420px;
+}
+
+.env-editor-content {
+  min-height: 300px;
+}
+
+.env-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: var(--text-4);
+  font-size: 13px;
+  border: 1px dashed var(--border-1);
+  border-radius: var(--radius);
+}
+
 .env-list {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .env-item {
   display: flex;
-  gap: 10px;
+  gap: 6px;
   align-items: center;
-  padding: 10px 14px;
+  padding: 8px 10px;
   background: var(--bg-2);
   border-radius: var(--radius);
   border: 1px solid var(--border-0);
+  cursor: pointer;
   transition: all 150ms var(--ease);
 }
 
 .env-item:hover {
   border-color: var(--border-1);
   background: var(--bg-3);
-  transform: translateX(2px);
 }
 
 .env-item .env-name {
@@ -1516,6 +1557,46 @@ body {
   font-size: 13px;
   font-weight: 500;
   color: var(--text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.env-rename-input {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-1);
+  border: 1px solid var(--accent-border);
+  color: var(--text-1);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: var(--font-ui);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-bg);
+}
+
+.env-delete-msg {
+  color: var(--red);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.env-item .env-item-actions {
+  display: flex;
+  gap: 3px;
+  opacity: 0;
+  transition: opacity 150ms var(--ease);
+}
+
+.env-item:hover .env-item-actions {
+  opacity: 1;
+}
+
+.env-action-btn {
+  padding: 2px 8px !important;
+  font-size: 11px !important;
 }
 
 .env-item.active {
@@ -1525,6 +1606,53 @@ body {
 
 .env-item.active .env-name {
   color: var(--accent);
+}
+
+.env-item.active .env-item-actions {
+  opacity: 1;
+}
+
+.env-new-area {
+  display: flex;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-0);
+  margin-top: 4px;
+}
+
+.env-create-btn {
+  font-size: 11px !important;
+  padding: 6px 14px !important;
+}
+
+.env-new-input {
+  flex: 1;
+  background: var(--bg-2);
+  border: 1px solid var(--border-0);
+  color: var(--text-1);
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  outline: none;
+  transition: border-color 150ms var(--ease);
+}
+.env-new-input:focus {
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 2px var(--accent-bg);
+}
+
+/* Duplicate key warning */
+.kv-row.kv-duplicate .kv-key {
+  border-color: var(--red) !important;
+  box-shadow: 0 0 0 2px var(--red-bg-md) !important;
+}
+
+.kv-dup-warn {
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 4px;
+  cursor: help;
 }
 
 /* ── Import / Export ──────────────────────── */
@@ -2400,34 +2528,6 @@ textarea:focus-visible {
   margin-top: 20px;
 }
 
-/* -- Env manager: new environment name input -- */
-.env-new-input {
-  background: var(--bg-2);
-  border: 1px solid var(--border-0);
-  color: var(--text-1);
-  padding: 6px 10px;
-  border-radius: var(--radius);
-  font-size: 12px;
-  width: 60%;
-  outline: none;
-  transition: border-color 150ms var(--ease);
-}
-.env-new-input:focus {
-  border-color: var(--accent-border);
-  box-shadow: 0 0 0 2px var(--accent-bg);
-}
-
-/* -- Env manager: section spacing -- */
-.env-section-gap { margin-top: 12px; }
-.env-section-gap-lg { margin-top: 16px; }
-
-/* -- Env manager: variable editor heading -- */
-.env-var-heading {
-  font-size: 13px;
-  margin-bottom: 8px;
-  color: var(--text-0);
-  font-weight: 600;
-}
 
 /* -- Shared: KV editor "add row" button -- */
 .kv-add-btn {
