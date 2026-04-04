@@ -31,7 +31,7 @@
 
   // Close on click outside
   document.addEventListener('click', (e) => {
-    if (!panel.contains(e.target) && e.target !== eyeBtn) {
+    if (!panel.contains(e.target) && !eyeBtn.contains(e.target)) {
       panelVisible = false;
       panel.classList.add('hidden');
     }
@@ -46,11 +46,11 @@
   // 作用域优先级
   const SCOPE_ORDER = ['Runtime', 'Collection', 'Environment', 'Global'];
   const SCOPE_PRIORITY = { Runtime: 4, Collection: 3, Environment: 2, Global: 1 };
-  const SCOPE_COLORS = {
-    Runtime: 'var(--accent)',
-    Collection: 'var(--yellow)',
-    Environment: 'var(--green)',
-    Global: 'var(--text-3)',
+  const SCOPE_CSS_CLASS = {
+    Runtime: 'var-scope-runtime',
+    Collection: 'var-scope-collection',
+    Environment: 'var-scope-environment',
+    Global: 'var-scope-global',
   };
 
   function collectAllVariables() {
@@ -120,12 +120,12 @@
 
     panel.innerHTML = `
       <div class="var-preview-header">
-        <span style="font-weight:600;font-size:13px">Variables</span>
+        <span class="var-preview-title">Variables</span>
         <input type="text" id="var-search" placeholder="搜索变量..." class="var-search-input">
       </div>
       <div class="var-preview-list" id="var-preview-list"></div>
       <div class="var-preview-footer">
-        <button id="btn-manage-global-vars" class="modal-btn modal-btn-secondary" style="font-size:11px;padding:4px 12px">
+        <button id="btn-manage-global-vars-panel" class="modal-btn modal-btn-secondary var-preview-manage-btn">
           管理全局变量
         </button>
       </div>
@@ -134,7 +134,7 @@
     const listEl = document.getElementById('var-preview-list');
 
     if (entries.size === 0) {
-      listEl.innerHTML = '<div style="color:var(--text-3);font-size:12px;padding:16px;text-align:center">暂无变量</div>';
+      listEl.innerHTML = '<div class="var-empty-msg">暂无变量</div>';
     } else {
       renderVariableList(listEl, entries, '');
     }
@@ -144,8 +144,8 @@
       renderVariableList(listEl, entries, e.target.value.toLowerCase());
     });
 
-    // 管理全局变量按钮
-    document.getElementById('btn-manage-global-vars').addEventListener('click', () => {
+    // 管理全局变量按钮（使用独立ID避免与侧边栏按钮冲突）
+    document.getElementById('btn-manage-global-vars-panel').addEventListener('click', () => {
       panelVisible = false;
       panel.classList.add('hidden');
       showGlobalVarModal();
@@ -197,7 +197,7 @@
       // 作用域分组标题
       const header = document.createElement('div');
       header.className = 'var-preview-scope-header';
-      header.innerHTML = `<span style="color:${SCOPE_COLORS[scope] || 'var(--text-3)'}">${scope}</span>`;
+      header.innerHTML = `<span class="${SCOPE_CSS_CLASS[scope] || 'var-scope-global'}">${scope}</span>`;
       listEl.appendChild(header);
 
       // 变量行
@@ -215,7 +215,7 @@
     }
 
     if (!hasContent) {
-      listEl.innerHTML = '<div style="color:var(--text-3);font-size:12px;padding:8px;text-align:center">无匹配变量</div>';
+      listEl.innerHTML = '<div class="var-empty-msg-compact">无匹配变量</div>';
     }
   }
 
