@@ -778,10 +778,11 @@ body {
 
 #response-panel {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   background: var(--bg-0);
+  min-height: 0;
 }
 
 /* ── Panel Resizer ────────────────────────── */
@@ -881,6 +882,7 @@ body {
   padding: 14px 18px;
   overflow-y: auto;
   flex: 1;
+  min-height: 0;
 }
 
 .tab-content.hidden {
@@ -1194,6 +1196,105 @@ body {
 .json-number  { color: var(--orange); }
 .json-bool    { color: var(--yellow); }
 .json-null    { color: var(--text-4); font-style: italic; }
+
+/* ── Virtual Scroll (大响应体优化) ────────── */
+#response-body.vs-active {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+}
+
+.response-warning {
+  color: var(--yellow);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  padding: 6px 10px;
+  background: var(--yellow-bg);
+  border-radius: var(--radius);
+  flex-shrink: 0;
+}
+
+.response-logs {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-0);
+  border-radius: var(--radius);
+  flex-shrink: 0;
+}
+
+.response-logs strong {
+  font-size: 10px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.response-logs > div {
+  margin-top: 6px;
+}
+
+.response-logs > div > div {
+  color: var(--text-2);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  line-height: 1.6;
+}
+
+.vscroll-wrapper {
+  flex: 1;
+  min-height: 0;
+  background: var(--bg-2);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-0);
+  overflow: hidden;
+}
+
+.vscroll-viewport {
+  height: 100%;
+  overflow: auto;
+}
+
+.vscroll-spacer {
+  position: relative;
+}
+
+.vscroll-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  min-width: 100%;
+}
+
+.vline {
+  height: 21px;
+  line-height: 21px;
+  white-space: pre;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding-left: 56px;
+  position: relative;
+}
+
+.vline:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.vline-num {
+  position: absolute;
+  left: 0;
+  width: 44px;
+  text-align: right;
+  padding-right: 12px;
+  color: var(--text-3);
+  user-select: none;
+  opacity: 0.4;
+  font-size: 11px;
+}
+
+.vline-code {
+  /* inherits font from .vline */
+}
 
 
 /* ── Modal ────────────────────────────────── */
