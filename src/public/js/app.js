@@ -2,9 +2,6 @@
 (function() {
   'use strict';
 
-  // Polyfill hidden class toggling
-  document.querySelectorAll('.hidden').forEach(el => el.style.display = 'none');
-
   // Toggle hidden utility
   function toggleHidden(el, force) {
     if (!el) return;

@@ -8,6 +8,7 @@ export interface Collection {
   created_at?: string;
   children?: Collection[];
   requests?: SavedRequest[];
+  variables?: { id: number; key: string; value: string | null; enabled: number }[];
 }
 
 export interface SavedRequest {
@@ -25,6 +26,14 @@ export interface SavedRequest {
   pre_request_script?: string;
   sort_order?: number;
   updated_at?: string;
+}
+
+interface CollectionVariable {
+  id: number;
+  collection_id: number;
+  key: string;
+  value: string | null;
+  enabled: number;
 }
 
 export class CollectionService {
@@ -76,6 +85,7 @@ export class CollectionService {
   getTree(): Collection[] {
     const collections = this.db.query<Collection>('SELECT * FROM collections ORDER BY sort_order, id');
     const requests = this.db.query<SavedRequest>('SELECT * FROM saved_requests ORDER BY sort_order, id');
+    const collVars = this.db.query<CollectionVariable>('SELECT * FROM collection_variables ORDER BY id');
 
     const requestMap = new Map<number, SavedRequest[]>();
     for (const req of requests) {
@@ -84,7 +94,13 @@ export class CollectionService {
       requestMap.get(cid)!.push(req);
     }
 
-    return this.buildTree(collections, requestMap);
+    const varMap = new Map<number, CollectionVariable[]>();
+    for (const v of collVars) {
+      if (!varMap.has(v.collection_id)) varMap.set(v.collection_id, []);
+      varMap.get(v.collection_id)!.push(v);
+    }
+
+    return this.buildTree(collections, requestMap, varMap);
   }
 
   addRequest(collectionId: number, request: Omit<SavedRequest, 'id' | 'collection_id' | 'updated_at'>): SavedRequest {
@@ -153,13 +169,18 @@ export class CollectionService {
     return ids;
   }
 
-  private buildTree(collections: Collection[], requestMap: Map<number, SavedRequest[]>): Collection[] {
+  private buildTree(
+    collections: Collection[],
+    requestMap: Map<number, SavedRequest[]>,
+    varMap: Map<number, CollectionVariable[]>
+  ): Collection[] {
     const map = new Map<number, Collection>();
     const roots: Collection[] = [];
 
     for (const col of collections) {
       col.children = [];
       col.requests = requestMap.get(col.id!) || [];
+      col.variables = varMap.get(col.id!) || [];
       map.set(col.id!, col);
     }
 

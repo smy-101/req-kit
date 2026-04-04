@@ -10,6 +10,7 @@ Pre-request scripts capability for executing user-defined JavaScript in a sandbo
 
 系统 SHALL 为脚本提供以下上下文对象：
 - `environment`（只读）：当前激活环境的变量键值对
+- `variables`：变量操作对象，提供 `get(key)` 和 `set(key, value)` 方法
 - `request`：操作对象，提供 `setHeader(key, value)`、`setBody(data)`、`setParam(key, value)` 方法
 - `console`：日志输出
 - `JSON`、`Date`、`Math`：标准工具对象
@@ -32,6 +33,14 @@ Pre-request scripts capability for executing user-defined JavaScript in a sandbo
 - **WHEN** 预请求脚本为 `const fs = require('fs')`
 - **THEN** 脚本执行失败，代理请求返回 HTTP 400，响应体包含错误信息
 
+#### Scenario: 通过 variables.get 按作用域链获取变量
+- **WHEN** 预请求脚本为 `request.setHeader('X-Token', variables.get('token'))`，runtime 变量有 `{ "token": "rt-val" }`，环境变量有 `{ "token": "env-val" }`
+- **THEN** `variables.get('token')` 返回 `rt-val`（最高优先级），请求头设置为 `X-Token: rt-val`
+
+#### Scenario: 通过 variables.set 设置 runtime 变量
+- **WHEN** 预请求脚本为 `variables.set('extractedId', '42')`
+- **THEN** 脚本结果包含 `"variables": { "extractedId": "42" }`，前端将该值写入 `store.runtimeVars`
+
 ### Requirement: 脚本日志输出
 
 系统 SHALL 收集脚本中 `console.log()` 的输出，并在代理响应中附带 `script_logs` 字段。
@@ -39,3 +48,19 @@ Pre-request scripts capability for executing user-defined JavaScript in a sandbo
 #### Scenario: 脚本输出日志
 - **WHEN** 预请求脚本为 `console.log('Sending request to', environment.base_url)`
 - **THEN** 代理响应包含 `"script_logs": ["Sending request to http://localhost:3000"]`
+
+### Requirement: 脚本变量返回值
+
+`ScriptResult` SHALL 新增 `variables` 字段（`Record<string, string>`），包含脚本通过 `variables.set()` 设置的所有变量。
+
+代理响应 SHALL 包含 `script_variables` 字段，值与 `ScriptResult.variables` 一致。
+
+前端接收到 `script_variables` 后 SHALL 将其合并到 `store.runtimeVars` 中。
+
+#### Scenario: 脚本设置变量并返回
+- **WHEN** 预请求脚本为 `variables.set('nextPageToken', 'abc'); variables.set('count', '10')`
+- **THEN** 代理响应包含 `"script_variables": { "nextPageToken": "abc", "count": "10" }`
+
+#### Scenario: 前端合并脚本变量到 runtimeVars
+- **WHEN** 前端收到代理响应的 `script_variables` 为 `{ "token": "new-val" }`，当前 `store.runtimeVars` 为 `{ "token": "old-val", "userId": "42" }`
+- **THEN** `store.runtimeVars` 更新为 `{ "token": "new-val", "userId": "42" }`（合并覆盖）

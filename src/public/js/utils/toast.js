@@ -38,6 +38,6 @@ function dismiss(toast) {
   if (!toast || !toast.parentNode) return;
   clearTimeout(toast._timer);
   toast.classList.remove('toast-visible');
-  toast.classList.add('toast-dismiss');
+  toast.classList.add('toast-exit');
   toast.addEventListener('animationend', () => toast.remove(), { once: true });
 }

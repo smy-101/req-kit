@@ -30,6 +30,8 @@ const store = {
     activeEnv: null,
     collections: [],
     environments: [],
+    runtimeVars: {},
+    globalVariables: [],
   },
   listeners: {},
 

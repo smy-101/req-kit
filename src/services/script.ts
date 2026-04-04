@@ -2,6 +2,7 @@ import { runInNewContext } from 'node:vm';
 
 export interface ScriptContext {
   environment?: Record<string, string>;
+  allVars?: Map<string, string>;
 }
 
 export interface ScriptResult {
@@ -11,6 +12,7 @@ export interface ScriptResult {
   body?: string;
   logs: string[];
   error?: string;
+  variables: Record<string, string>;
 }
 
 const SCRIPT_TIMEOUT = 5000; // 5 seconds
@@ -27,9 +29,18 @@ export class ScriptService {
     const requestHeaders: Record<string, string> = {};
     const requestParams: Record<string, string> = {};
     let requestBody: string | undefined;
+    const scriptVars: Record<string, string> = {};
 
     const sandbox = {
       environment: Object.freeze({ ...(context?.environment || {}) }),
+      variables: {
+        get(key: string): string | undefined {
+          return context?.allVars?.get(key);
+        },
+        set(key: string, value: string) {
+          scriptVars[key] = value;
+        },
+      },
       request: {
         setHeader(key: string, value: string) {
           requestHeaders[key] = value;
@@ -74,6 +85,7 @@ export class ScriptService {
         params: requestParams,
         body: requestBody,
         logs,
+        variables: scriptVars,
       };
     } catch (err: any) {
       const errorMessage = err.message || String(err);
@@ -84,6 +96,7 @@ export class ScriptService {
           params: requestParams,
           logs,
           error: '预请求脚本执行超时',
+          variables: scriptVars,
         };
       }
       return {
@@ -92,6 +105,7 @@ export class ScriptService {
         params: requestParams,
         logs,
         error: errorMessage,
+        variables: scriptVars,
       };
     }
   }

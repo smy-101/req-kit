@@ -2,16 +2,33 @@ import { describe, test, expect, beforeAll, afterAll } from 'bun:test';
 import { Hono } from 'hono';
 import { createProxyRoutes } from '../../src/routes/proxy';
 import { ProxyService } from '../../src/services/proxy';
+import { HistoryService } from '../../src/services/history';
+import { EnvService } from '../../src/services/environment';
+import { VariableService } from '../../src/services/variable';
+import { CollectionService } from '../../src/services/collection';
+import { ScriptService } from '../../src/services/script';
+import { Database } from '../../src/db/index';
 
 describe('Proxy Routes Integration', () => {
   let app: Hono;
   let server: any;
   let targetUrl: string;
+  let db: Database;
+  let envService: EnvService;
+  let variableService: VariableService;
+  let collectionService: CollectionService;
 
   beforeAll(() => {
-    app = new Hono();
+    db = new Database(':memory:');
+    db.migrate();
     const proxyService = new ProxyService();
-    app.route('/', createProxyRoutes(proxyService));
+    const historyService = new HistoryService(db);
+    envService = new EnvService(db);
+    variableService = new VariableService(db, envService);
+    collectionService = new CollectionService(db);
+    const scriptService = new ScriptService();
+    app = new Hono();
+    app.route('/', createProxyRoutes(proxyService, historyService, variableService, scriptService));
 
     // Create target server for integration testing
     const targetApp = new Hono();
@@ -93,5 +110,151 @@ describe('Proxy Routes Integration', () => {
     });
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('text/event-stream');
+  });
+
+  test('POST /api/proxy - runtime_vars template replacement', async () => {
+    const res = await app.request('/api/proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url: `${targetUrl}/get`,
+        method: 'GET',
+        runtime_vars: { q: 'hello' },
+      }),
+    });
+    // The URL doesn't contain {{q}}, so runtime_vars shouldn't affect it
+    expect(res.status).toBe(200);
+  });
+
+  test('POST /api/proxy - pre-request script returns variables', async () => {
+    const res = await app.request('/api/proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url: `${targetUrl}/get`,
+        method: 'GET',
+        pre_request_script: "variables.set('token', 'abc')",
+      }),
+    });
+    expect(res.status).toBe(200);
+    const data: any = await res.json();
+    expect(data.script_variables).toBeDefined();
+    expect(data.script_variables.token).toBe('abc');
+  });
+
+  describe('Variable template replacement in proxy pipeline', () => {
+    let envId: number;
+    let collectionId: number;
+
+    beforeAll(() => {
+      // Set up environment with variables
+      const env = envService.createEnvironment('TestEnv');
+      envId = env.id!;
+      envService.replaceVariables(envId, [
+        { key: 'token', value: 'env-token-val', enabled: true },
+        { key: 'shared', value: 'env-shared', enabled: true },
+      ]);
+
+      // Set up collection with variables
+      const col = collectionService.createCollection('TestCol');
+      collectionId = col.id!;
+      variableService.replaceForCollection(collectionId, [
+        { key: 'colKey', value: 'col-val', enabled: true },
+        { key: 'shared', value: 'col-shared', enabled: true },
+      ]);
+
+      // Set up global variables
+      variableService.replaceGlobal([
+        { key: 'gKey', value: 'global-val', enabled: true },
+        { key: 'shared', value: 'global-shared', enabled: true },
+      ]);
+    });
+
+    test('replaces params with global variable', async () => {
+      const res = await app.request('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `${targetUrl}/get`,
+          method: 'GET',
+          params: { q: '{{gKey}}' },
+        }),
+      });
+      expect(res.status).toBe(200);
+      const data: any = await res.json();
+      const target: any = JSON.parse(data.body);
+      expect(target.args.q).toBe('global-val');
+    });
+
+    test('environment variable overrides global', async () => {
+      const res = await app.request('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `${targetUrl}/get`,
+          method: 'GET',
+          params: { q: '{{token}}' },
+          environment_id: envId,
+        }),
+      });
+      expect(res.status).toBe(200);
+      const data: any = await res.json();
+      const target: any = JSON.parse(data.body);
+      expect(target.args.q).toBe('env-token-val');
+    });
+
+    test('collection variable overrides environment', async () => {
+      const res = await app.request('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `${targetUrl}/get`,
+          method: 'GET',
+          params: { q: '{{shared}}' },
+          environment_id: envId,
+          collection_id: collectionId,
+        }),
+      });
+      expect(res.status).toBe(200);
+      const data: any = await res.json();
+      const target: any = JSON.parse(data.body);
+      expect(target.args.q).toBe('col-shared');
+    });
+
+    test('runtime_vars override all scopes', async () => {
+      const res = await app.request('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `${targetUrl}/get`,
+          method: 'GET',
+          params: { q: '{{shared}}' },
+          environment_id: envId,
+          collection_id: collectionId,
+          runtime_vars: { shared: 'runtime-val' },
+        }),
+      });
+      expect(res.status).toBe(200);
+      const data: any = await res.json();
+      const target: any = JSON.parse(data.body);
+      expect(target.args.q).toBe('runtime-val');
+    });
+
+    test('unmatched variable stays as-is in URL', async () => {
+      const res = await app.request('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `${targetUrl}/get`,
+          method: 'GET',
+          params: { q: '{{unknownVar}}' },
+          environment_id: envId,
+        }),
+      });
+      expect(res.status).toBe(200);
+      const data: any = await res.json();
+      const target: any = JSON.parse(data.body);
+      expect(target.args.q).toBe('{{unknownVar}}');
+    });
   });
 });

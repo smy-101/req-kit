@@ -73,4 +73,45 @@ describe('ScriptService', () => {
     const parsed = JSON.parse(result.headers['X-Data']);
     expect(parsed.ts).toBeDefined();
   });
+
+  test('variables.get reads from allVars context', () => {
+    const allVars = new Map([['myKey', 'myValue']]);
+    const result = service.execute("request.setHeader('X-Var', variables.get('myKey'))", {
+      allVars,
+    });
+    expect(result.success).toBe(true);
+    expect(result.headers['X-Var']).toBe('myValue');
+  });
+
+  test('variables.get returns undefined for unknown key', () => {
+    const result = service.execute("request.setHeader('X-Var', String(variables.get('unknown')))", {
+      allVars: new Map(),
+    });
+    expect(result.success).toBe(true);
+    expect(result.headers['X-Var']).toBe('undefined');
+  });
+
+  test('variables.set stores runtime variable', () => {
+    const result = service.execute("variables.set('token', 'abc123')");
+    expect(result.success).toBe(true);
+    expect(result.variables['token']).toBe('abc123');
+  });
+
+  test('variables.set collects multiple variables', () => {
+    const result = service.execute("variables.set('a', '1'); variables.set('b', '2')");
+    expect(result.success).toBe(true);
+    expect(result.variables['a']).toBe('1');
+    expect(result.variables['b']).toBe('2');
+  });
+
+  test('ScriptResult always has variables field', () => {
+    const result = service.execute("request.setHeader('X', 'val')");
+    expect(result.variables).toEqual({});
+  });
+
+  test('variables object is available even without allVars context', () => {
+    const result = service.execute("variables.set('k', 'v')");
+    expect(result.success).toBe(true);
+    expect(result.variables['k']).toBe('v');
+  });
 });

@@ -66,8 +66,19 @@
 
   function renderCollectionNode(node, depth = 0) {
     const wrapper = document.createElement('div');
+    wrapper.dataset.collectionId = node.id;
 
     const item = createTreeItem(node.name, node.id, 'collection', depth);
+
+    // Add variables badge if collection has variables
+    if (node.variables && node.variables.length > 0) {
+      const varBadge = document.createElement('span');
+      varBadge.className = 'coll-var-indicator';
+      varBadge.textContent = `{${node.variables.length}}`;
+      varBadge.title = `${node.variables.length} collection variables`;
+      varBadge.style.cssText = 'font-size:9px;color:var(--text-3);margin-left:4px;font-family:var(--font-mono)';
+      item.querySelector('.name')?.after(varBadge);
+    }
 
     // Children
     if (node.children && node.children.length > 0) {

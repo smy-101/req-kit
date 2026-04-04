@@ -62,3 +62,22 @@ CREATE TABLE IF NOT EXISTS history (
     response_size     INTEGER,
     created_at        TEXT DEFAULT (datetime('now'))
 );
+
+-- 全局变量（始终生效，优先级最低）
+CREATE TABLE IF NOT EXISTS global_variables (
+    id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    key     TEXT NOT NULL UNIQUE,
+    value   TEXT,
+    enabled INTEGER DEFAULT 1
+);
+
+-- 集合变量（绑定到根集合，跟随集合级联删除）
+CREATE TABLE IF NOT EXISTS collection_variables (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    collection_id  INTEGER NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
+    key            TEXT NOT NULL,
+    value          TEXT,
+    enabled        INTEGER DEFAULT 1
+);
+
+CREATE INDEX IF NOT EXISTS idx_coll_vars_coll_id ON collection_variables(collection_id);

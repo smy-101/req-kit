@@ -9,6 +9,8 @@ export interface ProxyRequest {
   auth_config?: any;
   pre_request_script?: string;
   environment_id?: number;
+  collection_id?: number;
+  runtime_vars?: Record<string, string>;
 }
 
 export interface ProxyResponse {

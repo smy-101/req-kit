@@ -1,13 +1,16 @@
 import { Database } from '../db/index';
 import { CollectionService, SavedRequest } from './collection';
+import { VariableService } from './variable';
 
 export class ImportExportService {
   private db: Database;
   private collectionService: CollectionService;
+  private variableService: VariableService;
 
-  constructor(db: Database, collectionService: CollectionService) {
+  constructor(db: Database, collectionService: CollectionService, variableService: VariableService) {
     this.db = db;
     this.collectionService = collectionService;
+    this.variableService = variableService;
   }
 
   // --- Import ---
@@ -91,6 +94,20 @@ export class ImportExportService {
         this.importPostmanItems(json.item, collection.id!);
       }
 
+      // 导入集合变量
+      if (json.variable && Array.isArray(json.variable)) {
+        const vars = json.variable
+          .filter((v: any) => v.key)
+          .map((v: any) => ({
+            key: v.key,
+            value: v.value || '',
+            enabled: v.enabled !== false,
+          }));
+        if (vars.length > 0) {
+          this.variableService.replaceForCollection(collection.id!, vars);
+        }
+      }
+
       return collection.id!;
     } catch {
       return null;
@@ -138,13 +155,26 @@ export class ImportExportService {
     const collection = this.findCollectionInTree(tree, collectionId);
     if (!collection) return null;
 
-    return {
+    // 查询集合变量
+    const variables = this.variableService.getByCollection(collectionId);
+
+    const result: any = {
       info: {
         name: collection.name,
         schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
       },
       item: this.buildPostmanItems(collection),
     };
+
+    if (variables.length > 0) {
+      result.variable = variables.map(v => ({
+        key: v.key,
+        value: v.value || '',
+        enabled: v.enabled === 1,
+      }));
+    }
+
+    return result;
   }
 
   private findCollectionInTree(tree: any[], id: number): any {

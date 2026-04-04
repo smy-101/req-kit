@@ -22,11 +22,39 @@ const InputDebounce = {
   },
 };
 
+// 集合树遍历工具
+const CollectionTree = {
+  // 在集合树中按 id 查找集合
+  findById(collections, id) {
+    for (const col of collections) {
+      if (col.id === id) return col;
+      if (col.children) {
+        const found = this.findById(col.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  },
+
+  // 向上追溯 parent_id 到根集合
+  findRoot(collections, id) {
+    const col = this.findById(collections, id);
+    if (!col) return null;
+    let current = col;
+    while (current.parent_id != null) {
+      const parent = this.findById(collections, current.parent_id);
+      if (!parent) break;
+      current = parent;
+    }
+    return current;
+  },
+};
+
 // Template variable highlighter
 const TemplateHighlighter = {
   // Find all {{variable}} patterns in text
   findVariables(text) {
-    const regex = /\{\{(\w+)\}\}/g;
+    const regex = /\{\{([\w-]+)\}\}/g;
     const vars = [];
     let match;
     while ((match = regex.exec(text)) !== null) {

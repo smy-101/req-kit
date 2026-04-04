@@ -2,14 +2,14 @@ import { Hono } from 'hono';
 import { ProxyService, ProxyTimeoutError, ProxyUnreachableError } from '../services/proxy';
 import type { ProxyRequest } from '../services/proxy';
 import { HistoryService } from '../services/history';
-import { EnvService } from '../services/environment';
+import { VariableService } from '../services/variable';
 import { ScriptService } from '../services/script';
 import { injectAuth } from '../services/auth';
 
 export function createProxyRoutes(
   proxyService: ProxyService,
   historyService: HistoryService,
-  envService: EnvService,
+  variableService: VariableService,
   scriptService: ScriptService
 ) {
   const router = new Hono();
@@ -21,39 +21,43 @@ export function createProxyRoutes(
       return c.json({ error: '缺少必填字段: url' }, 400);
     }
 
-    // Step 1: Template replacement
+    // 构建变量解析上下文
+    const resolveContext = {
+      runtimeVars: body.runtime_vars,
+      collectionId: body.collection_id,
+      environmentId: body.environment_id,
+    };
+
+    // Step 1: Variable template replacement (四级作用域)
     let url = body.url;
     let headers = { ...body.headers } || {};
     let params = { ...body.params } || {};
     let bodyStr = body.body;
 
-    if (body.environment_id) {
-      url = envService.replaceTemplateValues(url, body.environment_id);
-      for (const key of Object.keys(headers)) {
-        headers[key] = envService.replaceTemplateValues(headers[key], body.environment_id);
-      }
-      for (const key of Object.keys(params)) {
-        params[key] = envService.replaceTemplateValues(params[key], body.environment_id);
-      }
-      if (bodyStr) {
-        bodyStr = envService.replaceTemplateValues(bodyStr, body.environment_id);
-      }
+    // Step 1: Variable template replacement (四级作用域，global 始终可用)
+    url = variableService.resolveVariables(url, resolveContext);
+    console.log(`[proxy] resolved url: ${url}`);
+    for (const key of Object.keys(headers)) {
+      headers[key] = variableService.resolveVariables(headers[key], resolveContext);
+    }
+    for (const key of Object.keys(params)) {
+      params[key] = variableService.resolveVariables(params[key], resolveContext);
+    }
+    if (bodyStr) {
+      bodyStr = variableService.resolveVariables(bodyStr, resolveContext);
     }
 
     // Step 2: Script execution
     let scriptLogs: string[] = [];
+    let scriptVariables: Record<string, string> = {};
     if (body.pre_request_script) {
-      const envVars: Record<string, string> = {};
-      if (body.environment_id) {
-        const vars = envService.getVariables(body.environment_id);
-        for (const v of vars) {
-          if (v.enabled !== false && v.enabled !== 0) {
-            envVars[v.key] = v.value || '';
-          }
-        }
-      }
+      // 构建合并后的全作用域变量 Map
+      const allVars = variableService.resolveAllVars(resolveContext);
 
-      const scriptResult = scriptService.execute(body.pre_request_script, { environment: envVars });
+      const scriptResult = scriptService.execute(body.pre_request_script, {
+        environment: Object.fromEntries(allVars),
+        allVars,
+      });
       if (!scriptResult.success) {
         return c.json({ error: scriptResult.error, script_logs: scriptResult.logs }, 400);
       }
@@ -63,6 +67,7 @@ export function createProxyRoutes(
       params = { ...params, ...scriptResult.params };
       if (scriptResult.body !== undefined) bodyStr = scriptResult.body;
       scriptLogs = scriptResult.logs;
+      scriptVariables = scriptResult.variables;
     }
 
     // Step 3: Auth injection
@@ -82,7 +87,7 @@ export function createProxyRoutes(
     };
 
     if (body.stream) {
-      return streamProxyResponse(c, proxyService, historyService, proxyReq, scriptLogs, body.auth_type, body.auth_config, body.body_type, body.pre_request_script);
+      return streamProxyResponse(c, proxyService, historyService, proxyReq, scriptLogs, scriptVariables, body.auth_type, body.auth_config, body.body_type, body.pre_request_script);
     }
 
     try {
@@ -93,6 +98,7 @@ export function createProxyRoutes(
 
       const response: any = result;
       if (scriptLogs.length > 0) response.script_logs = scriptLogs;
+      if (Object.keys(scriptVariables).length > 0) response.script_variables = scriptVariables;
       return c.json(response);
     } catch (err: any) {
       if (err instanceof ProxyTimeoutError) {
@@ -146,6 +152,7 @@ function streamProxyResponse(
   historyService: HistoryService,
   proxyReq: ProxyRequest,
   scriptLogs: string[],
+  scriptVariables: Record<string, string>,
   authType?: string,
   authConfig?: any,
   bodyType?: string,
@@ -173,6 +180,7 @@ function streamProxyResponse(
               capturedHeaders = headers;
               const data: any = { status, headers };
               if (scriptLogs.length > 0) data.script_logs = scriptLogs;
+              if (Object.keys(scriptVariables).length > 0) data.script_variables = scriptVariables;
               send('headers', data);
             },
             onChunk(chunk, size) {

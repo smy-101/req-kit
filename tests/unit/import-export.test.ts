@@ -1,18 +1,23 @@
 import { describe, test, expect, beforeEach, afterAll } from 'bun:test';
 import { Database } from '../../src/db/index';
 import { CollectionService } from '../../src/services/collection';
+import { EnvService } from '../../src/services/environment';
 import { ImportExportService } from '../../src/services/import-export';
+import { VariableService } from '../../src/services/variable';
 
 describe('ImportExportService', () => {
   let db: Database;
   let collectionService: CollectionService;
+  let variableService: VariableService;
   let service: ImportExportService;
 
   beforeEach(() => {
     db = new Database(':memory:');
     db.migrate();
     collectionService = new CollectionService(db);
-    service = new ImportExportService(db, collectionService);
+    const envService = new EnvService(db);
+    variableService = new VariableService(db, envService);
+    service = new ImportExportService(db, collectionService, variableService);
   });
 
   afterAll(() => {
@@ -123,6 +128,75 @@ describe('ImportExportService', () => {
     test('returns null for non-existent collection', () => {
       const result = service.exportPostmanCollection(999);
       expect(result).toBeNull();
+    });
+  });
+
+  describe('Postman Collection import with variables', () => {
+    test('imports top-level variable field into collection_variables', () => {
+      const postmanWithVars = {
+        info: {
+          name: 'API with Vars',
+          schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
+        },
+        item: [],
+        variable: [
+          { key: 'apiVersion', value: 'v2' },
+          { key: 'retryCount', value: '3', enabled: false },
+        ],
+      };
+
+      const id = service.importPostmanCollection(postmanWithVars);
+      expect(id).not.toBeNull();
+
+      const vars = variableService.getByCollection(id!);
+      expect(vars.length).toBe(2);
+      expect(vars[0].key).toBe('apiVersion');
+      expect(vars[0].value).toBe('v2');
+      expect(vars[1].key).toBe('retryCount');
+      expect(vars[1].enabled).toBe(0);
+    });
+
+    test('import works without variable field', () => {
+      const postmanNoVars = {
+        info: {
+          name: 'No Vars',
+          schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
+        },
+        item: [],
+      };
+
+      const id = service.importPostmanCollection(postmanNoVars);
+      expect(id).not.toBeNull();
+      expect(variableService.getByCollection(id!).length).toBe(0);
+    });
+  });
+
+  describe('Postman Collection export with variables', () => {
+    test('exports collection variables in variable field', () => {
+      const col = collectionService.createCollection('API');
+      variableService.replaceForCollection(col.id!, [
+        { key: 'apiVersion', value: 'v2', enabled: true },
+        { key: 'retry', value: '3', enabled: true },
+      ]);
+      collectionService.addRequest(col.id!, {
+        name: 'Get Users',
+        method: 'GET',
+        url: 'https://api.example.com/users',
+      });
+
+      const exported = service.exportPostmanCollection(col.id!);
+      expect(exported).not.toBeNull();
+      expect(exported!.variable).toBeDefined();
+      expect(exported!.variable.length).toBe(2);
+      expect(exported!.variable[0].key).toBe('apiVersion');
+      expect(exported!.variable[0].value).toBe('v2');
+    });
+
+    test('export omits variable field when no collection variables', () => {
+      const col = collectionService.createCollection('Empty');
+      const exported = service.exportPostmanCollection(col.id!);
+      expect(exported).not.toBeNull();
+      expect(exported!.variable).toBeUndefined();
     });
   });
 

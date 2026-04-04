@@ -67,7 +67,16 @@
         auth_config: tab.authConfig,
         pre_request_script: tab.preRequestScript,
         environment_id: store.getState().activeEnv,
+        collection_id: tab.collectionId,
+        runtime_vars: store.getState().runtimeVars,
       });
+
+      // 合并脚本返回的 runtime 变量
+      if (data.script_variables) {
+        const merged = { ...store.getState().runtimeVars, ...data.script_variables };
+        store.setState({ runtimeVars: merged });
+      }
+
       store.setState({ response: data });
       store.emit('request:complete', data);
     } catch (err) {

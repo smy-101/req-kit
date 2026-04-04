@@ -173,4 +173,28 @@ const api = {
   async exportCurl(requestId) {
     return fetch(`/api/export/requests/${requestId}/curl`).then(r => r.text());
   },
+
+  // Global Variables
+  async getGlobalVariables() {
+    return fetch('/api/global-variables').then(r => r.json());
+  },
+  async updateGlobalVariables(variables) {
+    return fetch('/api/global-variables', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(variables),
+    }).then(r => r.json());
+  },
+
+  // Collection Variables
+  async getCollectionVariables(collectionId) {
+    return fetch(`/api/collections/${collectionId}/variables`).then(r => r.json());
+  },
+  async updateCollectionVariables(collectionId, variables) {
+    return fetch(`/api/collections/${collectionId}/variables`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(variables),
+    }).then(r => r.json());
+  },
 };

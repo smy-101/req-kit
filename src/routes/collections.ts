@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { CollectionService } from '../services/collection';
+import { VariableService } from '../services/variable';
 
-export function createCollectionRoutes(collectionService: CollectionService) {
+export function createCollectionRoutes(collectionService: CollectionService, variableService?: VariableService) {
   const router = new Hono();
 
   router.get('/api/collections', (c) => {
@@ -70,6 +71,25 @@ export function createCollectionRoutes(collectionService: CollectionService) {
     if (!deleted) return c.json({ error: '请求不存在' }, 404);
     return c.json({ success: true });
   });
+
+  // 集合变量端点
+  if (variableService) {
+    router.get('/api/collections/:id/variables', (c) => {
+      const id = parseInt(c.req.param('id'));
+      const variables = variableService.getByCollection(id);
+      return c.json(variables);
+    });
+
+    router.put('/api/collections/:id/variables', async (c) => {
+      const id = parseInt(c.req.param('id'));
+      const body = await c.req.json<{ key: string; value?: string; enabled?: boolean }[]>();
+      if (!Array.isArray(body)) {
+        return c.json({ error: '请求体必须是数组' }, 400);
+      }
+      const variables = variableService.replaceForCollection(id, body);
+      return c.json(variables);
+    });
+  }
 
   return router;
 }

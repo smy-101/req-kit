@@ -6,13 +6,17 @@ Proxy capability for forwarding HTTP requests through the server, supporting all
 
 ### Requirement: 代理转发 HTTP 请求
 
-系统 SHALL 提供 `POST /api/proxy` 端点，接收包含 `url`、`method`、`headers`、`params`、`body` 的请求体，并在服务端发起对应的 HTTP 请求到目标 URL，将响应返回给客户端。
+系统 SHALL 提供 `POST /api/proxy` 端点，接收包含 `url`、`method`、`headers`、`params`、`body`、`collection_id`、`environment_id`、`runtime_vars` 的请求体，并在服务端发起对应的 HTTP 请求到目标 URL，将响应返回给客户端。
 
 系统 SHALL 支持所有标准 HTTP 方法：GET、POST、PUT、PATCH、DELETE、HEAD、OPTIONS。
 
 系统 SHALL 正确处理查询参数，将 `params` 字段中的键值对附加到目标 URL 的查询字符串中。
 
 系统 SHALL 正确处理请求体，根据 `body_type` 字段设置 `Content-Type` 请求头。
+
+系统 SHALL 在发起代理请求前，按 Runtime → Collection → Environment → Global 优先级对所有模板变量进行替换。
+
+`collection_id`、`environment_id`、`runtime_vars` 均为可选字段。缺失时跳过对应作用域。
 
 #### Scenario: 成功转发 GET 请求
 - **WHEN** 客户端发送 `POST /api/proxy`，body 为 `{ "url": "https://httpbin.org/get", "method": "GET" }`
@@ -33,6 +37,14 @@ Proxy capability for forwarding HTTP requests through the server, supporting all
 #### Scenario: 请求缺少必填字段
 - **WHEN** 客户端发送 `POST /api/proxy` 但缺少 `url` 字段
 - **THEN** 系统返回 HTTP 400，响应体包含 `{ "error": "缺少必填字段: url" }`
+
+#### Scenario: 使用完整变量上下文解析模板
+- **WHEN** 客户端发送 `POST /api/proxy`，body 包含 `"url": "{{baseUrl}}/users/{{userId}}"`、`"collection_id": 1`、`"environment_id": 2`、`"runtime_vars": { "userId": "42" }`
+- **THEN** 系统按优先级解析 `baseUrl`（从 Collection/Environment/Global）和 `userId`（从 runtime），替换后发起请求
+
+#### Scenario: 向后兼容无变量上下文的请求
+- **WHEN** 客户端发送 `POST /api/proxy`，body 不包含 `collection_id` 和 `runtime_vars`，仅包含 `environment_id`
+- **THEN** 系统仅从 Environment 和 Global 解析变量，行为与变更前一致
 
 ### Requirement: 流式代理传输
 
