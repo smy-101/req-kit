@@ -4,6 +4,7 @@
 
 ## 功能
 
+- **多 Tab 请求** — 同时打开多个请求，每个 Tab 独立持有完整的请求配置和响应数据，切换时不丢失状态
 - **代理转发** — 通过服务端代理绕过 CORS，支持 GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS
 - **流式传输** — SSE 流式代理，实时接收大响应体
 - **请求历史** — 自动记录所有请求，分页浏览、查看详情、删除
@@ -56,9 +57,12 @@ src/
     ├── css/style.css
     └── js/
         ├── app.js            # 入口
-        ├── store.js          # 事件驱动状态管理
+        ├── store.js          # 事件驱动状态管理（多 Tab）
         ├── api.js            # 后端 API 封装
         ├── components/       # UI 组件
+        │   ├── tab-bar.js    # 多 Tab 栏
+        │   ├── sidebar.js    # 侧边栏集合树
+        │   └── ...           # 其他组件
         └── utils/            # 工具函数
 ```
 

@@ -2,10 +2,16 @@
 (function() {
   const container = document.getElementById('tab-auth');
 
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
   function render() {
-    const state = store.getState();
-    const authType = state.authType || 'none';
-    const config = state.authConfig || {};
+    const tab = store.getActiveTab();
+    const authType = tab ? (tab.authType || 'none') : 'none';
+    const config = tab ? (tab.authConfig || {}) : {};
 
     container.innerHTML = `
       <select class="auth-type-select" id="auth-type-select">
@@ -81,18 +87,8 @@
     }
   }
 
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
-
-  store.on('request:load', (data) => {
-    const authType = data.auth_type || 'none';
-    const authConfig = data.auth_config || {};
-    store.setState({ authType, authConfig });
-    render();
-  });
+  // Re-render on tab switch
+  store.on('tab:switch', render);
 
   render();
 })();

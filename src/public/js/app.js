@@ -35,6 +35,17 @@
     if (e.key === 'Escape') {
       document.getElementById('modal-overlay').classList.add('hidden');
     }
+    // Ctrl+W / Cmd+W to close active tab
+    if (e.key === 'w' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      const tab = store.getActiveTab();
+      if (tab) store.closeTab(tab.id);
+    }
+    // Ctrl+T to create new tab
+    if (e.key === 't' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      store.createTab();
+    }
   });
 
   // Log state changes in development

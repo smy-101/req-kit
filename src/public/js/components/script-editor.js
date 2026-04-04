@@ -11,12 +11,18 @@
 
   const textarea = document.getElementById('script-textarea');
 
+  function restoreFromTab() {
+    const tab = store.getActiveTab();
+    if (!tab) return;
+    textarea.value = tab.preRequestScript || '';
+  }
+
+  restoreFromTab();
+
   textarea.addEventListener('input', () => {
     store.setState({ preRequestScript: textarea.value });
   });
 
-  store.on('request:load', (data) => {
-    textarea.value = data.pre_request_script || '';
-    store.setState({ preRequestScript: textarea.value });
-  });
+  // Restore on tab switch
+  store.on('tab:switch', restoreFromTab);
 })();

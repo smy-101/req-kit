@@ -4,10 +4,16 @@
   const urlInput = document.getElementById('url-input');
   const sendBtn = document.getElementById('send-btn');
 
-  // Initialize from store
-  const state = store.getState();
-  methodSelect.value = state.method;
-  urlInput.value = state.url;
+  function restoreFromTab() {
+    const tab = store.getActiveTab();
+    if (!tab) return;
+    methodSelect.value = tab.method;
+    urlInput.value = tab.url;
+    updateMethodColor();
+  }
+
+  // Initialize from active tab
+  restoreFromTab();
 
   // Method change
   methodSelect.addEventListener('change', () => {
@@ -22,18 +28,18 @@
 
   // Send button
   sendBtn.addEventListener('click', async () => {
-    const state = store.getState();
-    if (!state.url) return;
+    const tab = store.getActiveTab();
+    if (!tab || !tab.url) return;
 
     // Build headers object from key-value pairs
     const headers = {};
-    for (const h of state.headers) {
+    for (const h of tab.headers) {
       if (h.enabled && h.key) headers[h.key] = h.value;
     }
 
     // Build params
     const params = {};
-    for (const p of state.params) {
+    for (const p of tab.params) {
       if (p.enabled && p.key) params[p.key] = p.value;
     }
 
@@ -45,16 +51,16 @@
 
     try {
       const data = await api.sendRequest({
-        url: state.url,
-        method: state.method,
+        url: tab.url,
+        method: tab.method,
         headers,
         params,
-        body: state.body || undefined,
-        body_type: state.bodyType,
-        auth_type: state.authType,
-        auth_config: state.authConfig,
-        pre_request_script: state.preRequestScript,
-        environment_id: state.activeEnv,
+        body: tab.body || undefined,
+        body_type: tab.bodyType,
+        auth_type: tab.authType,
+        auth_config: tab.authConfig,
+        pre_request_script: tab.preRequestScript,
+        environment_id: store.getState().activeEnv,
       });
       store.setState({ response: data });
       store.emit('request:complete', data);
@@ -81,11 +87,6 @@
   }
   updateMethodColor();
 
-  // Listen for external state changes
-  store.on('request:load', (data) => {
-    methodSelect.value = data.method || 'GET';
-    urlInput.value = data.url || '';
-    store.setState({ method: methodSelect.value, url: urlInput.value });
-    updateMethodColor();
-  });
+  // Restore on tab switch
+  store.on('tab:switch', restoreFromTab);
 })();

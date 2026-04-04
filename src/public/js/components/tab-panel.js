@@ -1,4 +1,4 @@
-// Tab panel component
+// Tab panel component (request/response inner tabs)
 (function() {
   // Request tabs
   document.querySelectorAll('#request-panel .tab').forEach(tab => {

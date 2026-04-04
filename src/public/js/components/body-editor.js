@@ -20,6 +20,15 @@
   const formatBtn = document.getElementById('body-format-btn');
   const typeSelect = document.getElementById('body-type-select');
 
+  function restoreFromTab() {
+    const tab = store.getActiveTab();
+    if (!tab) return;
+    textarea.value = tab.body || '';
+    typeSelect.value = tab.bodyType || 'json';
+  }
+
+  restoreFromTab();
+
   textarea.addEventListener('input', () => {
     store.setState({ body: textarea.value });
   });
@@ -39,10 +48,6 @@
     }
   });
 
-  // Listen for external state changes
-  store.on('request:load', (data) => {
-    textarea.value = data.body || '';
-    typeSelect.value = data.body_type || 'json';
-    store.setState({ body: textarea.value, bodyType: typeSelect.value });
-  });
+  // Restore on tab switch
+  store.on('tab:switch', restoreFromTab);
 })();

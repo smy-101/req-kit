@@ -116,6 +116,14 @@
   }
 
   function loadRequest(req, collectionId) {
+    // Check if this request already has an open tab
+    const existingTab = store.findTabByRequestId(req.id);
+    if (existingTab) {
+      store.switchTab(existingTab.id);
+      return;
+    }
+
+    // Parse request data
     const headers = req.headers ? JSON.parse(req.headers) : {};
     const params = req.params ? JSON.parse(req.params) : {};
     const authConfig = req.auth_config ? (typeof req.auth_config === 'string' ? JSON.parse(req.auth_config) : req.auth_config) : {};
@@ -127,34 +135,20 @@
     if (headerRows.length === 0) headerRows.push({ key: '', value: '', enabled: true });
     if (paramRows.length === 0) paramRows.push({ key: '', value: '', enabled: true });
 
-    headersEditor.setRows(headerRows);
-    paramsEditor.setRows(paramRows);
-
-    store.setState({
+    // Create a new tab with the request data
+    store.createTab({
       method: req.method || 'GET',
       url: req.url || '',
+      headers: headerRows,
+      params: paramRows,
       body: req.body || '',
       bodyType: req.body_type || 'json',
       authType: req.auth_type || 'none',
       authConfig,
       preRequestScript: req.pre_request_script || '',
-      currentRequestId: req.id,
-      currentCollectionId: collectionId,
+      requestId: req.id,
+      collectionId,
     });
-
-    store.emit('request:load', {
-      method: req.method || 'GET',
-      url: req.url || '',
-      body: req.body || '',
-      body_type: req.body_type || 'json',
-      auth_type: req.auth_type || 'none',
-      auth_config: authConfig,
-      pre_request_script: req.pre_request_script || '',
-    });
-
-    // Update URL bar
-    document.getElementById('method-select').value = req.method || 'GET';
-    document.getElementById('url-input').value = req.url || '';
   }
 
   // New collection button
@@ -169,25 +163,27 @@
 
   // Save request button
   saveBtn.addEventListener('click', async () => {
-    const state = store.getState();
+    const tab = store.getActiveTab();
+    if (!tab) return;
 
-    if (state.currentRequestId && state.currentCollectionId) {
+    if (tab.requestId && tab.collectionId) {
       // Update existing request
-      await api.updateRequest(state.currentCollectionId, state.currentRequestId, {
-        name: `${state.method} ${state.url}`,
-        method: state.method,
-        url: state.url,
-        headers: JSON.stringify(kvToArray(state.headers)),
-        params: JSON.stringify(kvToArray(state.params)),
-        body: state.body,
-        body_type: state.bodyType,
-        auth_type: state.authType,
-        auth_config: JSON.stringify(state.authConfig),
-        pre_request_script: state.preRequestScript,
+      await api.updateRequest(tab.collectionId, tab.requestId, {
+        name: `${tab.method} ${tab.url}`,
+        method: tab.method,
+        url: tab.url,
+        headers: JSON.stringify(kvToArray(tab.headers)),
+        params: JSON.stringify(kvToArray(tab.params)),
+        body: tab.body,
+        body_type: tab.bodyType,
+        auth_type: tab.authType,
+        auth_config: JSON.stringify(tab.authConfig),
+        pre_request_script: tab.preRequestScript,
       });
       Toast.success('Request updated');
     } else {
       // Save new - need to pick a collection
+      const state = store.getState();
       const collections = state.collections;
       if (collections.length === 0) {
         const name = await Dialogs.prompt('Create a Collection', 'Collection name');
@@ -197,7 +193,6 @@
       }
       const cols = store.getState().collections;
       const items = cols.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
-      const { ModalOverrides } = window;
 
       const choice = await new Promise((resolve) => {
         const overlay = document.getElementById('modal-overlay');
@@ -240,19 +235,24 @@
       const col = cols.find(c => c.id == choice);
       if (!col) return;
 
-      await api.addRequest(col.id, {
-        name: `${state.method} ${state.url}`,
-        method: state.method,
-        url: state.url,
-        headers: JSON.stringify(kvToArray(state.headers)),
-        params: JSON.stringify(kvToArray(state.params)),
-        body: state.body,
-        body_type: state.bodyType,
-        auth_type: state.authType,
-        auth_config: JSON.stringify(state.authConfig),
-        pre_request_script: state.preRequestScript,
+      const savedReq = await api.addRequest(col.id, {
+        name: `${tab.method} ${tab.url}`,
+        method: tab.method,
+        url: tab.url,
+        headers: JSON.stringify(kvToArray(tab.headers)),
+        params: JSON.stringify(kvToArray(tab.params)),
+        body: tab.body,
+        body_type: tab.bodyType,
+        auth_type: tab.authType,
+        auth_config: JSON.stringify(tab.authConfig),
+        pre_request_script: tab.preRequestScript,
       });
       Toast.success('Request saved');
+
+      // Associate the new tab with the saved request
+      if (savedReq && savedReq.id) {
+        store.setState({ requestId: savedReq.id, collectionId: col.id });
+      }
     }
     refreshCollections();
   });

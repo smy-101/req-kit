@@ -1,7 +1,14 @@
 // Key-Value headers editor
 function createKVEditor(containerId, storeKey) {
   const container = document.getElementById(containerId);
-  let rows = store.getState()[storeKey] || [{ key: '', value: '', enabled: true }];
+  let rows = [];
+
+  function initRows() {
+    const tab = store.getActiveTab();
+    rows = tab && tab[storeKey] && tab[storeKey].length > 0
+      ? [...tab[storeKey]]
+      : [{ key: '', value: '', enabled: true }];
+  }
 
   function render() {
     container.innerHTML = '';
@@ -68,7 +75,15 @@ function createKVEditor(containerId, storeKey) {
     return (str || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   }
 
+  initRows();
   render();
+
+  // Re-render on tab switch
+  store.on('tab:switch', () => {
+    initRows();
+    render();
+  });
+
   return { setRows, getRows: () => rows };
 }
 
