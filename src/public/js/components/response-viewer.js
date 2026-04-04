@@ -22,9 +22,11 @@
 
   // VirtualScroller: 只渲染可视区域内的行，避免大量 DOM 节点导致卡顿
   class VirtualScroller {
-    constructor(container, lines) {
+    constructor(container, lines, needsHighlight = false) {
       this.container = container;
       this.lines = lines;
+      this.needsHighlight = needsHighlight;
+      this._cache = new Array(lines.length).fill(null);
       this.totalHeight = lines.length * LINE_HEIGHT;
       this._start = -1;
       this._end = -1;
@@ -85,7 +87,10 @@
 
       let html = '';
       for (let i = start; i < end; i++) {
-        html += `<div class="vline"><span class="vline-num">${i + 1}</span><span class="vline-code">${this.lines[i]}</span></div>`;
+        if (!this._cache[i]) {
+          this._cache[i] = this.needsHighlight ? syntaxHighlight(this.lines[i]) : this.lines[i];
+        }
+        html += `<div class="vline"><span class="vline-num">${i + 1}</span><span class="vline-code">${this._cache[i]}</span></div>`;
       }
       this.content.innerHTML = html;
     }
@@ -175,7 +180,7 @@
       const highlighted = isJson ? syntaxHighlight(text) : escapeHtml(text);
       bodyEl.innerHTML = extrasHtml + `<pre>${highlighted}</pre>`;
     } else {
-      // 大响应：虚拟滚动
+      // 大响应：虚拟滚动 + 懒加载高亮
       bodyEl.classList.add('vs-active');
       bodyEl.innerHTML = extrasHtml;
 
@@ -183,10 +188,8 @@
       wrapper.className = 'vscroll-wrapper';
       bodyEl.appendChild(wrapper);
 
-      const highlightedLines = lines.map(line =>
-        isJson ? syntaxHighlight(line) : escapeHtml(line)
-      );
-      vscroller = new VirtualScroller(wrapper, highlightedLines);
+      // 存储原始行，高亮延迟到 VirtualScroller.render() 时按需执行
+      vscroller = new VirtualScroller(wrapper, lines, isJson);
     }
 
     // Headers
@@ -233,12 +236,6 @@
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  }
-
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
   }
 
   function syntaxHighlight(json) {

@@ -1,12 +1,28 @@
 // API client for backend communication
 const api = {
+  _currentController: null,
+
   async sendRequest(data) {
-    const res = await fetch('/api/proxy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    return res.json();
+    // 取消上一个未完成的请求，避免旧响应覆盖当前 tab
+    if (this._currentController) {
+      this._currentController.abort();
+    }
+    this._currentController = new AbortController();
+    const signal = this._currentController.signal;
+
+    try {
+      const res = await fetch('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        signal,
+      });
+      return await res.json();
+    } finally {
+      if (this._currentController?.signal === signal) {
+        this._currentController = null;
+      }
+    }
   },
 
   async sendRequestStream(data, callbacks) {

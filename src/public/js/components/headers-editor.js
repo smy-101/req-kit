@@ -62,17 +62,16 @@ function createKVEditor(containerId, storeKey) {
     container.appendChild(editor);
   }
 
+  let _syncId = storeKey + '-sync';
   function sync() {
-    store.setState({ [storeKey]: [...rows] });
+    InputDebounce.schedule(_syncId, () => {
+      store.setState({ [storeKey]: [...rows] });
+    });
   }
 
   function setRows(newRows) {
     rows = newRows.length > 0 ? [...newRows] : [{ key: '', value: '', enabled: true }];
     render();
-  }
-
-  function escapeHtml(str) {
-    return (str || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   }
 
   initRows();

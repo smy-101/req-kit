@@ -30,7 +30,9 @@
   restoreFromTab();
 
   textarea.addEventListener('input', () => {
-    store.setState({ body: textarea.value });
+    InputDebounce.schedule('body', () => {
+      store.setState({ body: textarea.value });
+    });
   });
 
   typeSelect.addEventListener('change', () => {

@@ -8,14 +8,32 @@
   const MIN = 20;
   const MAX = 75;
 
+  let cachedRect = null;
+  let rafId = null;
+  let pendingClientY = null;
+
   function onMove(clientY) {
-    const rect = container.getBoundingClientRect();
+    const rect = cachedRect;
+    if (!rect) return;
     const pct = ((clientY - rect.top) / rect.height) * 100;
     const clamped = Math.min(MAX, Math.max(MIN, pct));
     requestPanel.style.flex = '0 0 ' + clamped + '%';
   }
 
+  function scheduleFrame(clientY) {
+    pendingClientY = clientY;
+    if (!rafId) {
+      rafId = requestAnimationFrame(() => {
+        onMove(pendingClientY);
+        rafId = null;
+      });
+    }
+  }
+
   function cleanup() {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = null;
+    cachedRect = null;
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
     document.removeEventListener('mousemove', onMouseMove);
@@ -26,7 +44,7 @@
 
   function onMouseMove(e) {
     e.preventDefault();
-    onMove(e.clientY);
+    scheduleFrame(e.clientY);
   }
 
   function onMouseUp() {
@@ -35,7 +53,7 @@
 
   function onTouchMove(e) {
     e.preventDefault();
-    onMove(e.touches[0].clientY);
+    scheduleFrame(e.touches[0].clientY);
   }
 
   function onTouchEnd() {
@@ -43,6 +61,8 @@
   }
 
   function startDrag() {
+    // 拖拽开始时缓存容器尺寸，避免每帧 getBoundingClientRect 强制布局
+    cachedRect = container.getBoundingClientRect();
     document.body.style.cursor = 'row-resize';
     document.body.style.userSelect = 'none';
     document.addEventListener('mousemove', onMouseMove, { passive: false });

@@ -21,13 +21,19 @@
     updateMethodColor();
   });
 
-  // URL change
+  // URL change（防抖）
   urlInput.addEventListener('input', () => {
-    store.setState({ url: urlInput.value });
+    InputDebounce.schedule('url', () => {
+      store.setState({ url: urlInput.value });
+    });
   });
 
   // Send button
   sendBtn.addEventListener('click', async () => {
+    // Flush all pending input debounce to ensure store is up-to-date
+    InputDebounce.flush();
+    store.setState({ url: urlInput.value });
+
     const tab = store.getActiveTab();
     if (!tab || !tab.url) return;
 
@@ -65,6 +71,7 @@
       store.setState({ response: data });
       store.emit('request:complete', data);
     } catch (err) {
+      if (err.name === 'AbortError') return; // 被取消的请求，静默忽略
       store.setState({ response: { error: err.message } });
       store.emit('request:error', err);
     } finally {

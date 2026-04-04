@@ -20,7 +20,9 @@
   restoreFromTab();
 
   textarea.addEventListener('input', () => {
-    store.setState({ preRequestScript: textarea.value });
+    InputDebounce.schedule('script', () => {
+      store.setState({ preRequestScript: textarea.value });
+    });
   });
 
   // Restore on tab switch

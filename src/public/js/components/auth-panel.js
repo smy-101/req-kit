@@ -2,12 +2,6 @@
 (function() {
   const container = document.getElementById('tab-auth');
 
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
-
   function render() {
     const tab = store.getActiveTab();
     const authType = tab ? (tab.authType || 'none') : 'none';
@@ -30,6 +24,13 @@
 
     const fieldsEl = document.getElementById('auth-fields');
 
+    function debouncedAuthUpdate(updates) {
+      InputDebounce.schedule('auth', () => {
+        const t = store.getActiveTab();
+        store.setState({ authConfig: { ...(t ? t.authConfig : {}), ...updates } });
+      });
+    }
+
     switch (authType) {
       case 'bearer':
         fieldsEl.innerHTML = `
@@ -38,7 +39,7 @@
           </label>
         `;
         fieldsEl.querySelector('#auth-token').addEventListener('input', (e) => {
-          store.setState({ authConfig: { ...config, token: e.target.value } });
+          debouncedAuthUpdate({ token: e.target.value });
         });
         break;
 
@@ -52,10 +53,10 @@
           </label>
         `;
         fieldsEl.querySelector('#auth-username').addEventListener('input', (e) => {
-          store.setState({ authConfig: { ...config, username: e.target.value } });
+          debouncedAuthUpdate({ username: e.target.value });
         });
         fieldsEl.querySelector('#auth-password').addEventListener('input', (e) => {
-          store.setState({ authConfig: { ...config, password: e.target.value } });
+          debouncedAuthUpdate({ password: e.target.value });
         });
         break;
 
@@ -75,13 +76,13 @@
           </label>
         `;
         fieldsEl.querySelector('#auth-apikey-key').addEventListener('input', (e) => {
-          store.setState({ authConfig: { ...config, key: e.target.value } });
+          debouncedAuthUpdate({ key: e.target.value });
         });
         fieldsEl.querySelector('#auth-apikey-value').addEventListener('input', (e) => {
-          store.setState({ authConfig: { ...config, value: e.target.value } });
+          debouncedAuthUpdate({ value: e.target.value });
         });
         fieldsEl.querySelector('#auth-apikey-in').addEventListener('change', (e) => {
-          store.setState({ authConfig: { ...config, in: e.target.value } });
+          debouncedAuthUpdate({ in: e.target.value });
         });
         break;
     }
