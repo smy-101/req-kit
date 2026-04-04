@@ -82,14 +82,14 @@ export function createProxyRoutes(
     };
 
     if (body.stream) {
-      return streamProxyResponse(c, proxyService, historyService, proxyReq, scriptLogs);
+      return streamProxyResponse(c, proxyService, historyService, proxyReq, scriptLogs, body.auth_type, body.auth_config, body.body_type, body.pre_request_script);
     }
 
     try {
       const result = await proxyService.sendRequest(proxyReq);
 
       // Step 4: History recording
-      recordHistory(historyService, proxyReq, result, scriptLogs);
+      recordHistory(historyService, proxyReq, result, scriptLogs, body.auth_type, body.auth_config, body.body_type, body.pre_request_script);
 
       const response: any = result;
       if (scriptLogs.length > 0) response.script_logs = scriptLogs;
@@ -112,7 +112,11 @@ function recordHistory(
   historyService: HistoryService,
   req: ProxyRequest,
   result: { status: number; headers: Record<string, string>; body: string; time: number; size: number },
-  scriptLogs: string[]
+  scriptLogs: string[],
+  authType?: string,
+  authConfig?: any,
+  bodyType?: string,
+  preRequestScript?: string
 ) {
   try {
     historyService.create({
@@ -121,6 +125,10 @@ function recordHistory(
       request_headers: JSON.stringify(req.headers),
       request_params: req.params ? JSON.stringify(req.params) : null,
       request_body: req.body || null,
+      body_type: bodyType || 'json',
+      pre_request_script: preRequestScript || null,
+      auth_type: authType || 'none',
+      auth_config: authConfig ? JSON.stringify(authConfig) : null,
       status: result.status,
       response_headers: JSON.stringify(result.headers),
       response_body: result.body,
@@ -137,7 +145,11 @@ function streamProxyResponse(
   proxyService: ProxyService,
   historyService: HistoryService,
   proxyReq: ProxyRequest,
-  scriptLogs: string[]
+  scriptLogs: string[],
+  authType?: string,
+  authConfig?: any,
+  bodyType?: string,
+  preRequestScript?: string
 ) {
   return new Response(
     new ReadableStream({
@@ -181,6 +193,10 @@ function streamProxyResponse(
                   request_headers: JSON.stringify(proxyReq.headers),
                   request_params: proxyReq.params ? JSON.stringify(proxyReq.params) : null,
                   request_body: proxyReq.body || null,
+                  body_type: bodyType || 'json',
+                  pre_request_script: preRequestScript || null,
+                  auth_type: authType || 'none',
+                  auth_config: authConfig ? JSON.stringify(authConfig) : null,
                   status: capturedStatus,
                   response_headers: JSON.stringify(capturedHeaders),
                   response_body: null,

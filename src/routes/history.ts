@@ -7,7 +7,9 @@ export function createHistoryRoutes(historyService: HistoryService) {
   router.get('/api/history', (c) => {
     const page = parseInt(c.req.query('page') || '1');
     const limit = parseInt(c.req.query('limit') || '50');
-    const result = historyService.list(page, limit);
+    const search = c.req.query('search') || undefined;
+    const method = c.req.query('method') || undefined;
+    const result = historyService.list(page, limit, search, method);
     return c.json(result);
   });
 

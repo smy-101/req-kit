@@ -43,8 +43,11 @@ const api = {
   },
 
   // History
-  async getHistory(page = 1, limit = 50) {
-    const res = await fetch(`/api/history?page=${page}&limit=${limit}`);
+  async getHistory(page = 1, limit = 50, search = '', method = '') {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (search) params.set('search', search);
+    if (method) params.set('method', method);
+    const res = await fetch(`/api/history?${params}`);
     return res.json();
   },
   async getHistoryItem(id) {

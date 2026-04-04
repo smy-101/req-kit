@@ -16,6 +16,7 @@ function _createEmptyTab() {
     response: null,
     requestId: null,
     collectionId: null,
+    historyId: null,
   };
 }
 
@@ -106,7 +107,7 @@ const store = {
     const tabFields = new Set([
       'method', 'url', 'headers', 'params', 'body', 'bodyType',
       'authType', 'authConfig', 'preRequestScript', 'response',
-      'requestId', 'collectionId',
+      'requestId', 'collectionId', 'historyId',
     ]);
 
     const tabUpdates = {};

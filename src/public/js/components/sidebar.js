@@ -14,9 +14,42 @@
   function renderTree(collections) {
     treeEl.innerHTML = '';
 
-    // History section
-    const historyHeader = createTreeItem('📋 History', null, 'history');
-    treeEl.appendChild(historyHeader);
+    // History section — expandable panel
+    const historySection = document.createElement('div');
+    historySection.className = 'history-section';
+
+    const historyHeader = document.createElement('div');
+    historyHeader.className = 'history-header';
+    historyHeader.innerHTML = `
+      <span style="display:flex;align-items:center;gap:8px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>History</span>
+      </span>
+      <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    `;
+
+    let historyPanelEl = null;
+    let expanded = false;
+
+    historyHeader.addEventListener('click', () => {
+      expanded = !expanded;
+      historyHeader.classList.toggle('expanded', expanded);
+
+      if (expanded && !historyPanelEl) {
+        historyPanelEl = document.createElement('div');
+        historyPanelEl.className = 'history-panel';
+        historySection.appendChild(historyPanelEl);
+        HistoryPanel.mount(historyPanelEl);
+      } else if (expanded && historyPanelEl) {
+        historyPanelEl.style.display = '';
+        HistoryPanel.refresh();
+      } else if (historyPanelEl) {
+        historyPanelEl.style.display = 'none';
+      }
+    });
+
+    historySection.appendChild(historyHeader);
+    treeEl.appendChild(historySection);
 
     // Collections
     for (const col of collections) {

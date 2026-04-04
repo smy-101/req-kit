@@ -75,6 +75,8 @@ describe('HistoryService', () => {
       url: 'https://api.example.com/users',
       request_headers: JSON.stringify({ 'Content-Type': 'application/json' }),
       request_body: JSON.stringify({ name: 'test' }),
+      body_type: 'form-data',
+      pre_request_script: 'console.log("test")',
       status: 201,
       response_headers: JSON.stringify({ 'Content-Type': 'application/json' }),
       response_body: JSON.stringify({ id: 1 }),
@@ -87,6 +89,8 @@ describe('HistoryService', () => {
     expect(record!.method).toBe('POST');
     expect(record!.request_body).toBe(JSON.stringify({ name: 'test' }));
     expect(record!.response_body).toBe(JSON.stringify({ id: 1 }));
+    expect(record!.body_type).toBe('form-data');
+    expect(record!.pre_request_script).toBe('console.log("test")');
   });
 
   test('returns undefined for non-existent id', () => {
@@ -127,5 +131,40 @@ describe('HistoryService', () => {
     const deleted = service.deleteAll();
     expect(deleted).toBe(3);
     expect(service.list().total).toBe(0);
+  });
+
+  describe('search and method filtering', () => {
+    beforeEach(() => {
+      service.create({ method: 'GET', url: 'https://api.example.com/users', status: 200, response_time: 100, response_size: 50 });
+      service.create({ method: 'POST', url: 'https://api.example.com/users', status: 201, response_time: 150, response_size: 80 });
+      service.create({ method: 'GET', url: 'https://api.example.com/posts', status: 200, response_time: 120, response_size: 200 });
+      service.create({ method: 'DELETE', url: 'https://api.example.com/users/1', status: 204, response_time: 80, response_size: 0 });
+      service.create({ method: 'PUT', url: 'https://api.other.com/data', status: 200, response_time: 200, response_size: 300 });
+    });
+
+    test('filters by search keyword', () => {
+      const result = service.list(1, 50, 'users');
+      expect(result.total).toBe(3);
+      expect(result.items.every(i => i.url!.includes('users'))).toBe(true);
+    });
+
+    test('filters by method', () => {
+      const result = service.list(1, 50, undefined, 'GET');
+      expect(result.total).toBe(2);
+      expect(result.items.every(i => i.method === 'GET')).toBe(true);
+    });
+
+    test('combines search and method filter', () => {
+      const result = service.list(1, 50, 'users', 'POST');
+      expect(result.total).toBe(1);
+      expect(result.items[0].method).toBe('POST');
+      expect(result.items[0].url).toContain('users');
+    });
+
+    test('returns empty when no match', () => {
+      const result = service.list(1, 50, 'nonexistent');
+      expect(result.total).toBe(0);
+      expect(result.items).toEqual([]);
+    });
   });
 });
