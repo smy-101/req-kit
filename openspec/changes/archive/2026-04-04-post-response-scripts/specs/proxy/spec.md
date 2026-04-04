@@ -1,22 +1,14 @@
-## Purpose
-
-Proxy capability for forwarding HTTP requests through the server, supporting all standard HTTP methods with both standard and streaming (SSE) response modes.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: 代理转发 HTTP 请求
 
 系统 SHALL 提供 `POST /api/proxy` 端点，接收包含 `url`、`method`、`headers`、`params`、`body`、`collection_id`、`environment_id`、`runtime_vars`、`pre_request_script`、`post_response_script` 的请求体，并在服务端发起对应的 HTTP 请求到目标 URL，将响应返回给客户端。
 
-系统 SHALL 支持所有标准 HTTP 方法：GET、POST、PUT、PATCH、DELETE、HEAD、OPTIONS。
+代理管线 SHALL 按以下顺序执行：模板替换 → 前置脚本 → Auth 注入 → 发送请求 → **后置脚本** → 记录历史。
 
-系统 SHALL 正确处理查询参数，将 `params` 字段中的键值对附加到目标 URL 的查询字符串中。
+当请求体包含 `post_response_script` 时（且 `stream` 不为 `true`），系统 SHALL 在收到代理响应后执行后置脚本，将断言结果通过 `script_tests` 字段、日志通过 `post_script_logs` 字段、变量通过 `post_script_variables` 字段附加到响应中。
 
-系统 SHALL 正确处理请求体，根据 `body_type` 字段设置 `Content-Type` 请求头。
-
-系统 SHALL 在发起代理请求前，按 Runtime → Collection → Environment → Global 优先级对所有模板变量进行替换。
-
-`collection_id`、`environment_id`、`runtime_vars` 均为可选字段。缺失时跳过对应作用域。
+后置脚本执行失败时（超时、语法错误、运行时错误），系统 SHALL 返回 HTTP 400，响应体包含 `{ "error": "后置脚本执行超时" }` 或具体错误信息。
 
 #### Scenario: 成功转发 GET 请求
 - **WHEN** 客户端发送 `POST /api/proxy`，body 为 `{ "url": "https://httpbin.org/get", "method": "GET" }`
@@ -53,36 +45,3 @@ Proxy capability for forwarding HTTP requests through the server, supporting all
 #### Scenario: 后置脚本执行超时
 - **WHEN** 客户端发送 `POST /api/proxy`，body 包含 `"post_response_script": "while(true) {}"`
 - **THEN** 系统返回 HTTP 400，响应体包含 `{ "error": "后置脚本执行超时" }`
-
-### Requirement: 流式代理传输
-
-系统 SHALL 支持通过 SSE (Server-Sent Events) 流式传输代理响应。当请求体包含 `"stream": true` 时，系统 SHALL 使用 SSE 格式推送响应数据。
-
-SSE 事件序列 SHALL 为：
-1. `event: headers` — 包含状态码和响应头
-2. `event: chunk`（多次）— 包含响应体分块（Base64 编码）
-3. `event: done` — 包含总耗时和总大小
-
-当 `stream` 为 `false` 或未设置时，系统 SHALL 使用标准 JSON 响应。
-
-#### Scenario: 流式代理请求
-- **WHEN** 客户端发送 `POST /api/proxy`，body 包含 `"stream": true`
-- **THEN** 系统返回 `Content-Type: text/event-stream`，依次发送 `headers`、`chunk`、`done` 事件
-
-#### Scenario: 非流式代理请求
-- **WHEN** 客户端发送 `POST /api/proxy`，body 不包含 `stream` 或 `stream: false`
-- **THEN** 系统返回标准 JSON 响应 `{ "status": ..., "headers": ..., "body": ..., "time": ..., "size": ... }`
-
-### Requirement: 代理请求大小限制
-
-系统 SHALL 限制代理响应体最大为 50MB。超出限制时系统 SHALL 截断响应体并在响应中标记 `truncated: true`。
-
-系统 SHALL 限制代理请求超时为 30 秒。超时后系统 SHALL 返回 HTTP 504。
-
-#### Scenario: 响应体超过大小限制
-- **WHEN** 代理目标返回超过 50MB 的响应体
-- **THEN** 系统截断响应体，返回 `{ ..., "truncated": true, "size": 52428800 }`
-
-#### Scenario: 代理请求超时
-- **WHEN** 代理目标 30 秒内未返回响应
-- **THEN** 系统返回 HTTP 504，响应体 `{ "error": "请求超时" }`

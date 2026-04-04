@@ -1086,7 +1086,8 @@ body {
 }
 
 #body-textarea,
-#script-textarea {
+#script-textarea,
+#post-script-textarea {
   width: 100%;
   min-height: 130px;
   background: var(--bg-2);
@@ -2678,6 +2679,78 @@ textarea:focus-visible {
   font-size: 12px;
   padding: 8px;
   text-align: center;
+}
+
+/* -- Test Results -- */
+.test-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.test-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: var(--font-mono);
+}
+
+.test-item.test-passed {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.test-item.test-failed {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.test-item .test-icon {
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.test-passed .test-icon {
+  color: #22c55e;
+}
+
+.test-failed .test-icon {
+  color: #ef4444;
+}
+
+.test-item .test-name {
+  word-break: break-all;
+}
+
+.test-summary {
+  margin-top: 10px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  border-top: 1px solid var(--border-0);
+}
+
+.test-logs {
+  margin-top: 12px;
+  border-top: 1px solid var(--border-0);
+  padding-top: 8px;
+}
+
+.test-logs-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-bottom: 6px;
+}
+
+.test-log-line {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-3);
+  padding: 2px 8px;
 }
 
 /* -- Variable scope colors (preview + autocomplete) -- */

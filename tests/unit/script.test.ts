@@ -114,4 +114,118 @@ describe('ScriptService', () => {
     expect(result.success).toBe(true);
     expect(result.variables['k']).toBe('v');
   });
+
+  // --- Post-script tests ---
+
+  test('executePostScript - basic assertion', () => {
+    const result = service.executePostScript('tests["状态码是 200"] = response.status === 200', {
+      response: { status: 200, headers: {}, body: '', time: 100, size: 0 },
+    });
+    expect(result.success).toBe(true);
+    expect(result.tests['状态码是 200']).toBe(true);
+  });
+
+  test('executePostScript - assertion failure', () => {
+    const result = service.executePostScript('tests["is 404"] = response.status === 404', {
+      response: { status: 200, headers: {}, body: '', time: 100, size: 0 },
+    });
+    expect(result.success).toBe(true);
+    expect(result.tests['is 404']).toBe(false);
+  });
+
+  test('executePostScript - multiple assertions', () => {
+    const result = service.executePostScript(
+      'tests["a"] = true; tests["b"] = false; tests["c"] = 1 === 1',
+      { response: { status: 200, headers: {}, body: '', time: 100, size: 0 } }
+    );
+    expect(result.success).toBe(true);
+    expect(Object.keys(result.tests).length).toBe(3);
+    expect(result.tests['a']).toBe(true);
+    expect(result.tests['b']).toBe(false);
+    expect(result.tests['c']).toBe(true);
+  });
+
+  test('executePostScript - response.json() parses body', () => {
+    const result = service.executePostScript(
+      'tests["有ID"] = response.json().id !== undefined',
+      { response: { status: 200, headers: {}, body: '{"id":42}', time: 100, size: 5 } }
+    );
+    expect(result.success).toBe(true);
+    expect(result.tests['有ID']).toBe(true);
+  });
+
+  test('executePostScript - response fields accessible', () => {
+    const result = service.executePostScript(
+      'tests["time"] = response.time === 150; tests["size"] = response.size === 100',
+      { response: { status: 200, headers: { 'x-test': 'val' }, body: 'ok', time: 150, size: 100 } }
+    );
+    expect(result.success).toBe(true);
+    expect(result.tests['time']).toBe(true);
+    expect(result.tests['size']).toBe(true);
+  });
+
+  test('executePostScript - variables.set extracts variables', () => {
+    const result = service.executePostScript(
+      'variables.set("token", response.json().access_token)',
+      { response: { status: 200, headers: {}, body: '{"access_token":"abc123"}', time: 100, size: 0 } }
+    );
+    expect(result.success).toBe(true);
+    expect(result.variables['token']).toBe('abc123');
+  });
+
+  test('executePostScript - console.log output', () => {
+    const result = service.executePostScript(
+      'console.log("Status:", response.status)',
+      { response: { status: 200, headers: {}, body: '', time: 100, size: 0 } }
+    );
+    expect(result.success).toBe(true);
+    expect(result.logs).toContain('Status: 200');
+  });
+
+  test('executePostScript - timeout on infinite loop', () => {
+    const result = service.executePostScript('while(true) {}', {
+      response: { status: 200, headers: {}, body: '', time: 100, size: 0 },
+    });
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('超时');
+  });
+
+  test('executePostScript - blocks require', () => {
+    const result = service.executePostScript("const fs = require('fs')", {
+      response: { status: 200, headers: {}, body: '', time: 100, size: 0 },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  test('executePostScript - environment read-only access', () => {
+    const result = service.executePostScript(
+      'tests["has token"] = environment.token === "my-token"',
+      {
+        environment: { token: 'my-token' },
+        response: { status: 200, headers: {}, body: '', time: 100, size: 0 },
+      }
+    );
+    expect(result.success).toBe(true);
+    expect(result.tests['has token']).toBe(true);
+  });
+
+  test('executePostScript - response.headers accessible', () => {
+    const result = service.executePostScript(
+      'tests["has header"] = response.headers["content-type"] === "application/json"',
+      {
+        response: { status: 200, headers: { 'content-type': 'application/json' }, body: '{}', time: 100, size: 2 },
+      }
+    );
+    expect(result.success).toBe(true);
+    expect(result.tests['has header']).toBe(true);
+  });
+
+  test('executePostScript - response.json() on non-JSON body fails', () => {
+    const result = service.executePostScript(
+      'response.json()',
+      { response: { status: 200, headers: {}, body: 'not-json', time: 100, size: 8 } }
+    );
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
+  });
 });

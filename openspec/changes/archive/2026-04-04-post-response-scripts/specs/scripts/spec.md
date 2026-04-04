@@ -1,8 +1,4 @@
-## Purpose
-
-Pre-request scripts capability for executing user-defined JavaScript in a sandboxed Bun VM before proxy requests are sent, enabling dynamic request modification.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: 预请求脚本执行
 

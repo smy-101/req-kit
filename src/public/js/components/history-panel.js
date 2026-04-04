@@ -213,6 +213,7 @@
         authType: record.auth_type || 'none',
         authConfig,
         preRequestScript: record.pre_request_script || '',
+        postResponseScript: record.post_response_script || '',
         response,
         historyId: record.id,
       });

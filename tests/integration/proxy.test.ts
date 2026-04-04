@@ -257,4 +257,104 @@ describe('Proxy Routes Integration', () => {
       expect(target.args.q).toBe('{{unknownVar}}');
     });
   });
+
+  describe('Post-response script', () => {
+    test('executes post-response script and returns script_tests', async () => {
+      const res = await app.request('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `${targetUrl}/get`,
+          method: 'GET',
+          post_response_script: "tests['状态码200'] = response.status === 200",
+        }),
+      });
+      expect(res.status).toBe(200);
+      const data: any = await res.json();
+      expect(data.script_tests).toBeDefined();
+      expect(data.script_tests['状态码200']).toBe(true);
+    });
+
+    test('returns post_script_variables', async () => {
+      const res = await app.request('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `${targetUrl}/get`,
+          method: 'GET',
+          post_response_script: "variables.set('extracted', 'value1')",
+        }),
+      });
+      expect(res.status).toBe(200);
+      const data: any = await res.json();
+      expect(data.post_script_variables).toBeDefined();
+      expect(data.post_script_variables.extracted).toBe('value1');
+    });
+
+    test('returns post_script_logs', async () => {
+      const res = await app.request('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `${targetUrl}/get`,
+          method: 'GET',
+          post_response_script: "console.log('got status', response.status)",
+        }),
+      });
+      expect(res.status).toBe(200);
+      const data: any = await res.json();
+      expect(data.post_script_logs).toBeDefined();
+      expect(data.post_script_logs).toContain('got status 200');
+    });
+
+    test('post-response script timeout returns 400', async () => {
+      const res = await app.request('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `${targetUrl}/get`,
+          method: 'GET',
+          post_response_script: 'while(true) {}',
+        }),
+      });
+      expect(res.status).toBe(400);
+      const data: any = await res.json();
+      expect(data.error).toContain('超时');
+      expect(data.post_script_logs).toBeDefined();
+      expect(data.post_script_variables).toBeDefined();
+    });
+
+    test('post-response script error returns 400 with logs and variables', async () => {
+      const res = await app.request('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `${targetUrl}/get`,
+          method: 'GET',
+          post_response_script: "variables.set('k', 'v'); console.log('before error'); throw new Error('boom')",
+        }),
+      });
+      expect(res.status).toBe(400);
+      const data: any = await res.json();
+      expect(data.error).toContain('boom');
+      expect(data.post_script_logs).toContain('before error');
+      expect(data.post_script_variables).toEqual({ k: 'v' });
+    });
+
+    test('SSE stream ignores post-response script', async () => {
+      const res = await app.request('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `${targetUrl}/get`,
+          method: 'GET',
+          stream: true,
+          post_response_script: "tests['should not run'] = true",
+        }),
+      });
+      expect(res.status).toBe(200);
+      expect(res.headers.get('Content-Type')).toBe('text/event-stream');
+      // No script_tests in SSE mode — just verify it doesn't crash
+    });
+  });
 });

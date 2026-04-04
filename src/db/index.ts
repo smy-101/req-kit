@@ -27,11 +27,24 @@ export class Database {
       ['pre_request_script', 'ALTER TABLE history ADD COLUMN pre_request_script TEXT'],
       ['auth_type', 'ALTER TABLE history ADD COLUMN auth_type TEXT DEFAULT \'none\''],
       ['auth_config', 'ALTER TABLE history ADD COLUMN auth_config TEXT'],
+      ['post_response_script', 'ALTER TABLE history ADD COLUMN post_response_script TEXT'],
     ];
     const existing = this.db.prepare("PRAGMA table_info(history)").all() as { name: string }[];
     const columns = new Set(existing.map(c => c.name));
     for (const [col, sql] of migrations) {
       if (!columns.has(col)) {
+        this.db.run(sql);
+      }
+    }
+
+    // saved_requests migrations
+    const reqMigrations: [string, string][] = [
+      ['post_response_script', 'ALTER TABLE saved_requests ADD COLUMN post_response_script TEXT'],
+    ];
+    const reqExisting = this.db.prepare("PRAGMA table_info(saved_requests)").all() as { name: string }[];
+    const reqColumns = new Set(reqExisting.map(c => c.name));
+    for (const [col, sql] of reqMigrations) {
+      if (!reqColumns.has(col)) {
         this.db.run(sql);
       }
     }

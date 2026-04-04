@@ -87,18 +87,52 @@ export function createProxyRoutes(
     };
 
     if (body.stream) {
-      return streamProxyResponse(c, proxyService, historyService, proxyReq, scriptLogs, scriptVariables, body.auth_type, body.auth_config, body.body_type, body.pre_request_script);
+      return streamProxyResponse(c, proxyService, historyService, variableService, scriptService, proxyReq, scriptLogs, scriptVariables, body.auth_type, body.auth_config, body.body_type, body.pre_request_script);
     }
 
     try {
       const result = await proxyService.sendRequest(proxyReq);
 
+      // Step 3.5: Post-response script execution (skip for SSE)
+      let scriptTests: Record<string, boolean> | undefined;
+      let postScriptLogs: string[] = [];
+      let postScriptVariables: Record<string, string> = {};
+
+      if (body.post_response_script) {
+        const allVars = variableService.resolveAllVars(resolveContext);
+        const postResult = scriptService.executePostScript(body.post_response_script, {
+          environment: Object.fromEntries(allVars),
+          allVars,
+          response: {
+            status: result.status,
+            headers: result.headers,
+            body: result.body,
+            time: result.time,
+            size: result.size,
+          },
+        });
+        scriptTests = postResult.tests;
+        postScriptLogs = postResult.logs;
+        postScriptVariables = postResult.variables;
+
+        if (!postResult.success) {
+          // Record history before returning error
+          recordHistory(historyService, proxyReq, result, scriptLogs, body.auth_type, body.auth_config, body.body_type, body.pre_request_script, body.post_response_script);
+          return c.json({ error: postResult.error, post_script_logs: postScriptLogs, post_script_variables: postScriptVariables }, 400);
+        }
+      }
+
       // Step 4: History recording
-      recordHistory(historyService, proxyReq, result, scriptLogs, body.auth_type, body.auth_config, body.body_type, body.pre_request_script);
+      recordHistory(historyService, proxyReq, result, scriptLogs, body.auth_type, body.auth_config, body.body_type, body.pre_request_script, body.post_response_script);
 
       const response: any = result;
       if (scriptLogs.length > 0) response.script_logs = scriptLogs;
       if (Object.keys(scriptVariables).length > 0) response.script_variables = scriptVariables;
+      if (body.post_response_script) {
+        response.script_tests = scriptTests ?? {};
+        response.post_script_logs = postScriptLogs;
+        response.post_script_variables = postScriptVariables;
+      }
       return c.json(response);
     } catch (err: any) {
       if (err instanceof ProxyTimeoutError) {
@@ -122,7 +156,8 @@ function recordHistory(
   authType?: string,
   authConfig?: any,
   bodyType?: string,
-  preRequestScript?: string
+  preRequestScript?: string,
+  postResponseScript?: string
 ) {
   try {
     historyService.create({
@@ -133,6 +168,7 @@ function recordHistory(
       request_body: req.body || null,
       body_type: bodyType || 'json',
       pre_request_script: preRequestScript || null,
+      post_response_script: postResponseScript || null,
       auth_type: authType || 'none',
       auth_config: authConfig ? JSON.stringify(authConfig) : null,
       status: result.status,
@@ -150,6 +186,8 @@ function streamProxyResponse(
   c: any,
   proxyService: ProxyService,
   historyService: HistoryService,
+  variableService: VariableService,
+  scriptService: ScriptService,
   proxyReq: ProxyRequest,
   scriptLogs: string[],
   scriptVariables: Record<string, string>,
@@ -203,6 +241,7 @@ function streamProxyResponse(
                   request_body: proxyReq.body || null,
                   body_type: bodyType || 'json',
                   pre_request_script: preRequestScript || null,
+                  post_response_script: null, // SSE mode: no post-script
                   auth_type: authType || 'none',
                   auth_config: authConfig ? JSON.stringify(authConfig) : null,
                   status: capturedStatus,

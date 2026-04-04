@@ -167,6 +167,11 @@
         data.script_logs.map(l => `<div>> ${escapeHtml(l)}</div>`).join('') +
         '</div></div>';
     }
+    if (data.post_script_logs && data.post_script_logs.length > 0) {
+      extrasHtml += '<div class="response-logs"><strong>Post-script Logs</strong><div>' +
+        data.post_script_logs.map(l => `<div>> ${escapeHtml(l)}</div>`).join('') +
+        '</div></div>';
+    }
 
     if (lines.length < LARGE_LINE_THRESHOLD) {
       // 小响应：一次性渲染

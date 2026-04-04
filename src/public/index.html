@@ -78,12 +78,14 @@
             <button class="tab" data-tab="body">Body</button>
             <button class="tab" data-tab="auth">Auth</button>
             <button class="tab" data-tab="script">Pre-request Script</button>
+            <button class="tab" data-tab="tests">Tests</button>
           </div>
           <div class="tab-content" id="tab-headers"></div>
           <div class="tab-content hidden" id="tab-params"></div>
           <div class="tab-content hidden" id="tab-body"></div>
           <div class="tab-content hidden" id="tab-auth"></div>
           <div class="tab-content hidden" id="tab-script"></div>
+          <div class="tab-content hidden" id="tab-tests"></div>
         </div>
 
         <!-- Panel resizer -->
@@ -99,9 +101,11 @@
           <div class="tab-bar">
             <button class="tab active" data-response-tab="body">Body</button>
             <button class="tab" data-response-tab="headers">Headers</button>
+            <button class="tab" data-response-tab="test-results">Test Results</button>
           </div>
           <div class="tab-content" id="response-body"></div>
           <div class="tab-content hidden" id="response-headers"></div>
+          <div class="tab-content hidden" id="response-test-results"></div>
         </div>
       </div>
     </main>
@@ -135,6 +139,8 @@
   <script src="/js/components/auth-panel.js"></script>
   <script src="/js/components/import-export.js"></script>
   <script src="/js/components/script-editor.js"></script>
+  <script src="/js/components/post-script-editor.js"></script>
+  <script src="/js/components/test-results.js"></script>
   <script src="/js/components/variable-preview.js"></script>
   <script src="/js/components/global-var-modal.js"></script>
   <script src="/js/components/collection-var-editor.js"></script>

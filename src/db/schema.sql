@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS saved_requests (
     auth_type           TEXT DEFAULT 'none',
     auth_config         TEXT,
     pre_request_script  TEXT,
+    post_response_script TEXT,
     sort_order          INTEGER DEFAULT 0,
     updated_at          TEXT DEFAULT (datetime('now'))
 );
@@ -53,6 +54,7 @@ CREATE TABLE IF NOT EXISTS history (
     request_body      TEXT,
     body_type          TEXT DEFAULT 'json',
     pre_request_script TEXT,
+    post_response_script TEXT,
     auth_type         TEXT DEFAULT 'none',
     auth_config       TEXT,
     status            INTEGER,

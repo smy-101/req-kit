@@ -24,6 +24,7 @@ export interface SavedRequest {
   auth_type?: string;
   auth_config?: string;
   pre_request_script?: string;
+  post_response_script?: string;
   sort_order?: number;
   updated_at?: string;
 }
@@ -105,8 +106,8 @@ export class CollectionService {
 
   addRequest(collectionId: number, request: Omit<SavedRequest, 'id' | 'collection_id' | 'updated_at'>): SavedRequest {
     const result = this.db.run(
-      `INSERT INTO saved_requests (collection_id, name, method, url, headers, params, body, body_type, auth_type, auth_config, pre_request_script)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO saved_requests (collection_id, name, method, url, headers, params, body, body_type, auth_type, auth_config, pre_request_script, post_response_script)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         collectionId,
         request.name,
@@ -119,6 +120,7 @@ export class CollectionService {
         request.auth_type || 'none',
         request.auth_config || null,
         request.pre_request_script || null,
+        request.post_response_script || null,
       ]
     );
     return { ...request, id: result.lastInsertRowid, collection_id: collectionId };
@@ -128,7 +130,7 @@ export class CollectionService {
     const fields: string[] = [];
     const values: unknown[] = [];
 
-    const allowedFields = ['name', 'method', 'url', 'headers', 'params', 'body', 'body_type', 'auth_type', 'auth_config', 'pre_request_script', 'sort_order'];
+    const allowedFields = ['name', 'method', 'url', 'headers', 'params', 'body', 'body_type', 'auth_type', 'auth_config', 'pre_request_script', 'post_response_script', 'sort_order'];
     for (const field of allowedFields) {
       if ((updates as any)[field] !== undefined) {
         fields.push(`${field} = ?`);

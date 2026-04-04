@@ -189,6 +189,7 @@
       authType: req.auth_type || 'none',
       authConfig,
       preRequestScript: req.pre_request_script || '',
+      postResponseScript: req.post_response_script || '',
       requestId: req.id,
       collectionId,
     });
@@ -222,6 +223,7 @@
         auth_type: tab.authType,
         auth_config: JSON.stringify(tab.authConfig),
         pre_request_script: tab.preRequestScript,
+        post_response_script: tab.postResponseScript,
       });
       Toast.success('Request updated');
     } else {
@@ -294,6 +296,7 @@
         auth_type: tab.authType,
         auth_config: JSON.stringify(tab.authConfig),
         pre_request_script: tab.preRequestScript,
+        post_response_script: tab.postResponseScript,
       });
       Toast.success('Request saved');
 

@@ -66,6 +66,7 @@
         auth_type: tab.authType,
         auth_config: tab.authConfig,
         pre_request_script: tab.preRequestScript,
+        post_response_script: tab.postResponseScript,
         environment_id: store.getState().activeEnv,
         collection_id: tab.collectionId,
         runtime_vars: store.getState().runtimeVars,
@@ -75,6 +76,13 @@
       if (data.script_variables) {
         const merged = { ...store.getState().runtimeVars, ...data.script_variables };
         store.setState({ runtimeVars: merged });
+      }
+      if (data.post_script_variables) {
+        const merged = { ...store.getState().runtimeVars, ...data.post_script_variables };
+        store.setState({ runtimeVars: merged });
+      }
+      if (data.script_tests) {
+        store.setState({ scriptTests: data.script_tests });
       }
 
       store.setState({ response: data });

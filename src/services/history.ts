@@ -9,6 +9,7 @@ export interface HistoryRecord {
   request_body?: string;
   body_type?: string;
   pre_request_script?: string;
+  post_response_script?: string;
   auth_type?: string;
   auth_config?: string;
   status?: number;
@@ -35,8 +36,8 @@ export class HistoryService {
 
   create(record: Omit<HistoryRecord, 'id' | 'created_at'>): number {
     const result = this.db.run(
-      `INSERT INTO history (method, url, request_headers, request_params, request_body, body_type, pre_request_script, auth_type, auth_config, status, response_headers, response_body, response_time, response_size)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO history (method, url, request_headers, request_params, request_body, body_type, pre_request_script, post_response_script, auth_type, auth_config, status, response_headers, response_body, response_time, response_size)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         record.method,
         record.url,
@@ -45,6 +46,7 @@ export class HistoryService {
         record.request_body || null,
         record.body_type || 'json',
         record.pre_request_script || null,
+        record.post_response_script || null,
         record.auth_type || 'none',
         record.auth_config || null,
         record.status || null,
