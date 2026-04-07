@@ -42,7 +42,7 @@ No build step. Static files served from `src/public/`.
 
 ### Database
 
-SQLite via `bun:sqlite`. Tables: `environments`, `env_variables`, `collections` (nested via `parent_id`), `saved_requests`, `history`. All cascade deletes are handled by foreign key constraints.
+SQLite via `bun:sqlite`. Tables: `environments`, `env_variables`, `collections` (nested via `parent_id`), `saved_requests`, `history`, `global_variables`, `collection_variables`. All cascade deletes are handled by foreign key constraints.
 
 ## Key Patterns
 
