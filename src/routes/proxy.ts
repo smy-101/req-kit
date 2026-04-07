@@ -36,7 +36,6 @@ export function createProxyRoutes(
 
     // Step 1: Variable template replacement (四级作用域，global 始终可用)
     url = variableService.resolveVariables(url, resolveContext);
-    console.log(`[proxy] resolved url: ${url}`);
     for (const key of Object.keys(headers)) {
       headers[key] = variableService.resolveVariables(headers[key], resolveContext);
     }

@@ -30,7 +30,7 @@
           <input type="text" placeholder="Value" value="${escapeHtml(v.value || '')}" class="kv-value">
           <button class="kv-delete" title="Remove">&times;</button>
         `;
-        row.querySelector('.kv-enabled').addEventListener('change', (e) => { vars[idx].enabled = e.target.checked ? 1 : 0; });
+        row.querySelector('.kv-enabled').addEventListener('change', (e) => { vars[idx].enabled = e.target.checked; });
         row.querySelector('.kv-key').addEventListener('input', (e) => { vars[idx].key = e.target.value; });
         row.querySelector('.kv-value').addEventListener('input', (e) => { vars[idx].value = e.target.value; });
         row.querySelector('.kv-delete').addEventListener('click', () => { vars.splice(idx, 1); renderModal(); });
@@ -40,7 +40,7 @@
       const addBtn = document.createElement('button');
       addBtn.className = 'modal-btn modal-btn-secondary kv-add-btn';
       addBtn.textContent = '+ 添加变量';
-      addBtn.addEventListener('click', () => { vars.push({ key: '', value: '', enabled: 1 }); renderModal(); });
+      addBtn.addEventListener('click', () => { vars.push({ key: '', value: '', enabled: true }); renderModal(); });
       editor.appendChild(addBtn);
 
       document.getElementById('close-global-var-modal').addEventListener('click', () => {
@@ -50,7 +50,7 @@
       document.getElementById('save-global-vars').addEventListener('click', async () => {
         const cleaned = vars
           .filter(v => v.key.trim())
-          .map(v => ({ key: v.key.trim(), value: v.value || '', enabled: v.enabled ? true : false }));
+          .map(v => ({ key: v.key.trim(), value: v.value || '', enabled: !!v.enabled }));
         await api.updateGlobalVariables(cleaned);
         await window.refreshGlobalVars();
         Toast.success('全局变量已保存');

@@ -2699,11 +2699,11 @@ textarea:focus-visible {
 }
 
 .test-item.test-passed {
-  background: rgba(34, 197, 94, 0.1);
+  background: var(--green-bg);
 }
 
 .test-item.test-failed {
-  background: rgba(239, 68, 68, 0.1);
+  background: var(--red-bg);
 }
 
 .test-item .test-icon {
@@ -2713,11 +2713,11 @@ textarea:focus-visible {
 }
 
 .test-passed .test-icon {
-  color: #22c55e;
+  color: var(--green);
 }
 
 .test-failed .test-icon {
-  color: #ef4444;
+  color: var(--red);
 }
 
 .test-item .test-name {
@@ -2760,14 +2760,6 @@ textarea:focus-visible {
 .var-scope-global { color: var(--text-3); }
 
 /* -- History panel: expand/collapse transition -- */
-.history-panel {
-  overflow: hidden;
-  max-height: 0;
-  transition: max-height 250ms var(--ease-out), padding 250ms var(--ease-out);
-  padding: 0 8px;
-  flex-direction: column;
-  gap: 6px;
-}
 .history-panel.expanded {
   max-height: 600px;
   padding: 6px 8px 8px;
