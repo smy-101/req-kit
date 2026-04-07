@@ -22,7 +22,7 @@ function _createEmptyTab() {
   };
 }
 
-const store = {
+export const store = {
   state: {
     tabs: [],
     activeTabId: null,
@@ -156,5 +156,3 @@ const store = {
   },
 };
 
-// Auto-create initial empty tab
-store.createTab();

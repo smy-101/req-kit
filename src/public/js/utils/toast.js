@@ -1,4 +1,4 @@
-const Toast = {
+export const Toast = {
   show(message, type = 'info', duration = 3000) {
     const container = document.getElementById('toast-container');
     if (!container) return;

@@ -1,4 +1,4 @@
-(function () {
+export function initPanelResizer() {
   const resizer = document.getElementById('panel-resizer');
   const requestPanel = document.getElementById('request-panel');
   const container = document.getElementById('request-response');
@@ -73,4 +73,4 @@
 
   resizer.addEventListener('mousedown', startDrag);
   resizer.addEventListener('touchstart', startDrag, { passive: true });
-})();
+}

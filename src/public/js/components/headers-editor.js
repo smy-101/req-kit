@@ -1,3 +1,6 @@
+import { store } from '../store.js';
+import { InputDebounce, escapeHtml } from '../utils/template.js';
+
 // Key-Value headers editor
 function createKVEditor(containerId, storeKey) {
   const container = document.getElementById(containerId);

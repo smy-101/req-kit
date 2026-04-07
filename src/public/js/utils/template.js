@@ -1,5 +1,5 @@
 // HTML 转义 — 字符串替换，避免每次 createElement 的开销
-function escapeHtml(str) {
+export function escapeHtml(str) {
   return (str == null ? '' : String(str))
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;')
@@ -8,7 +8,7 @@ function escapeHtml(str) {
 }
 
 // 空状态 HTML — 响应面板初始/空状态
-function emptyStateHTML() {
+export function emptyStateHTML() {
   return `<div class="empty-state">
     <div class="empty-state-icon">
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
@@ -19,7 +19,7 @@ function emptyStateHTML() {
 }
 
 // 输入防抖工具 — 统一管理所有防抖定时器，支持发送前 flush
-const InputDebounce = {
+export const InputDebounce = {
   _timers: {},
   schedule(id, fn, ms = 150) {
     clearTimeout(this._timers[id]);
@@ -34,7 +34,7 @@ const InputDebounce = {
 };
 
 // 集合树遍历工具
-const CollectionTree = {
+export const CollectionTree = {
   // 在集合树中按 id 查找集合
   findById(collections, id) {
     for (const col of collections) {

@@ -1,5 +1,5 @@
 // API client for backend communication
-const api = {
+export const api = {
   _currentController: null,
 
   async sendRequest(data) {
