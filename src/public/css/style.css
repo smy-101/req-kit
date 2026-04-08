@@ -2943,3 +2943,215 @@ textarea:focus-visible {
   max-height: 600px;
   padding: 6px 8px 8px;
 }
+
+/* -- Sidebar Cookie row -- */
+#cookie-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  cursor: default;
+  border-bottom: 1px solid var(--border);
+}
+#btn-manage-cookies {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-3);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+}
+#btn-manage-cookies:hover {
+  color: var(--text-1);
+}
+
+/* -- Cookie Manager Modal -- */
+.cookie-modal-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.cookie-modal-total {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.cookie-modal-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+.cookie-empty-msg {
+  text-align: center;
+  color: var(--text-3);
+  padding: 24px;
+  font-size: 13px;
+}
+.modal-btn-sm {
+  font-size: 11px;
+  padding: 3px 10px;
+}
+.cookie-domain-group {
+  margin-bottom: 4px;
+}
+.cookie-domain-group.collapsed .cookie-domain-items {
+  display: none;
+}
+.cookie-domain-group.collapsed .cookie-domain-chevron {
+  transform: rotate(-90deg);
+}
+.cookie-domain-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  background: var(--bg-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+.cookie-domain-header:hover {
+  background: var(--bg-3);
+}
+.cookie-domain-chevron {
+  transition: transform 0.15s;
+  flex-shrink: 0;
+}
+.cookie-domain-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cookie-domain-count {
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 400;
+}
+.cookie-domain-clear {
+  flex-shrink: 0;
+}
+.cookie-domain-items {
+  padding: 2px 0 2px 16px;
+}
+.cookie-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  position: relative;
+}
+.cookie-item:hover {
+  background: var(--bg-2);
+}
+.cookie-item-main {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.cookie-item-name {
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.cookie-item-value {
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cookie-item-meta {
+  display: flex;
+  gap: 10px;
+  color: var(--text-3);
+  font-size: 11px;
+}
+.cookie-item-delete {
+  background: none;
+  border: none;
+  color: var(--text-3);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 4px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.cookie-item:hover .cookie-item-delete {
+  opacity: 1;
+}
+.cookie-item-delete:hover {
+  color: var(--red);
+}
+.cookie-flag {
+  display: inline-block;
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--bg-3);
+  color: var(--text-3);
+  margin-right: 3px;
+}
+
+/* -- Response Cookies Tab -- */
+.cookie-tab-list {
+  padding: 8px 12px;
+}
+.cookie-tab-item {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.cookie-tab-item.cookie-action-added {
+  border-left: 3px solid var(--green);
+}
+.cookie-tab-item.cookie-action-updated {
+  border-left: 3px solid var(--yellow);
+}
+.cookie-tab-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.cookie-tab-name {
+  font-weight: 600;
+  font-size: 13px;
+}
+.cookie-tab-action {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: 500;
+}
+.cookie-tab-action.cookie-action-added {
+  background: rgba(76, 175, 80, 0.15);
+  color: var(--green);
+}
+.cookie-tab-action.cookie-action-updated {
+  background: rgba(255, 193, 7, 0.15);
+  color: var(--yellow);
+}
+.cookie-tab-details {
+  font-size: 12px;
+}
+.cookie-tab-row {
+  display: flex;
+  gap: 8px;
+  padding: 2px 0;
+}
+.cookie-tab-label {
+  color: var(--text-3);
+  min-width: 60px;
+  flex-shrink: 0;
+}
+.cookie-tab-value {
+  color: var(--text-2);
+  word-break: break-all;
+}

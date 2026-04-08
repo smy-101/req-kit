@@ -197,4 +197,19 @@ export const api = {
       body: JSON.stringify(variables),
     }).then(r => r.json());
   },
+
+  // Cookies
+  async getCookies(domain) {
+    const url = domain ? `/api/cookies?domain=${encodeURIComponent(domain)}` : '/api/cookies';
+    return fetch(url).then(r => r.json());
+  },
+  async deleteCookie(id) {
+    return fetch(`/api/cookies/${id}`, { method: 'DELETE' }).then(r => r.json());
+  },
+  async deleteCookiesByDomain(domain) {
+    return fetch(`/api/cookies?domain=${encodeURIComponent(domain)}`, { method: 'DELETE' }).then(r => r.json());
+  },
+  async clearAllCookies() {
+    return fetch('/api/cookies', { method: 'DELETE' }).then(r => r.json());
+  },
 };

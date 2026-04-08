@@ -5,12 +5,14 @@ import { HistoryService } from '../services/history';
 import { VariableService } from '../services/variable';
 import { ScriptService } from '../services/script';
 import { injectAuth } from '../services/auth';
+import { CookieService } from '../services/cookie';
 
 export function createProxyRoutes(
   proxyService: ProxyService,
   historyService: HistoryService,
   variableService: VariableService,
-  scriptService: ScriptService
+  scriptService: ScriptService,
+  cookieService: CookieService
 ) {
   const router = new Hono();
 
@@ -117,6 +119,15 @@ export function createProxyRoutes(
       params = authResult.params;
     }
 
+    // Step 3.5: Cookie injection (不覆盖用户手动设置的 Cookie header)
+    const hasUserCookie = Object.keys(headers).some(k => k.toLowerCase() === 'cookie');
+    if (!hasUserCookie) {
+      const cookieHeader = cookieService.buildCookieHeader(url);
+      if (cookieHeader) {
+        headers['Cookie'] = cookieHeader;
+      }
+    }
+
     const proxyReq: ProxyRequest = {
       url,
       method: body.method || 'GET',
@@ -132,11 +143,19 @@ export function createProxyRoutes(
       : (proxyBody as string | undefined) || null;
 
     if (body.stream) {
-      return streamProxyResponse(c, proxyService, historyService, variableService, scriptService, proxyReq, scriptLogs, scriptVariables, body.auth_type, body.auth_config, body.body_type, body.pre_request_script, historyBody);
+      return streamProxyResponse(c, proxyService, historyService, variableService, scriptService, cookieService, proxyReq, scriptLogs, scriptVariables, body.auth_type, body.auth_config, body.body_type, body.pre_request_script, historyBody);
     }
 
     try {
       const result = await proxyService.sendRequest(proxyReq);
+
+      // Step 4: 提取 Set-Cookie 并存入 jar
+      let setCookies: any[] = [];
+      const setCookieHeaders = extractSetCookieHeaders(result.headers);
+      if (setCookieHeaders.length > 0) {
+        const requestHost = new URL(url).hostname;
+        setCookies = cookieService.storeCookies(setCookieHeaders, requestHost);
+      }
 
       // Step 3.5: Post-response script execution (skip for SSE)
       let scriptTests: Record<string, boolean> | undefined;
@@ -178,6 +197,7 @@ export function createProxyRoutes(
         response.post_script_logs = postScriptLogs;
         response.post_script_variables = postScriptVariables;
       }
+      if (setCookies.length > 0) response.set_cookies = setCookies;
       return c.json(response);
     } catch (err: any) {
       if (err instanceof ProxyTimeoutError) {
@@ -234,6 +254,7 @@ function streamProxyResponse(
   historyService: HistoryService,
   variableService: VariableService,
   scriptService: ScriptService,
+  cookieService: CookieService,
   proxyReq: ProxyRequest,
   scriptLogs: string[],
   scriptVariables: Record<string, string>,
@@ -263,9 +284,21 @@ function streamProxyResponse(
             onHeaders(status, headers) {
               capturedStatus = status;
               capturedHeaders = headers;
+
+              // 提取 Set-Cookie 并存入 jar
+              let setCookies: any[] = [];
+              const setCookieHeaders = extractSetCookieHeaders(headers);
+              if (setCookieHeaders.length > 0) {
+                try {
+                  const requestHost = new URL(proxyReq.url).hostname;
+                  setCookies = cookieService.storeCookies(setCookieHeaders, requestHost);
+                } catch {}
+              }
+
               const data: any = { status, headers };
               if (scriptLogs.length > 0) data.script_logs = scriptLogs;
               if (Object.keys(scriptVariables).length > 0) data.script_variables = scriptVariables;
+              if (setCookies.length > 0) data.set_cookies = setCookies;
               send('headers', data);
             },
             onChunk(chunk, size) {
@@ -324,4 +357,17 @@ function streamProxyResponse(
       },
     }
   );
+}
+
+/**
+ * 从响应 headers 中提取所有 Set-Cookie 值
+ * extractHeaders 将多个 Set-Cookie 用 \n 拼接
+ */
+function extractSetCookieHeaders(headers: Record<string, string>): string[] {
+  for (const [key, value] of Object.entries(headers)) {
+    if (key.toLowerCase() === 'set-cookie') {
+      return value.split('\n').filter(v => v.trim());
+    }
+  }
+  return [];
 }

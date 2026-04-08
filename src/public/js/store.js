@@ -36,6 +36,7 @@ export const store = {
     environments: [],
     runtimeVars: {},
     globalVariables: [],
+    cookieCount: 0,
   },
   listeners: {},
 

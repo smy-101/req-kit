@@ -7,6 +7,7 @@ import { EnvService } from '../../src/services/environment';
 import { VariableService } from '../../src/services/variable';
 import { CollectionService } from '../../src/services/collection';
 import { ScriptService } from '../../src/services/script';
+import { CookieService } from '../../src/services/cookie';
 import { Database } from '../../src/db/index';
 
 describe('Proxy Routes Integration', () => {
@@ -27,8 +28,9 @@ describe('Proxy Routes Integration', () => {
     variableService = new VariableService(db, envService);
     collectionService = new CollectionService(db);
     const scriptService = new ScriptService();
+    const cookieService = new CookieService(db);
     app = new Hono();
-    app.route('/', createProxyRoutes(proxyService, historyService, variableService, scriptService));
+    app.route('/', createProxyRoutes(proxyService, historyService, variableService, scriptService, cookieService));
 
     // Create target server for integration testing
     const targetApp = new Hono();

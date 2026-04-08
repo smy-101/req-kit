@@ -83,3 +83,18 @@ CREATE TABLE IF NOT EXISTS collection_variables (
 );
 
 CREATE INDEX IF NOT EXISTS idx_coll_vars_coll_id ON collection_variables(collection_id);
+
+-- Cookie Jar
+CREATE TABLE IF NOT EXISTS cookies (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    domain      TEXT NOT NULL,
+    path        TEXT NOT NULL DEFAULT '/',
+    name        TEXT NOT NULL,
+    value       TEXT NOT NULL,
+    expires_at  TEXT,
+    http_only   INTEGER DEFAULT 0,
+    secure      INTEGER DEFAULT 0,
+    same_site   TEXT,
+    created_at  TEXT DEFAULT (datetime('now'))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_cookies_unique ON cookies(domain, path, name);

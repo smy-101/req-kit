@@ -1,6 +1,7 @@
 import { store } from '../store.js';
 import { api } from '../api.js';
 import { InputDebounce } from '../utils/template.js';
+import { refreshCookieCount } from './cookie-manager.js';
 
 // URL bar component
 const methodSelect = document.getElementById('method-select');
@@ -98,6 +99,11 @@ sendBtn.addEventListener('click', async () => {
 
     store.setState({ response: data });
     store.emit('request:complete', data);
+
+    // 请求完成后刷新 cookie 数量（可能有新的 Set-Cookie）
+    if (data.set_cookies && data.set_cookies.length > 0) {
+      refreshCookieCount();
+    }
   } catch (err) {
     if (err.name === 'AbortError') return; // 被取消的请求，静默忽略
     store.setState({ response: { error: err.message } });

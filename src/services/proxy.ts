@@ -156,7 +156,13 @@ export class ProxyService {
   private extractHeaders(headers: Headers): Record<string, string> {
     const result: Record<string, string> = {};
     headers.forEach((value, key) => {
-      result[key] = value;
+      const lower = key.toLowerCase();
+      if (lower === 'set-cookie') {
+        // 多个 Set-Cookie 用换行拼接，后续可按 \n 拆分
+        result[key] = result[key] ? result[key] + '\n' + value : value;
+      } else {
+        result[key] = value;
+      }
     });
     return result;
   }

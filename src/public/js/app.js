@@ -21,6 +21,8 @@ import './components/variable-preview.js';
 import './components/global-var-modal.js';
 import './components/collection-var-editor.js';
 import './components/variable-autocomplete.js';
+import './components/cookie-manager.js';
+import './components/cookie-tab.js';
 
 // Close modal on overlay click
 document.getElementById('modal-overlay').addEventListener('click', (e) => {

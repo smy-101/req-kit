@@ -42,6 +42,16 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>
       </div>
+      <div id="cookie-row">
+        <span class="global-var-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="8" cy="10" r="1" fill="currentColor"/><circle cx="14" cy="8" r="1" fill="currentColor"/><circle cx="16" cy="14" r="1" fill="currentColor"/><circle cx="10" cy="16" r="1" fill="currentColor"/></svg>
+        </span>
+        <span class="global-var-label">Cookies</span>
+        <span id="cookie-count" class="global-var-count">0</span>
+        <button id="btn-manage-cookies" title="管理 Cookies">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+      </div>
       <div id="collection-tree"></div>
     </aside>
 
@@ -101,10 +111,12 @@
           <div class="tab-bar">
             <button class="tab active" data-response-tab="body">Body</button>
             <button class="tab" data-response-tab="headers">Headers</button>
+            <button class="tab" data-response-tab="cookies">Cookies</button>
             <button class="tab" data-response-tab="test-results">Test Results</button>
           </div>
           <div class="tab-content" id="response-body"></div>
           <div class="tab-content hidden" id="response-headers"></div>
+          <div class="tab-content hidden" id="response-cookies"></div>
           <div class="tab-content hidden" id="response-test-results"></div>
         </div>
       </div>
