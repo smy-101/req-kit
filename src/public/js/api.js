@@ -246,4 +246,51 @@ export const api = {
   async clearAllCookies() {
     return fetch('/api/cookies', { method: 'DELETE' }).then(r => r.json());
   },
+
+  // Collection Runner
+  runCollection(collectionId, environmentId, callbacks) {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    (async () => {
+      try {
+        const res = await fetch('/api/runners/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ collection_id: collectionId, environment_id: environmentId }),
+          signal,
+        });
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          let currentEvent = '';
+          for (const line of lines) {
+            if (line.startsWith('event: ')) {
+              currentEvent = line.slice(7).trim();
+            } else if (line.startsWith('data: ')) {
+              const data = JSON.parse(line.slice(6));
+              if (currentEvent === 'runner:start') callbacks.onStart?.(data);
+              else if (currentEvent === 'request:start') callbacks.onRequestStart?.(data);
+              else if (currentEvent === 'request:complete') callbacks.onRequestComplete?.(data);
+              else if (currentEvent === 'runner:done') callbacks.onDone?.(data);
+            }
+          }
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        callbacks.onError?.({ error: err.message });
+      }
+    })();
+
+    return { abort: () => controller.abort() };
+  },
 };

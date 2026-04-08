@@ -24,6 +24,7 @@ import './components/variable-autocomplete.js';
 import './components/cookie-manager.js';
 import './components/cookie-tab.js';
 import './components/request-options.js';
+import './components/runner-panel.js';
 
 // Close modal on overlay click
 document.getElementById('modal-overlay').addEventListener('click', (e) => {

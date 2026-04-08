@@ -16,6 +16,8 @@ import { createImportExportRoutes } from './routes/import-export';
 import { createGlobalVariableRoutes } from './routes/global-variables';
 import { CookieService } from './services/cookie';
 import { createCookieRoutes } from './routes/cookies';
+import { RunnerService } from './services/runner';
+import { createRunnerRoutes } from './routes/runner';
 
 const db = new Database('req-kit.db');
 db.migrate();
@@ -28,6 +30,7 @@ const variableService = new VariableService(db, envService);
 const importExportService = new ImportExportService(db, collectionService, variableService);
 const scriptService = new ScriptService();
 const cookieService = new CookieService(db);
+const runnerService = new RunnerService(collectionService, variableService, historyService, scriptService, proxyService, cookieService);
 
 const app = new Hono();
 
@@ -39,6 +42,7 @@ app.route('/', createEnvironmentRoutes(envService));
 app.route('/', createImportExportRoutes(importExportService));
 app.route('/', createGlobalVariableRoutes(variableService));
 app.route('/', createCookieRoutes(cookieService));
+app.route('/', createRunnerRoutes(runnerService));
 
 // Serve static files from src/public (must be last)
 app.use('/*', serveStatic({ root: './src/public' }));

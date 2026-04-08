@@ -4,6 +4,7 @@ import { escapeHtml } from '../utils/template.js';
 import { Toast } from '../utils/toast.js';
 import { Dialogs } from '../utils/dialogs.js';
 import { HistoryPanel } from './history-panel.js';
+import { openRunnerPanel } from './runner-panel.js';
 
 // Sidebar component - collection tree
 const treeEl = document.getElementById('collection-tree');
@@ -74,7 +75,10 @@ function renderCollectionNode(node, depth = 0) {
   const wrapper = document.createElement('div');
   wrapper.dataset.collectionId = node.id;
 
-  const item = createTreeItem(node.name, node.id, 'collection', depth);
+  // 检查集合（含子集合）是否有请求
+  const hasRequests = collectionHasRequests(node);
+
+  const item = createTreeItem(node.name, node.id, 'collection', depth, hasRequests);
 
   // Add variables badge if collection has variables
   if (node.variables && node.variables.length > 0) {
@@ -110,7 +114,7 @@ function renderCollectionNode(node, depth = 0) {
   return wrapper;
 }
 
-function createTreeItem(name, id, type, depth = 0) {
+function createTreeItem(name, id, type, depth = 0, hasRequests = false) {
   const item = document.createElement('div');
   item.className = 'tree-item';
   item.style.paddingLeft = `${8 + depth * 16}px`;
@@ -123,6 +127,19 @@ function createTreeItem(name, id, type, depth = 0) {
   item.innerHTML = `<span class="icon">${icon}</span><span class="name">${escapeHtml(name)}</span>`;
 
   if (type === 'collection') {
+    // 运行按钮（仅当集合含请求时显示）
+    if (hasRequests) {
+      const runBtn = document.createElement('button');
+      runBtn.className = 'tree-run-btn';
+      runBtn.title = 'Run collection';
+      runBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+      runBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openRunnerPanel(id, name);
+      });
+      item.appendChild(runBtn);
+    }
+
     item.addEventListener('contextmenu', async (e) => {
       e.preventDefault();
       const yes = await Dialogs.confirmDanger('Delete Collection', `Delete collection "${name}" and all its requests?`);
@@ -135,6 +152,19 @@ function createTreeItem(name, id, type, depth = 0) {
   }
 
   return item;
+}
+
+/**
+ * 递归检查集合（含子集合）是否有请求
+ */
+function collectionHasRequests(node) {
+  if (node.requests && node.requests.length > 0) return true;
+  if (node.children) {
+    for (const child of node.children) {
+      if (collectionHasRequests(child)) return true;
+    }
+  }
+  return false;
 }
 
 function createRequestItem(req, collectionId, depth = 0) {

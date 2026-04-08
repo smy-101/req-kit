@@ -38,6 +38,18 @@ Collections capability for organizing saved requests into folder hierarchies wit
 - **WHEN** 客户端请求 `GET /api/collections`
 - **THEN** 系统返回树形结构，每个集合节点包含 `"variables": [{"id": 1, "key": "userId", "value": "42", "enabled": 1}]` 字段
 
+侧边栏集合项 SHALL 显示 ▶ 运行按钮，点击后打开运行器面板并开始运行该集合。仅当集合（含子集合）内存在至少一个请求时显示运行按钮。
+
+#### Scenario: 含请求的集合显示运行按钮
+
+- **WHEN** 侧边栏渲染集合树，某集合内包含至少一个请求
+- **THEN** 该集合项显示 ▶ 运行按钮
+
+#### Scenario: 空集合不显示运行按钮
+
+- **WHEN** 侧边栏渲染集合树，某集合内不包含任何请求
+- **THEN** 该集合项不显示运行按钮
+
 ### Requirement: 管理集合中的请求
 
 系统 SHALL 提供 `POST /api/collections/:id/requests` 端点往集合中添加请求。
