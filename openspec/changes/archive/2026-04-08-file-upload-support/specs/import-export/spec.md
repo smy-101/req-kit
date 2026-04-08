@@ -1,8 +1,4 @@
-## Purpose
-
-Import and export capability for converting between req-kit format and external formats like curl commands and Postman Collection v2.1.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: 导入 curl 命令
 

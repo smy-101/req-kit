@@ -3,7 +3,7 @@ export interface ProxyRequest {
   method: string;
   headers?: Record<string, string>;
   params?: Record<string, string>;
-  body?: string;
+  body?: string | FormData | Buffer;
   stream?: boolean;
   auth_type?: string;
   auth_config?: any;

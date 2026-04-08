@@ -201,14 +201,8 @@ async function loadHistoryItem(id) {
       size: record.response_size,
     } : null;
 
-    // Switch to existing tab if one has the same method + URL
-    const existing = store.findTabByMethodUrl(record.method || 'GET', record.url || '');
-    if (existing) {
-      store.switchTab(existing.id);
-      return;
-    }
-
-    store.createTab({
+    // Build tab data with multipart/binary support
+    const tabData = {
       method: record.method || 'GET',
       url: record.url || '',
       headers: headerRows,
@@ -221,7 +215,30 @@ async function loadHistoryItem(id) {
       postResponseScript: record.post_response_script || '',
       response,
       historyId: record.id,
-    });
+    };
+
+    if (record.body_type === 'multipart' && record.request_body) {
+      try {
+        const parsed = JSON.parse(record.request_body);
+        tabData.multipartParts = parsed.parts || [{ key: '', type: 'text', value: '' }];
+        tabData.body = '';
+      } catch (e) { console.warn('Failed to parse multipart body:', e); }
+    } else if (record.body_type === 'binary' && record.request_body) {
+      try {
+        const parsed = JSON.parse(record.request_body);
+        tabData.binaryFile = { data: parsed.data, filename: parsed.filename, contentType: parsed.contentType };
+        tabData.body = '';
+      } catch (e) { console.warn('Failed to parse binary body:', e); }
+    }
+
+    // Switch to existing tab if one has the same method + URL
+    const existing = store.findTabByMethodUrl(record.method || 'GET', record.url || '');
+    if (existing) {
+      store.switchTab(existing.id);
+      return;
+    }
+
+    store.createTab(tabData);
   } catch (e) {
     console.error('Failed to load history item:', e);
   }

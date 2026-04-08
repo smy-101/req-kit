@@ -59,12 +59,20 @@ sendBtn.addEventListener('click', async () => {
   store.emit('request:start');
 
   try {
+    // Build body based on type
+    let reqBody = tab.body || undefined;
+    if (tab.bodyType === 'multipart') {
+      reqBody = { parts: tab.multipartParts || [] };
+    } else if (tab.bodyType === 'binary') {
+      reqBody = tab.binaryFile || undefined;
+    }
+
     const data = await api.sendRequest({
       url: tab.url,
       method: tab.method,
       headers,
       params,
-      body: tab.body || undefined,
+      body: reqBody,
       body_type: tab.bodyType,
       auth_type: tab.authType,
       auth_config: tab.authConfig,

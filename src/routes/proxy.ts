@@ -33,6 +33,7 @@ export function createProxyRoutes(
     let headers = { ...body.headers } || {};
     let params = { ...body.params } || {};
     let bodyStr = body.body;
+    const bodyType = body.body_type;
 
     // Step 1: Variable template replacement (四级作用域，global 始终可用)
     url = variableService.resolveVariables(url, resolveContext);
@@ -43,7 +44,47 @@ export function createProxyRoutes(
       params[key] = variableService.resolveVariables(params[key], resolveContext);
     }
     if (bodyStr) {
-      bodyStr = variableService.resolveVariables(bodyStr, resolveContext);
+      if (bodyType === 'multipart' && typeof bodyStr === 'object' && (bodyStr as any).parts) {
+        // Multipart: only replace variables in text field values
+        for (const part of (bodyStr as any).parts) {
+          if (part.type === 'text' && part.value) {
+            part.value = variableService.resolveVariables(part.value, resolveContext);
+          }
+        }
+      } else if (bodyType !== 'binary' && typeof bodyStr === 'string') {
+        bodyStr = variableService.resolveVariables(bodyStr, resolveContext);
+      }
+    }
+
+    // Build actual body for proxy based on body_type
+    let proxyBody: string | FormData | Buffer | undefined;
+    let originalBodyForHistory: any = body.body;
+
+    if (bodyType === 'multipart' && typeof body.body === 'object' && (body.body as any).parts) {
+      // Task 2.2: Build FormData from parts
+      const formData = new FormData();
+      for (const part of (body.body as any).parts) {
+        if (part.type === 'file' && part.value) {
+          const binary = Buffer.from(part.value, 'base64');
+          const blob = new Blob([binary], { type: part.contentType || 'application/octet-stream' });
+          formData.append(part.key, blob, part.filename || 'file');
+        } else {
+          formData.append(part.key, part.value || '');
+        }
+      }
+      proxyBody = formData;
+      originalBodyForHistory = body.body;
+    } else if (bodyType === 'binary' && typeof body.body === 'object' && (body.body as any).data) {
+      // Task 2.3: Decode base64 to Buffer
+      proxyBody = Buffer.from((body.body as any).data, 'base64');
+      // Auto-set Content-Type if not already set
+      if ((body.body as any).contentType && !headers['Content-Type']) {
+        headers['Content-Type'] = (body.body as any).contentType;
+      }
+      originalBodyForHistory = body.body;
+    } else {
+      proxyBody = bodyStr as string | undefined;
+      originalBodyForHistory = bodyStr;
     }
 
     // Step 2: Script execution
@@ -81,12 +122,17 @@ export function createProxyRoutes(
       method: body.method || 'GET',
       headers,
       params,
-      body: bodyStr,
+      body: proxyBody,
       stream: body.stream,
     };
 
+    // Serialize body for history (multipart/binary store original JSON)
+    const historyBody = (bodyType === 'multipart' || bodyType === 'binary')
+      ? JSON.stringify(originalBodyForHistory)
+      : (proxyBody as string | undefined) || null;
+
     if (body.stream) {
-      return streamProxyResponse(c, proxyService, historyService, variableService, scriptService, proxyReq, scriptLogs, scriptVariables, body.auth_type, body.auth_config, body.body_type, body.pre_request_script);
+      return streamProxyResponse(c, proxyService, historyService, variableService, scriptService, proxyReq, scriptLogs, scriptVariables, body.auth_type, body.auth_config, body.body_type, body.pre_request_script, historyBody);
     }
 
     try {
@@ -116,13 +162,13 @@ export function createProxyRoutes(
 
         if (!postResult.success) {
           // Record history before returning error
-          recordHistory(historyService, proxyReq, result, scriptLogs, body.auth_type, body.auth_config, body.body_type, body.pre_request_script, body.post_response_script);
+          recordHistory(historyService, proxyReq, result, scriptLogs, body.auth_type, body.auth_config, body.body_type, body.pre_request_script, body.post_response_script, historyBody);
           return c.json({ error: postResult.error, post_script_logs: postScriptLogs, post_script_variables: postScriptVariables }, 400);
         }
       }
 
       // Step 4: History recording
-      recordHistory(historyService, proxyReq, result, scriptLogs, body.auth_type, body.auth_config, body.body_type, body.pre_request_script, body.post_response_script);
+      recordHistory(historyService, proxyReq, result, scriptLogs, body.auth_type, body.auth_config, body.body_type, body.pre_request_script, body.post_response_script, historyBody);
 
       const response: any = result;
       if (scriptLogs.length > 0) response.script_logs = scriptLogs;
@@ -156,7 +202,8 @@ function recordHistory(
   authConfig?: any,
   bodyType?: string,
   preRequestScript?: string,
-  postResponseScript?: string
+  postResponseScript?: string,
+  historyBody?: string | null
 ) {
   try {
     historyService.create({
@@ -164,7 +211,7 @@ function recordHistory(
       url: req.url,
       request_headers: JSON.stringify(req.headers),
       request_params: req.params ? JSON.stringify(req.params) : null,
-      request_body: req.body || null,
+      request_body: historyBody ?? (typeof req.body === 'string' ? req.body : req.body ? JSON.stringify(req.body) : null),
       body_type: bodyType || 'json',
       pre_request_script: preRequestScript || null,
       post_response_script: postResponseScript || null,
@@ -193,7 +240,8 @@ function streamProxyResponse(
   authType?: string,
   authConfig?: any,
   bodyType?: string,
-  preRequestScript?: string
+  preRequestScript?: string,
+  historyBody?: string | null
 ) {
   return new Response(
     new ReadableStream({
@@ -237,7 +285,7 @@ function streamProxyResponse(
                   url: proxyReq.url,
                   request_headers: JSON.stringify(proxyReq.headers),
                   request_params: proxyReq.params ? JSON.stringify(proxyReq.params) : null,
-                  request_body: proxyReq.body || null,
+                  request_body: historyBody ?? (typeof proxyReq.body === 'string' ? proxyReq.body : proxyReq.body ? JSON.stringify(proxyReq.body) : null),
                   body_type: bodyType || 'json',
                   pre_request_script: preRequestScript || null,
                   post_response_script: null, // SSE mode: no post-script

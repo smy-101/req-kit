@@ -16,6 +16,8 @@ function _createEmptyTab() {
     postResponseScript: '',
     scriptTests: null,
     response: null,
+    multipartParts: [{ key: '', type: 'text', value: '' }],
+    binaryFile: null,
     requestId: null,
     collectionId: null,
     historyId: null,
@@ -117,6 +119,7 @@ export const store = {
       'method', 'url', 'headers', 'params', 'body', 'bodyType',
       'authType', 'authConfig', 'preRequestScript', 'postResponseScript', 'scriptTests', 'response',
       'requestId', 'collectionId', 'historyId',
+      'multipartParts', 'binaryFile',
     ]);
 
     const tabUpdates = {};

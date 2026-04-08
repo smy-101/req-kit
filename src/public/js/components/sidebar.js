@@ -184,8 +184,8 @@ function loadRequest(req, collectionId) {
   if (headerRows.length === 0) headerRows.push({ key: '', value: '', enabled: true });
   if (paramRows.length === 0) paramRows.push({ key: '', value: '', enabled: true });
 
-  // Create a new tab with the request data
-  store.createTab({
+  // Parse body for multipart/binary
+  const tabData = {
     method: req.method || 'GET',
     url: req.url || '',
     headers: headerRows,
@@ -198,7 +198,24 @@ function loadRequest(req, collectionId) {
     postResponseScript: req.post_response_script || '',
     requestId: req.id,
     collectionId,
-  });
+  };
+
+  if (req.body_type === 'multipart' && req.body) {
+    try {
+      const parsed = JSON.parse(req.body);
+      tabData.multipartParts = parsed.parts || [{ key: '', type: 'text', value: '' }];
+      tabData.body = '';
+    } catch (e) { console.warn('Failed to parse multipart body:', e); }
+  } else if (req.body_type === 'binary' && req.body) {
+    try {
+      const parsed = JSON.parse(req.body);
+      tabData.binaryFile = { data: parsed.data, filename: parsed.filename, contentType: parsed.contentType };
+      tabData.body = '';
+    } catch (e) { console.warn('Failed to parse binary body:', e); }
+  }
+
+  // Create a new tab with the request data
+  store.createTab(tabData);
 }
 
 // New collection button
@@ -224,7 +241,7 @@ saveBtn.addEventListener('click', async () => {
       url: tab.url,
       headers: JSON.stringify(kvToArray(tab.headers)),
       params: JSON.stringify(kvToArray(tab.params)),
-      body: tab.body,
+      body: serializeBody(tab),
       body_type: tab.bodyType,
       auth_type: tab.authType,
       auth_config: JSON.stringify(tab.authConfig),
@@ -297,7 +314,7 @@ saveBtn.addEventListener('click', async () => {
       url: tab.url,
       headers: JSON.stringify(kvToArray(tab.headers)),
       params: JSON.stringify(kvToArray(tab.params)),
-      body: tab.body,
+      body: serializeBody(tab),
       body_type: tab.bodyType,
       auth_type: tab.authType,
       auth_config: JSON.stringify(tab.authConfig),
@@ -320,6 +337,17 @@ function kvToArray(rows) {
     if (r.enabled && r.key) obj[r.key] = r.value;
   }
   return obj;
+}
+
+// Serialize body for saving (multipart/binary stored as JSON)
+function serializeBody(tab) {
+  if (tab.bodyType === 'multipart') {
+    return JSON.stringify({ parts: tab.multipartParts || [] });
+  }
+  if (tab.bodyType === 'binary' && tab.binaryFile) {
+    return JSON.stringify(tab.binaryFile);
+  }
+  return tab.body;
 }
 
 // Initial load

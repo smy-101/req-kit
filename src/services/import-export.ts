@@ -15,12 +15,14 @@ export class ImportExportService {
 
   // --- Import ---
 
-  parseCurl(curlCommand: string): { method: string; url: string; headers: Record<string, string>; body?: string } | null {
+  parseCurl(curlCommand: string): { method: string; url: string; headers: Record<string, string>; body?: string; body_type?: string } | null {
     try {
       let method = 'GET';
       let url = '';
       const headers: Record<string, string> = {};
       let body: string | undefined;
+      let bodyType: string | undefined;
+      const multipartParts: { key: string; type: string; value: string; filename?: string; contentType?: string }[] = [];
 
       // Tokenize the curl command
       const tokens = this.tokenizeCurl(curlCommand);
@@ -47,6 +49,23 @@ export class ImportExportService {
               headers[key] = value;
             }
           }
+        } else if (token === '-F' || token === '--form') {
+          i++;
+          if (tokens[i]) {
+            const field = tokens[i];
+            const eqIdx = field.indexOf('=');
+            if (eqIdx > 0) {
+              const key = field.slice(0, eqIdx);
+              const val = field.slice(eqIdx + 1);
+              if (val.startsWith('@')) {
+                multipartParts.push({ key, type: 'file', value: '', filename: val.slice(1), contentType: 'application/octet-stream' });
+              } else {
+                multipartParts.push({ key, type: 'text', value: val });
+              }
+            }
+            if (method === 'GET') method = 'POST';
+            bodyType = 'multipart';
+          }
         } else if (token === '-d' || token === '--data' || token === '--data-raw' || token === '--data-binary') {
           i++;
           if (tokens[i]) {
@@ -62,7 +81,12 @@ export class ImportExportService {
       if (!url) return null;
       // Validate URL looks like a real URL
       if (!/^https?:\/\//i.test(url)) return null;
-      return { method, url, headers, body };
+
+      if (bodyType === 'multipart') {
+        body = JSON.stringify({ parts: multipartParts });
+      }
+
+      return { method, url, headers, body, body_type: bodyType };
     } catch {
       return null;
     }
@@ -78,6 +102,7 @@ export class ImportExportService {
       url: parsed.url,
       headers: Object.keys(parsed.headers).length > 0 ? JSON.stringify(parsed.headers) : undefined,
       body: parsed.body,
+      body_type: (parsed as any).body_type,
     });
   }
 
@@ -133,8 +158,18 @@ export class ImportExportService {
         }
 
         let body: string | undefined;
+        let bodyType: string | undefined;
         if (req.body?.raw) {
           body = req.body.raw;
+        } else if (req.body?.mode === 'formdata' && Array.isArray(req.body.formdata)) {
+          const parts = req.body.formdata.map((f: any) => {
+            if (f.type === 'file') {
+              return { key: f.key, type: 'file', value: '', filename: typeof f.src === 'string' ? f.src.split('/').pop() || f.src : 'file', contentType: 'application/octet-stream' };
+            }
+            return { key: f.key, type: 'text', value: f.value || '' };
+          });
+          body = JSON.stringify({ parts });
+          bodyType = 'multipart';
         }
 
         this.collectionService.addRequest(parentId, {
@@ -143,6 +178,7 @@ export class ImportExportService {
           url,
           headers: Object.keys(headers).length > 0 ? JSON.stringify(headers) : undefined,
           body,
+          body_type: bodyType,
         });
       }
     }
@@ -205,13 +241,38 @@ export class ImportExportService {
         const headers = req.headers ? JSON.parse(req.headers) : {};
         const headerArray = Object.entries(headers).map(([key, value]) => ({ key, value }));
 
+        let bodyObj: any = undefined;
+        if (req.body_type === 'multipart' && req.body) {
+          try {
+            const parsed = JSON.parse(req.body);
+            const formdata = (parsed.parts || []).map((p: any) => {
+              if (p.type === 'file') {
+                return { key: p.key, type: 'file', src: p.filename || 'file' };
+              }
+              return { key: p.key, value: p.value, type: 'text' };
+            });
+            bodyObj = { mode: 'formdata', formdata };
+          } catch {
+            bodyObj = { mode: 'raw', raw: req.body };
+          }
+        } else if (req.body_type === 'binary' && req.body) {
+          try {
+            const parsed = JSON.parse(req.body);
+            bodyObj = { mode: 'file', file: { content: parsed.data } };
+          } catch {
+            bodyObj = { mode: 'raw', raw: req.body };
+          }
+        } else if (req.body) {
+          bodyObj = { mode: 'raw', raw: req.body };
+        }
+
         items.push({
           name: req.name,
           request: {
             method: req.method || 'GET',
             header: headerArray,
             url: req.url || '',
-            body: req.body ? { mode: 'raw', raw: req.body } : undefined,
+            body: bodyObj,
           },
         });
       }
@@ -240,7 +301,25 @@ export class ImportExportService {
       } catch {}
     }
 
-    if (req.body) {
+    if (req.body_type === 'multipart' && req.body) {
+      try {
+        const parsed = JSON.parse(req.body);
+        if (parsed.parts) {
+          for (const part of parsed.parts) {
+            if (part.type === 'file') {
+              curl += ` -F '${part.key}=@${part.filename || 'file'}'`;
+            } else {
+              curl += ` -F '${part.key}=${part.value}'`;
+            }
+          }
+        }
+      } catch {}
+    } else if (req.body_type === 'binary' && req.body) {
+      try {
+        const parsed = JSON.parse(req.body);
+        curl += ` --data-binary @${parsed.filename || 'data.bin'}`;
+      } catch {}
+    } else if (req.body) {
       curl += ` -d '${req.body}'`;
     }
 
