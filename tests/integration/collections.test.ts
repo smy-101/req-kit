@@ -94,4 +94,51 @@ describe('Collections Routes Integration', () => {
     const delRes = await app.request(`/api/collections/${col.id}`, { method: 'DELETE' });
     expect(delRes.status).toBe(200);
   });
+
+  test('POST /api/collections/requests/:id/duplicate - duplicates request', async () => {
+    // Create collection + request
+    const colRes = await app.request('/api/collections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'DupTest' }),
+    });
+    const col = await colRes.json();
+
+    const reqRes = await app.request(`/api/collections/${col.id}/requests`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Original',
+        method: 'POST',
+        url: 'https://api.example.com/test',
+        headers: '{"Content-Type":"application/json"}',
+        body: '{"key":"value"}',
+        body_type: 'json',
+        auth_type: 'bearer',
+        auth_config: '{"token":"test"}',
+      }),
+    });
+    const req = await reqRes.json();
+
+    // Duplicate
+    const dupRes = await app.request(`/api/collections/requests/${req.id}/duplicate`, {
+      method: 'POST',
+    });
+    expect(dupRes.status).toBe(201);
+    const dup = await dupRes.json();
+    expect(dup.name).toBe('Original (副本)');
+    expect(dup.method).toBe('POST');
+    expect(dup.url).toBe('https://api.example.com/test');
+    expect(dup.headers).toBe('{"Content-Type":"application/json"}');
+    expect(dup.body).toBe('{"key":"value"}');
+    expect(dup.auth_type).toBe('bearer');
+    expect(dup.auth_config).toBe('{"token":"test"}');
+    expect(dup.body_type).toBe('json');
+    expect(dup.id).not.toBe(req.id);
+  });
+
+  test('POST /api/collections/requests/:id/duplicate - 404 for non-existent', async () => {
+    const res = await app.request('/api/collections/requests/99999/duplicate', { method: 'POST' });
+    expect(res.status).toBe(404);
+  });
 });

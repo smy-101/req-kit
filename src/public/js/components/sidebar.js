@@ -153,15 +153,65 @@ function createRequestItem(req, collectionId, depth = 0) {
 
   item.addEventListener('contextmenu', async (e) => {
     e.preventDefault();
-    const yes = await Dialogs.confirmDanger('Delete Request', `Delete request "${req.name}"?`);
-    if (yes) {
-      await api.deleteRequest(collectionId, req.id);
-      Toast.info('Request deleted');
-      refreshCollections();
+    const action = await showContextMenu(e, [
+      { label: '复制', value: 'duplicate' },
+      { label: '删除', value: 'delete', danger: true },
+    ]);
+
+    if (action === 'duplicate') {
+      const result = await api.duplicateRequest(req.id);
+      if (result && !result.error) {
+        Toast.success('请求已复制');
+        refreshCollections();
+      } else {
+        Toast.error(result?.error || '复制失败');
+      }
+    } else if (action === 'delete') {
+      const yes = await Dialogs.confirmDanger('Delete Request', `Delete request "${req.name}"?`);
+      if (yes) {
+        await api.deleteRequest(collectionId, req.id);
+        Toast.info('Request deleted');
+        refreshCollections();
+      }
     }
   });
 
   return item;
+}
+
+function showContextMenu(e, items) {
+  return new Promise((resolve) => {
+    const menu = document.createElement('div');
+    menu.className = 'context-menu';
+
+    for (const item of items) {
+      const btn = document.createElement('button');
+      btn.className = 'context-menu-item' + (item.danger ? ' danger' : '');
+      btn.textContent = item.label;
+      btn.addEventListener('click', () => {
+        menu.remove();
+        resolve(item.value);
+      });
+      menu.appendChild(btn);
+    }
+
+    // Position
+    const x = Math.min(e.clientX, window.innerWidth - 160);
+    const y = Math.min(e.clientY, window.innerHeight - items.length * 36 - 10);
+    menu.style.left = x + 'px';
+    menu.style.top = y + 'px';
+    document.body.appendChild(menu);
+
+    // Close on outside click
+    const close = (ev) => {
+      if (!menu.contains(ev.target)) {
+        menu.remove();
+        resolve(null);
+        document.removeEventListener('click', close);
+      }
+    };
+    setTimeout(() => document.addEventListener('click', close), 0);
+  });
 }
 
 function loadRequest(req, collectionId) {
@@ -249,6 +299,7 @@ saveBtn.addEventListener('click', async () => {
       post_response_script: tab.postResponseScript,
     });
     Toast.success('Request updated');
+    store.setState({ dirty: false });
   } else {
     // Save new - need to pick a collection
     const state = store.getState();
@@ -325,7 +376,7 @@ saveBtn.addEventListener('click', async () => {
 
     // Associate the new tab with the saved request
     if (savedReq && savedReq.id) {
-      store.setState({ requestId: savedReq.id, collectionId: col.id });
+      store.setState({ requestId: savedReq.id, collectionId: col.id, dirty: false });
     }
   }
   refreshCollections();

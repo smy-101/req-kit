@@ -100,6 +100,39 @@ describe('CollectionService', () => {
       const tree = service.getTree();
       expect(tree[0].requests!.length).toBe(0);
     });
+
+    test('duplicateRequest copies all fields with suffix name', () => {
+      const col = service.createCollection('Users');
+      const req = service.addRequest(col.id!, {
+        name: 'Get Users',
+        method: 'POST',
+        url: 'https://api.example.com/users',
+        headers: JSON.stringify([{ key: 'Content-Type', value: 'application/json' }]),
+        params: JSON.stringify([{ key: 'page', value: '1' }]),
+        body: '{"page":1}',
+        body_type: 'json',
+        auth_type: 'bearer',
+        auth_config: JSON.stringify({ token: 'test-token' }),
+        pre_request_script: 'console.log("pre")',
+        post_response_script: 'console.log("post")',
+      });
+
+      const dup = service.duplicateRequest(req.id!);
+      expect(dup).not.toBeNull();
+      expect(dup!.name).toBe('Get Users (副本)');
+      expect(dup!.method).toBe('POST');
+      expect(dup!.url).toBe('https://api.example.com/users');
+      expect(dup!.headers).toBe(req.headers);
+      expect(dup!.body).toBe(req.body);
+      expect(dup!.auth_type).toBe('bearer');
+      expect(dup!.id).not.toBe(req.id);
+      expect(dup!.collection_id).toBe(col.id);
+    });
+
+    test('duplicateRequest returns null for non-existent request', () => {
+      const result = service.duplicateRequest(99999);
+      expect(result).toBeNull();
+    });
   });
 
   describe('tree structure', () => {

@@ -1,17 +1,62 @@
 import { store } from '../store.js';
+import { api } from '../api.js';
+import { Toast } from '../utils/toast.js';
 
 // Tab Bar component — 增量更新，避免每次输入都重建 DOM
 const container = document.getElementById('tab-bar');
 const tabElMap = new Map(); // tabId -> DOM element
 
 function getTabTitle(tab) {
-  if (!tab.url) return 'New Request';
+  const prefix = tab.dirty ? '● ' : '';
+  if (!tab.url) return prefix + 'New Request';
   try {
     const url = new URL(tab.url);
-    return `${tab.method} ${url.pathname}`;
+    return `${prefix}${tab.method} ${url.pathname}`;
   } catch {
-    return `${tab.method} ${tab.url}`;
+    return `${prefix}${tab.method} ${tab.url}`;
   }
+}
+
+async function confirmCloseDirty(tab) {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('modal-overlay');
+    const modal = document.getElementById('modal');
+    const dialog = document.createElement('div');
+    dialog.className = 'confirm-dialog';
+    dialog.addEventListener('click', e => e.stopPropagation());
+
+    dialog.innerHTML = `
+      <div class="confirm-dialog-title">未保存的变更</div>
+      <div style="color:var(--text-2);font-size:13px;margin-bottom:16px;">此标签页有未保存的变更。</div>
+      <div class="confirm-dialog-actions">
+        <button class="modal-btn modal-btn-secondary" id="dirty-discard">不保存</button>
+        <button class="modal-btn modal-btn-cancel" id="dirty-cancel">取消</button>
+        <button class="modal-btn modal-btn-primary" id="dirty-save">保存</button>
+      </div>
+    `;
+
+    modal.innerHTML = '';
+    modal.appendChild(dialog);
+    overlay.classList.remove('hidden');
+
+    dialog.querySelector('#dirty-save').onclick = async () => {
+      overlay.classList.add('hidden');
+      // Trigger save
+      document.getElementById('save-btn')?.click();
+      resolve('save');
+    };
+    dialog.querySelector('#dirty-discard').onclick = () => {
+      overlay.classList.add('hidden');
+      resolve('discard');
+    };
+    dialog.querySelector('#dirty-cancel').onclick = () => {
+      overlay.classList.add('hidden');
+      resolve('cancel');
+    };
+    overlay.onclick = (e) => {
+      if (e.target === overlay) { overlay.classList.add('hidden'); resolve('cancel'); }
+    };
+  });
 }
 
 function createTabElement(tab, isActive) {
@@ -28,8 +73,13 @@ function createTabElement(tab, isActive) {
   closeBtn.innerHTML = '&times;';
   closeBtn.title = 'Close tab';
 
-  closeBtn.addEventListener('click', (e) => {
+  closeBtn.addEventListener('click', async (e) => {
     e.stopPropagation();
+    if (tab.dirty && tab.requestId) {
+      const result = await confirmCloseDirty(tab);
+      if (result === 'cancel') return;
+      // 'discard' or 'save' — proceed to close
+    }
     store.closeTab(tab.id);
   });
 
@@ -40,9 +90,13 @@ function createTabElement(tab, isActive) {
     store.switchTab(tab.id);
   });
 
-  tabEl.addEventListener('mousedown', (e) => {
+  tabEl.addEventListener('mousedown', async (e) => {
     if (e.button === 1) {
       e.preventDefault();
+      if (tab.dirty && tab.requestId) {
+        const result = await confirmCloseDirty(tab);
+        if (result === 'cancel') return;
+      }
       store.closeTab(tab.id);
     }
   });

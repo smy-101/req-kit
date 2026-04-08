@@ -47,6 +47,19 @@ store SHALL 通过 ES Module `export` 导出，消费方通过 `import { store }
 - **WHEN** 只剩一个 Tab 且用户关闭它
 - **THEN** 系统自动创建一个新的空白 Tab 作为活跃 Tab
 
+### Requirement: Tab 状态扩展
+每个 tab 的状态 SHALL 包含以下额外字段：
+- `dirty`: boolean，标记是否有未保存的变更（仅对从已保存请求打开的 tab 有效）
+- `options`: { timeout?: number, followRedirects?: boolean }，请求级选项
+
+#### Scenario: 打开已保存请求时 dirty 为 false
+- **WHEN** 用户从 sidebar 打开一个已保存请求
+- **THEN** tab 状态中 dirty 为 false，options 为默认值
+
+#### Scenario: 修改请求配置后 dirty 变为 true
+- **WHEN** 用户在已保存请求的 tab 中修改 url 或 headers
+- **THEN** tab 状态中 dirty 变为 true
+
 ### Requirement: Tab 标题显示
 系统 SHALL 在 Tab 头部显示请求方法 + URL 路径缩略信息（如 "GET /users"）。空白 Tab SHALL 显示 "New Request"。
 

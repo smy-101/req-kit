@@ -2,6 +2,14 @@
 export const api = {
   _currentController: null,
 
+  // Abort the in-flight request (called by cancel button)
+  abortCurrent() {
+    if (this._currentController) {
+      this._currentController.abort();
+      this._currentController = null;
+    }
+  },
+
   async sendRequest(data) {
     // 取消上一个未完成的请求，避免旧响应覆盖当前 tab
     if (this._currentController) {
@@ -26,34 +34,54 @@ export const api = {
   },
 
   async sendRequestStream(data, callbacks) {
-    const res = await fetch('/api/proxy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...data, stream: true }),
-    });
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
+    // 取消上一个未完成的请求，避免旧响应覆盖当前 tab
+    if (this._currentController) {
+      this._currentController.abort();
+    }
+    this._currentController = new AbortController();
+    const signal = this._currentController.signal;
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+    try {
+      const res = await fetch('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, stream: true }),
+        signal,
+      });
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-      let currentEvent = '';
-      for (const line of lines) {
-        if (line.startsWith('event: ')) {
-          currentEvent = line.slice(7).trim();
-        } else if (line.startsWith('data: ')) {
-          const data = JSON.parse(line.slice(6));
-          if (currentEvent === 'headers') callbacks.onHeaders(data);
-          else if (currentEvent === 'chunk') callbacks.onChunk(data);
-          else if (currentEvent === 'done') callbacks.onDone(data);
-          else if (currentEvent === 'error') callbacks.onError(data);
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        let currentEvent = '';
+        for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            currentEvent = line.slice(7).trim();
+          } else if (line.startsWith('data: ')) {
+            const data = JSON.parse(line.slice(6));
+            if (currentEvent === 'headers') callbacks.onHeaders(data);
+            else if (currentEvent === 'chunk') callbacks.onChunk(data);
+            else if (currentEvent === 'done') callbacks.onDone(data);
+            else if (currentEvent === 'error') callbacks.onError(data);
+          }
         }
+      }
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        callbacks.onError({ error: '请求已取消', cancelled: true });
+        return;
+      }
+      throw err;
+    } finally {
+      if (this._currentController?.signal === signal) {
+        this._currentController = null;
       }
     }
   },
@@ -118,6 +146,12 @@ export const api = {
     return fetch(`/api/collections/${collectionId}/requests/${requestId}`, {
       method: 'DELETE',
     }).then(r => r.json());
+  },
+  async duplicateRequest(requestId) {
+    const res = await fetch(`/api/collections/requests/${requestId}/duplicate`, {
+      method: 'POST',
+    });
+    return res.json();
   },
 
   // Environments

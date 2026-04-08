@@ -73,6 +73,9 @@
         </select>
         <input type="text" id="url-input" placeholder="Enter request URL or paste curl...">
         <button id="send-btn">Send</button>
+        <button id="request-options-btn" title="Request Options">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
         <button id="save-btn" title="Save Request">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         </button>
@@ -80,6 +83,20 @@
 
       <!-- Request/Response panels -->
       <div id="request-response">
+        <!-- Request options (collapsible) -->
+        <div class="request-options-panel hidden" id="request-options-panel">
+          <div class="request-options-row">
+            <label class="request-options-label">Timeout (ms)</label>
+            <input type="number" id="request-timeout-input" min="1000" max="300000" step="1000" value="30000" class="request-options-input">
+          </div>
+          <div class="request-options-row">
+            <label class="request-options-label">Follow Redirects</label>
+            <label class="request-options-switch">
+              <input type="checkbox" id="request-redirect-toggle" checked>
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+        </div>
         <!-- Request tabs -->
         <div id="request-panel">
           <div class="tab-bar">
@@ -114,7 +131,32 @@
             <button class="tab" data-response-tab="cookies">Cookies</button>
             <button class="tab" data-response-tab="test-results">Test Results</button>
           </div>
-          <div class="tab-content" id="response-body"></div>
+          <div class="tab-content" id="response-body">
+            <div class="response-format-bar" id="response-format-bar">
+              <div class="format-toggle-group">
+                <button class="format-tab active" data-format="pretty">Pretty</button>
+                <button class="format-tab" data-format="raw">Raw</button>
+                <button class="format-tab" data-format="preview">Preview</button>
+              </div>
+              <button class="search-toggle-btn" id="search-toggle-btn" title="Search (Ctrl+F)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </button>
+            </div>
+            <div id="response-format-content"></div>
+            <div class="response-search-bar hidden" id="response-search-bar">
+              <input type="text" id="response-search-input" placeholder="Search response..." autocomplete="off">
+              <span class="search-count" id="response-search-count"></span>
+              <button class="search-nav-btn" id="search-prev-btn" title="Previous (Shift+Enter)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
+              </button>
+              <button class="search-nav-btn" id="search-next-btn" title="Next (Enter)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <button class="search-close-btn" id="search-close-btn" title="Close (Escape)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
           <div class="tab-content hidden" id="response-headers"></div>
           <div class="tab-content hidden" id="response-cookies"></div>
           <div class="tab-content hidden" id="response-test-results"></div>

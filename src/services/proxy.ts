@@ -11,6 +11,8 @@ export interface ProxyRequest {
   environment_id?: number;
   collection_id?: number;
   runtime_vars?: Record<string, string>;
+  timeout?: number;
+  follow_redirects?: boolean;
 }
 
 export interface ProxyResponse {
@@ -38,15 +40,21 @@ export class ProxyService {
     const startTime = Date.now();
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+    const timeoutMs = req.timeout ?? REQUEST_TIMEOUT;
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const response = await fetch(url, {
+      const fetchOptions: RequestInit = {
         method: req.method,
         headers: req.headers || {},
         body: this.hasBody(req.method) ? req.body : undefined,
         signal: controller.signal,
-      });
+      };
+      if (req.follow_redirects === false) {
+        fetchOptions.redirect = 'manual';
+      }
+
+      const response = await fetch(url, fetchOptions);
 
       clearTimeout(timeout);
 
@@ -89,15 +97,21 @@ export class ProxyService {
     const startTime = Date.now();
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+    const timeoutMs = req.timeout ?? REQUEST_TIMEOUT;
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const response = await fetch(url, {
+      const fetchOptions: RequestInit = {
         method: req.method,
         headers: req.headers || {},
         body: this.hasBody(req.method) ? req.body : undefined,
         signal: controller.signal,
-      });
+      };
+      if (req.follow_redirects === false) {
+        fetchOptions.redirect = 'manual';
+      }
+
+      const response = await fetch(url, fetchOptions);
 
       clearTimeout(timeout);
 

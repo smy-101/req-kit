@@ -21,6 +21,8 @@ function _createEmptyTab() {
     requestId: null,
     collectionId: null,
     historyId: null,
+    dirty: false,
+    options: { timeout: 30000, followRedirects: true },
   };
 }
 
@@ -121,6 +123,12 @@ export const store = {
       'authType', 'authConfig', 'preRequestScript', 'postResponseScript', 'scriptTests', 'response',
       'requestId', 'collectionId', 'historyId',
       'multipartParts', 'binaryFile',
+      'dirty', 'options',
+    ]);
+
+    const dirtyTriggerFields = new Set([
+      'method', 'url', 'headers', 'params', 'body', 'bodyType',
+      'authType', 'authConfig', 'preRequestScript', 'postResponseScript',
     ]);
 
     const tabUpdates = {};
@@ -142,14 +150,18 @@ export const store = {
       const tab = this.getActiveTab();
       if (tab) {
         Object.assign(tab, tabUpdates);
+        // Mark dirty for saved requests when config fields change
+        if (tab.requestId && !tabUpdates.dirty && Object.keys(tabUpdates).some(k => dirtyTriggerFields.has(k))) {
+          tab.dirty = true;
+        }
       }
     }
 
     this.emit('change', this.state);
     if (Object.keys(tabUpdates).length > 0) {
       this.emit('tab:update', this.getActiveTab());
-      // Tab bar only needs to re-render when title (method/url) changes
-      if ('method' in tabUpdates || 'url' in tabUpdates) {
+      // Tab bar only needs to re-render when title (method/url) changes or dirty state changes
+      if ('method' in tabUpdates || 'url' in tabUpdates || 'dirty' in tabUpdates) {
         this.emit('tab:title-change', this.getActiveTab());
       }
     }

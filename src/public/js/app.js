@@ -23,6 +23,7 @@ import './components/collection-var-editor.js';
 import './components/variable-autocomplete.js';
 import './components/cookie-manager.js';
 import './components/cookie-tab.js';
+import './components/request-options.js';
 
 // Close modal on overlay click
 document.getElementById('modal-overlay').addEventListener('click', (e) => {

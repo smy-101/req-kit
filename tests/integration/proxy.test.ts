@@ -39,6 +39,13 @@ describe('Proxy Routes Integration', () => {
       const body = await c.req.text();
       return c.json({ method: 'POST', data: body });
     });
+    targetApp.get('/slow', async (c) => {
+      await Bun.sleep(5000);
+      return c.json({ slow: true });
+    });
+    targetApp.get('/redirect', (c) => {
+      return c.redirect(`${c.req.query('to') || '/get'}`, 301);
+    });
     server = Bun.serve({ port: 0, fetch: targetApp.fetch });
     targetUrl = `http://localhost:${server.port}`;
   });
@@ -357,6 +364,54 @@ describe('Proxy Routes Integration', () => {
       expect(res.status).toBe(200);
       expect(res.headers.get('Content-Type')).toBe('text/event-stream');
       // No script_tests in SSE mode — just verify it doesn't crash
+    });
+  });
+
+  describe('Custom timeout', () => {
+    test('short timeout on slow endpoint returns 504', async () => {
+      const res = await app.request('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `${targetUrl}/slow`,
+          method: 'GET',
+	          timeout: 1000,
+        }),
+      });
+      expect(res.status).toBe(504);
+      const data = await res.json();
+      expect(data.error).toBe('请求超时');
+    });
+  });
+
+  describe('Redirect control', () => {
+    test('follow_redirects: true follows redirect (default)', async () => {
+      const res = await app.request('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `${targetUrl}/redirect`,
+          method: 'GET',
+        }),
+      });
+      expect(res.status).toBe(200);
+      const data: any = await res.json();
+      expect(data.status).toBe(200);
+    });
+
+    test('follow_redirects: false returns redirect response', async () => {
+      const res = await app.request('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `${targetUrl}/redirect`,
+          method: 'GET',
+          follow_redirects: false,
+        }),
+      });
+      expect(res.status).toBe(200);
+      const data: any = await res.json();
+      expect(data.status).toBe(301);
     });
   });
 });

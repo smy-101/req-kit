@@ -34,6 +34,12 @@ urlInput.addEventListener('input', () => {
 
 // Send button
 sendBtn.addEventListener('click', async () => {
+  // If request is in-flight, cancel it
+  if (sendBtn.dataset.loading === 'true') {
+    api.abortCurrent();
+    return;
+  }
+
   // Flush all pending input debounce to ensure store is up-to-date
   InputDebounce.flush();
   store.setState({ url: urlInput.value });
@@ -53,9 +59,9 @@ sendBtn.addEventListener('click', async () => {
     if (p.enabled && p.key) params[p.key] = p.value;
   }
 
-  sendBtn.disabled = true;
+  sendBtn.disabled = false;
   sendBtn.dataset.loading = 'true';
-  sendBtn.innerHTML = '<svg class="send-spinner" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Sending';
+  sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Cancel';
 
   store.emit('request:start');
 
@@ -82,6 +88,8 @@ sendBtn.addEventListener('click', async () => {
       environment_id: store.getState().activeEnv,
       collection_id: tab.collectionId,
       runtime_vars: store.getState().runtimeVars,
+      timeout: tab.options?.timeout,
+      follow_redirects: tab.options?.followRedirects,
     });
 
     // 合并脚本返回的 runtime 变量
@@ -105,7 +113,11 @@ sendBtn.addEventListener('click', async () => {
       refreshCookieCount();
     }
   } catch (err) {
-    if (err.name === 'AbortError') return; // 被取消的请求，静默忽略
+    if (err.name === 'AbortError') {
+      store.setState({ response: { error: '请求已取消', cancelled: true } });
+      store.emit('request:cancel');
+      return;
+    }
     store.setState({ response: { error: err.message } });
     store.emit('request:error', err);
   } finally {

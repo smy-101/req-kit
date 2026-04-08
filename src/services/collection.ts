@@ -158,6 +158,34 @@ export class CollectionService {
     return result.changes > 0;
   }
 
+  duplicateRequest(requestId: number): SavedRequest | null {
+    const row = this.db.queryOne<SavedRequest>(
+      'SELECT * FROM saved_requests WHERE id = ?',
+      [requestId]
+    );
+    if (!row) return null;
+
+    const result = this.db.run(
+      `INSERT INTO saved_requests (collection_id, name, method, url, headers, params, body, body_type, auth_type, auth_config, pre_request_script, post_response_script)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        row.collection_id,
+        row.name + ' (副本)',
+        row.method,
+        row.url,
+        row.headers,
+        row.params,
+        row.body,
+        row.body_type,
+        row.auth_type,
+        row.auth_config,
+        row.pre_request_script,
+        row.post_response_script,
+      ]
+    );
+    return { ...row, id: result.lastInsertRowid, name: row.name + ' (副本)' };
+  }
+
   private getDescendantIds(parentId: number): number[] {
     const children = this.db.query<{ id: number }>(
       'SELECT id FROM collections WHERE parent_id = ?',

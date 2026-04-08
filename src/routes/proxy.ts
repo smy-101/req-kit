@@ -135,6 +135,8 @@ export function createProxyRoutes(
       params,
       body: proxyBody,
       stream: body.stream,
+      timeout: body.timeout,
+      follow_redirects: body.follow_redirects,
     };
 
     // Serialize body for history (multipart/binary store original JSON)

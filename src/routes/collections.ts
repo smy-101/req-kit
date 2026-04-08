@@ -72,6 +72,13 @@ export function createCollectionRoutes(collectionService: CollectionService, var
     return c.json({ success: true });
   });
 
+  router.post('/api/collections/requests/:id/duplicate', (c) => {
+    const requestId = parseInt(c.req.param('id'));
+    const duplicated = collectionService.duplicateRequest(requestId);
+    if (!duplicated) return c.json({ error: '请求不存在' }, 404);
+    return c.json(duplicated, 201);
+  });
+
   // 集合变量端点
   if (variableService) {
     router.get('/api/collections/:id/variables', (c) => {
