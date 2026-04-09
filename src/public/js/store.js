@@ -18,6 +18,9 @@ function _createEmptyTab() {
     response: null,
     multipartParts: [{ key: '', type: 'text', value: '' }],
     binaryFile: null,
+    graphqlQuery: '',
+    graphqlVariables: '',
+    graphqlOperationName: '',
     requestId: null,
     collectionId: null,
     historyId: null,
@@ -140,12 +143,14 @@ export const store = {
       'authType', 'authConfig', 'preRequestScript', 'postResponseScript', 'scriptTests', 'response',
       'requestId', 'collectionId', 'historyId',
       'multipartParts', 'binaryFile',
+      'graphqlQuery', 'graphqlVariables', 'graphqlOperationName',
       'dirty', 'options',
     ]);
 
     const dirtyTriggerFields = new Set([
       'method', 'url', 'headers', 'params', 'body', 'bodyType',
       'authType', 'authConfig', 'preRequestScript', 'postResponseScript',
+      'graphqlQuery', 'graphqlVariables', 'graphqlOperationName',
     ]);
 
     const tabUpdates = {};

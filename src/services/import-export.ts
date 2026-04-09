@@ -159,7 +159,14 @@ export class ImportExportService {
 
         let body: string | undefined;
         let bodyType: string | undefined;
-        if (req.body?.raw) {
+        if (req.body?.mode === 'graphql') {
+          // Postman GraphQL: { query, variables, operationName }
+          const gqlObj: Record<string, string> = { query: req.body.graphql?.query || '' };
+          if (req.body.graphql?.variables) gqlObj.variables = req.body.graphql.variables;
+          if (req.body.graphql?.operationName) gqlObj.operationName = req.body.graphql.operationName;
+          body = JSON.stringify(gqlObj);
+          bodyType = 'graphql';
+        } else if (req.body?.raw) {
           body = req.body.raw;
         } else if (req.body?.mode === 'formdata' && Array.isArray(req.body.formdata)) {
           const parts = req.body.formdata.map((f: any) => {
@@ -262,6 +269,13 @@ export class ImportExportService {
           } catch {
             bodyObj = { mode: 'raw', raw: req.body };
           }
+        } else if (req.body_type === 'graphql' && req.body) {
+          try {
+            const parsed = JSON.parse(req.body);
+            bodyObj = { mode: 'graphql', graphql: { query: parsed.query || '', variables: parsed.variables || '', operationName: parsed.operationName || '' } };
+          } catch {
+            bodyObj = { mode: 'raw', raw: req.body };
+          }
         } else if (req.body) {
           bodyObj = { mode: 'raw', raw: req.body };
         }
@@ -318,6 +332,11 @@ export class ImportExportService {
       try {
         const parsed = JSON.parse(req.body);
         curl += ` --data-binary @${parsed.filename || 'data.bin'}`;
+      } catch {}
+    } else if (req.body_type === 'graphql' && req.body) {
+      try {
+        const parsed = JSON.parse(req.body);
+        if (parsed.query) curl += ` -d '${JSON.stringify(parsed)}'`;
       } catch {}
     } else if (req.body) {
       curl += ` -d '${req.body}'`;

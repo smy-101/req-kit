@@ -267,6 +267,116 @@ describe('Proxy Routes Integration', () => {
     });
   });
 
+  describe('GraphQL body template replacement', () => {
+    let envId: number;
+
+    beforeAll(() => {
+      const env = envService.createEnvironment('GraphQLEnv');
+      envId = env.id!;
+      envService.replaceVariables(envId, [
+        { key: 'userId', value: '42', enabled: true },
+      ]);
+      variableService.replaceGlobal([
+        { key: 'token', value: 'abc123', enabled: true },
+      ]);
+    });
+
+    test('sends GraphQL body with parsed variables object', async () => {
+      const graphqlBody = JSON.stringify({
+        query: 'query { users { id name } }',
+        variables: { limit: 10 },
+      });
+      const res = await app.request('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `${targetUrl}/post`,
+          method: 'POST',
+          body: graphqlBody,
+          body_type: 'graphql',
+        }),
+      });
+      expect(res.status).toBe(200);
+      const data: any = await res.json();
+      const received = JSON.parse(data.body);
+      const parsedReceived = JSON.parse(received.data);
+      expect(parsedReceived.query).toBe('query { users { id name } }');
+      expect(parsedReceived.variables).toEqual({ limit: 10 });
+    });
+
+    test('replaces template variables in GraphQL variables (object format)', async () => {
+      const graphqlBody = JSON.stringify({
+        query: 'query { user(id: $userId) { name } }',
+        variables: { userId: '{{userId}}', token: '{{token}}' },
+      });
+      const res = await app.request('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `${targetUrl}/post`,
+          method: 'POST',
+          body: graphqlBody,
+          body_type: 'graphql',
+          environment_id: envId,
+        }),
+      });
+      expect(res.status).toBe(200);
+      const data: any = await res.json();
+      const received = JSON.parse(data.body);
+      const parsedReceived = JSON.parse(received.data);
+      // variables should be resolved
+      expect(parsedReceived.variables.userId).toBe('42');
+      expect(parsedReceived.variables.token).toBe('abc123');
+      // query should NOT be replaced (contains {{ }} syntax but untouched)
+      expect(parsedReceived.query).toBe('query { user(id: $userId) { name } }');
+    });
+
+    test('replaces template variables in GraphQL variables (string format, backward compat)', async () => {
+      const graphqlBody = JSON.stringify({
+        query: 'query { user(id: $id) { name } }',
+        variables: '{"id": "{{userId}}"}',
+      });
+      const res = await app.request('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `${targetUrl}/post`,
+          method: 'POST',
+          body: graphqlBody,
+          body_type: 'graphql',
+          environment_id: envId,
+        }),
+      });
+      expect(res.status).toBe(200);
+      const data: any = await res.json();
+      const received = JSON.parse(data.body);
+      const parsedReceived = JSON.parse(received.data);
+      expect(parsedReceived.variables.id).toBe('42');
+    });
+
+    test('omits variables field when empty', async () => {
+      const graphqlBody = JSON.stringify({
+        query: '{ users { id } }',
+      });
+      const res = await app.request('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `${targetUrl}/post`,
+          method: 'POST',
+          body: graphqlBody,
+          body_type: 'graphql',
+        }),
+      });
+      expect(res.status).toBe(200);
+      const data: any = await res.json();
+      const received = JSON.parse(data.body);
+      const parsedReceived = JSON.parse(received.data);
+      expect(parsedReceived.query).toBe('{ users { id } }');
+      expect(parsedReceived.variables).toBeUndefined();
+    });
+  });
+
   describe('Post-response script', () => {
     test('executes post-response script and returns script_tests', async () => {
       const res = await app.request('/api/proxy', {

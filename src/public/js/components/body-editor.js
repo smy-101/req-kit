@@ -17,12 +17,20 @@ container.innerHTML = `
       <option value="form">Form URL Encoded</option>
       <option value="multipart">Multipart Form Data</option>
       <option value="binary">Binary</option>
+      <option value="graphql">GraphQL</option>
       <option value="none">None</option>
     </select>
   </div>
   <textarea id="body-textarea" placeholder="Request body..."></textarea>
   <div id="multipart-editor" class="multipart-editor hidden"></div>
   <div id="binary-editor" class="binary-editor hidden"></div>
+  <div id="graphql-editor" class="graphql-editor hidden">
+    <textarea id="graphql-query" class="body-textarea" placeholder="GraphQL Query..." spellcheck="false"></textarea>
+    <div class="graphql-meta">
+      <input type="text" id="graphql-operation-name" placeholder="Operation Name (可选)" />
+      <textarea id="graphql-variables" class="body-textarea" placeholder='{"key": "value"}' spellcheck="false"></textarea>
+    </div>
+  </div>
 `;
 
 const textarea = document.getElementById('body-textarea');
@@ -30,12 +38,18 @@ const formatBtn = document.getElementById('body-format-btn');
 const typeSelect = document.getElementById('body-type-select');
 const multipartEditor = document.getElementById('multipart-editor');
 const binaryEditor = document.getElementById('binary-editor');
+const graphqlEditor = document.getElementById('graphql-editor');
+const graphqlQuery = document.getElementById('graphql-query');
+const graphqlVariables = document.getElementById('graphql-variables');
+const graphqlOperationName = document.getElementById('graphql-operation-name');
 
 function renderBodyEditor(type) {
-  textarea.classList.toggle('hidden', type === 'multipart' || type === 'binary' || type === 'none');
+  textarea.classList.toggle('hidden', type === 'multipart' || type === 'binary' || type === 'none' || type === 'graphql');
   multipartEditor.classList.toggle('hidden', type !== 'multipart');
   binaryEditor.classList.toggle('hidden', type !== 'binary');
-  formatBtn.classList.toggle('hidden', type !== 'json');
+  graphqlEditor.classList.toggle('hidden', type !== 'graphql');
+  formatBtn.classList.toggle('hidden', type !== 'json' && type !== 'graphql');
+  formatBtn.textContent = type === 'graphql' ? 'Format Variables' : 'Format JSON';
 
   if (type === 'multipart') {
     renderMultipartEditor();
@@ -272,6 +286,9 @@ function restoreFromTab() {
   if (!tab) return;
   textarea.value = tab.body || '';
   typeSelect.value = tab.bodyType || 'json';
+  graphqlQuery.value = tab.graphqlQuery || '';
+  graphqlVariables.value = tab.graphqlVariables || '';
+  graphqlOperationName.value = tab.graphqlOperationName || '';
   renderBodyEditor(tab.bodyType || 'json');
 }
 
@@ -280,6 +297,24 @@ restoreFromTab();
 textarea.addEventListener('input', () => {
   InputDebounce.schedule('body', () => {
     store.setState({ body: textarea.value });
+  });
+});
+
+graphqlQuery.addEventListener('input', () => {
+  InputDebounce.schedule('graphqlQuery', () => {
+    store.setState({ graphqlQuery: graphqlQuery.value });
+  });
+});
+
+graphqlVariables.addEventListener('input', () => {
+  InputDebounce.schedule('graphqlVariables', () => {
+    store.setState({ graphqlVariables: graphqlVariables.value });
+  });
+});
+
+graphqlOperationName.addEventListener('input', () => {
+  InputDebounce.schedule('graphqlOperationName', () => {
+    store.setState({ graphqlOperationName: graphqlOperationName.value });
   });
 });
 
@@ -296,6 +331,18 @@ typeSelect.addEventListener('change', () => {
 });
 
 formatBtn.addEventListener('click', () => {
+  const tab = store.getActiveTab();
+  if (tab?.bodyType === 'graphql') {
+    try {
+      const parsed = JSON.parse(graphqlVariables.value);
+      graphqlVariables.value = JSON.stringify(parsed, null, 2);
+      store.setState({ graphqlVariables: graphqlVariables.value });
+      Toast.success('Variables JSON formatted');
+    } catch (e) {
+      Toast.error('Invalid JSON: ' + e.message);
+    }
+    return;
+  }
   try {
     const parsed = JSON.parse(textarea.value);
     textarea.value = JSON.stringify(parsed, null, 2);

@@ -1559,6 +1559,45 @@ body {
   background: var(--bg-4);
 }
 
+/* ── GraphQL Editor ─────────────────────────── */
+.graphql-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.graphql-editor > .body-textarea {
+  min-height: 180px;
+  font-family: var(--font-mono);
+}
+
+.graphql-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.graphql-meta > input {
+  background: var(--bg-2);
+  border: 1px solid var(--border-0);
+  color: var(--text-1);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-family: var(--font-ui);
+  outline: none;
+  transition: border-color 140ms var(--ease);
+}
+
+.graphql-meta > input:focus {
+  border-color: var(--accent);
+}
+
+.graphql-meta > .body-textarea {
+  min-height: 80px;
+  font-family: var(--font-mono);
+}
+
 .hidden { display: none !important; }
 
 

@@ -76,6 +76,17 @@ function resolveTemplateVariables(
           part.value = variableService.resolveVariables(part.value, resolveContext);
         }
       }
+    } else if (input.body_type === 'graphql' && typeof bodyStr === 'string') {
+      // GraphQL: 仅对 variables 字段做模板替换，query 不替换
+      try {
+        const parsed = JSON.parse(bodyStr);
+        if (parsed.variables) {
+          const varsStr = typeof parsed.variables === 'string' ? parsed.variables : JSON.stringify(parsed.variables);
+          const resolved = variableService.resolveVariables(varsStr, resolveContext);
+          try { parsed.variables = JSON.parse(resolved); } catch { parsed.variables = resolved; }
+        }
+        bodyStr = JSON.stringify(parsed);
+      } catch {}
     } else if (input.body_type !== 'binary' && typeof bodyStr === 'string') {
       bodyStr = variableService.resolveVariables(bodyStr, resolveContext);
     }
@@ -118,6 +129,9 @@ function buildProxyBody(
   } else {
     proxyBody = bodyStr as string | undefined;
     originalBodyForHistory = bodyStr;
+    if (bodyType === 'graphql' && !headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
   }
 
   return { proxyBody, originalBodyForHistory };

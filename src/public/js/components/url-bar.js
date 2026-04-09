@@ -72,6 +72,24 @@ sendBtn.addEventListener('click', async () => {
       reqBody = { parts: tab.multipartParts || [] };
     } else if (tab.bodyType === 'binary') {
       reqBody = tab.binaryFile || undefined;
+    } else if (tab.bodyType === 'graphql') {
+      // 序列化 GraphQL body：仅对 variables 做模板替换，query 不替换
+      const graphqlBody: Record<string, string> = { query: tab.graphqlQuery || '' };
+      if (tab.graphqlVariables?.trim()) {
+        try {
+          graphqlBody.variables = JSON.parse(tab.graphqlVariables.trim());
+        } catch {
+          graphqlBody.variables = tab.graphqlVariables.trim();
+        }
+      }
+      if (tab.graphqlOperationName?.trim()) {
+        graphqlBody.operationName = tab.graphqlOperationName.trim();
+      }
+      reqBody = JSON.stringify(graphqlBody);
+      // 确保 Content-Type 为 application/json
+      if (!headers['Content-Type']) {
+        headers['Content-Type'] = 'application/json';
+      }
     }
 
     const data = await api.sendRequest({

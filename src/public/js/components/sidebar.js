@@ -292,6 +292,14 @@ function loadRequest(req, collectionId) {
       tabData.binaryFile = { data: parsed.data, filename: parsed.filename, contentType: parsed.contentType };
       tabData.body = '';
     } catch (e) { console.warn('Failed to parse binary body:', e); }
+  } else if (req.body_type === 'graphql' && req.body) {
+    try {
+      const parsed = JSON.parse(req.body);
+      tabData.graphqlQuery = parsed.query || '';
+      tabData.graphqlVariables = parsed.variables || '';
+      tabData.graphqlOperationName = parsed.operationName || '';
+      tabData.body = '';
+    } catch (e) { console.warn('Failed to parse graphql body:', e); }
   }
 
   // Create a new tab with the request data
@@ -427,13 +435,19 @@ function kvToArray(rows) {
   return obj;
 }
 
-// Serialize body for saving (multipart/binary stored as JSON)
+// Serialize body for saving (multipart/binary/graphql stored as JSON)
 function serializeBody(tab) {
   if (tab.bodyType === 'multipart') {
     return JSON.stringify({ parts: tab.multipartParts || [] });
   }
   if (tab.bodyType === 'binary' && tab.binaryFile) {
     return JSON.stringify(tab.binaryFile);
+  }
+  if (tab.bodyType === 'graphql') {
+    const obj = { query: tab.graphqlQuery || '' };
+    if (tab.graphqlVariables?.trim()) obj.variables = tab.graphqlVariables.trim();
+    if (tab.graphqlOperationName?.trim()) obj.operationName = tab.graphqlOperationName.trim();
+    return JSON.stringify(obj);
   }
   return tab.body;
 }
