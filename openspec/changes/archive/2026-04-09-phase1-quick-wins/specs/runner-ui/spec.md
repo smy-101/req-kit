@@ -1,8 +1,4 @@
-## Purpose
-
-Runner panel UI for displaying real-time progress and results when running a collection of requests sequentially.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: 运行器面板 UI
 

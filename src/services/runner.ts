@@ -22,9 +22,17 @@ export interface RunnerRequestItem {
   collection_id?: number;
 }
 
+export interface RetryEvent {
+  index: number;
+  attempt: number;
+  maxRetries: number;
+  reason: string;
+}
+
 export interface RunnerCallbacks {
   onStart: (totalRequests: number) => void;
   onRequestStart: (index: number, name: string, method: string, url: string) => void;
+  onRequestRetry: (data: RetryEvent) => void;
   onRequestComplete: (data: {
     index: number;
     name: string;
@@ -37,6 +45,7 @@ export interface RunnerCallbacks {
     scriptLogs?: string[];
     postScriptLogs?: string[];
     error?: string;
+    retryCount: number;
   }) => void;
   onDone: (data: { passed: number; failed: number; total: number; totalTime: number; stopped?: boolean }) => void;
 }
@@ -106,7 +115,9 @@ export class RunnerService {
     collectionId: number,
     environmentId: number | undefined,
     callbacks: RunnerCallbacks,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    retryCount: number = 0,
+    retryDelayMs: number = 1000
   ): Promise<void> {
     // 获取完整集合树，找到目标集合
     const tree = this.collectionService.getTree();
@@ -174,7 +185,35 @@ export class RunnerService {
         environment_id: environmentId,
       };
 
-      const result = await executeRequestPipeline(input, this.services);
+      // 执行请求（含重试逻辑）
+      let result = await executeRequestPipeline(input, this.services);
+      let actualRetryCount = 0;
+
+      // 判断是否应该重试：网络错误（retryable 标记）或 HTTP 5xx
+      // 脚本错误（前置/后置脚本异常）和 HTTP 4xx 不重试
+      const shouldRetry = (r: PipelineResult): boolean => {
+        if (r.retryable) return true;
+        // !r.error 确保仅对纯 HTTP 5xx 响应重试；
+        // 如果 error 已设置（如后置脚本断言失败），即使状态码为 5xx 也不重试，
+        // 避免在脚本层错误上无意义地重复请求。
+        if (!r.error && r.status && r.status >= 500) return true;
+        return false;
+      };
+
+      while (actualRetryCount < retryCount && shouldRetry(result)) {
+        actualRetryCount++;
+        callbacks.onRequestRetry({
+          index: i,
+          attempt: actualRetryCount,
+          maxRetries: retryCount,
+          reason: result.error || `HTTP ${result.status}`,
+        });
+        // 等待重试间隔
+        await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+        // 检查是否已中止
+        if (signal?.aborted) break;
+        result = await executeRequestPipeline(input, this.services);
+      }
 
       // 累积运行时变量
       if (result.scriptVariables) {
@@ -210,6 +249,7 @@ export class RunnerService {
         scriptLogs: result.scriptLogs,
         postScriptLogs: result.postScriptLogs,
         error: result.error,
+        retryCount: actualRetryCount,
       });
     }
 

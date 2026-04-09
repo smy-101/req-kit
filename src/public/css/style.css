@@ -39,6 +39,8 @@
   --accent-bg-md: rgba(229, 168, 25, 0.14);
   --accent-border: rgba(229, 168, 25, 0.22);
   --accent-glow: rgba(229, 168, 25, 0.06);
+  --accent-edge-start: rgba(229, 168, 25, 0.08);
+  --accent-edge-end: rgba(229, 168, 25, 0.04);
 
   /* Semantic Colors */
   --green: #3DD68C;
@@ -91,11 +93,157 @@
   --shadow-glow: 0 0 30px -5px rgba(229, 168, 25, 0.15);
   --shadow-inner: inset 0 1px 2px rgba(0,0,0,0.2);
 
+  /* Overlay & misc */
+  --overlay-bg: rgba(6, 8, 12, 0.75);
+  --accent-text: #0E0D0A;
+  --hover-subtle: rgba(255, 255, 255, 0.04);
+  --toast-success-bg: rgba(18, 28, 20, 0.92);
+  --toast-error-bg: rgba(28, 18, 18, 0.92);
+  --toast-info-bg: rgba(18, 22, 28, 0.92);
+
+  /* Reusable tints */
+  --tint-black-10: rgba(0,0,0,0.1);
+  --tint-black-08: rgba(0,0,0,0.08);
+  --tint-black-12: rgba(0,0,0,0.12);
+  --tint-black-40: rgba(0,0,0,0.4);
+  --tint-black-30: rgba(0,0,0,0.3);
+  --tint-black-05: rgba(0,0,0,0.05);
+  --tint-black-03: rgba(0,0,0,0.03);
+  --tint-accent-25: rgba(229, 168, 25, 0.25);
+  --tint-accent-20: rgba(229, 168, 25, 0.20);
+  --tint-accent-35: rgba(229, 168, 25, 0.35);
+  --tint-accent-05: rgba(229, 168, 25, 0.05);
+  --tint-accent-30: rgba(229, 168, 25, 0.30);
+  --tint-accent-40: rgba(229, 168, 25, 0.40);
+  --tint-red-12: rgba(239,68,68,0.12);
+  --tint-red-20: rgba(240,104,104,0.2);
+  --tint-red-18: rgba(240,104,104,0.18);
+  --tint-red-25: rgba(240,104,104,0.25);
+  --tint-red-35: rgba(240,104,104,0.35);
+  --tint-red-15: rgba(240,104,104,0.15);
+  --tint-green-25: rgba(61,214,140,0.25);
+  --tint-green-18: rgba(61,214,140,0.18);
+  --tint-green-15: rgba(76,175,80,0.15);
+  --tint-yellow-25: rgba(240,190,48,0.25);
+  --tint-yellow-35: rgba(240,190,48,0.35);
+  --tint-yellow-70: rgba(240,190,48,0.7);
+  --tint-yellow-15: rgba(240,190,48,0.15);
+  --tint-yellow-bg-15: rgba(255,193,7,0.15);
+  --tint-blue-25: rgba(92,160,240,0.25);
+  --tint-blue-18: rgba(92,160,240,0.18);
+  --tint-white-03: rgba(255,255,255,0.03);
+
   /* Layout */
 }
 
+/* ── Light Theme ───────────────────────────── */
+[data-theme="light"] {
+  /* Backgrounds — warm off-whites */
+  --bg-0: #F5F5F4;
+  --bg-1: #FFFFFF;
+  --bg-2: #F0F0EE;
+  --bg-3: #E8E8E5;
+  --bg-4: #DEDEDA;
+  --bg-5: #D0D0CC;
+  --bg-glass: rgba(255, 255, 255, 0.85);
 
-/* ── Reset ────────────────────────────────── */
+  /* Borders — warm grays */
+  --border-0: #E2E2DE;
+  --border-1: #D0D0CC;
+  --border-2: #B8B8B2;
+
+  /* Text — deep charcoals */
+  --text-0: #1A1A1A;
+  --text-1: #3A3A3A;
+  --text-2: #5A5A5A;
+  --text-3: #8A8A8A;
+  --text-4: #ABABAB;
+
+  /* Accent — amber/gold (slightly deeper for light bg) */
+  --accent: #C98F0A;
+  --accent-hover: #A87808;
+  --accent-dim: #E5A819;
+  --accent-bg: rgba(201, 143, 10, 0.06);
+  --accent-bg-md: rgba(201, 143, 10, 0.1);
+  --accent-border: rgba(201, 143, 10, 0.18);
+  --accent-glow: rgba(201, 143, 10, 0.04);
+  --accent-edge-start: rgba(201, 143, 10, 0.06);
+  --accent-edge-end: rgba(201, 143, 10, 0.03);
+
+  /* Semantic Colors */
+  --green: #1A9A5A;
+  --green-bright: #15804A;
+  --green-bg: rgba(26, 154, 90, 0.08);
+  --green-bg-md: rgba(26, 154, 90, 0.14);
+  --red: #D04040;
+  --red-bright: #B03030;
+  --red-bg: rgba(208, 64, 64, 0.08);
+  --red-bg-md: rgba(208, 64, 64, 0.14);
+  --yellow: #C09520;
+  --yellow-bright: #A07A18;
+  --yellow-bg: rgba(192, 149, 32, 0.08);
+  --yellow-bg-md: rgba(192, 149, 32, 0.14);
+  --blue: #3070C0;
+  --blue-bright: #2860A0;
+  --blue-bg: rgba(48, 112, 192, 0.08);
+  --blue-bg-md: rgba(48, 112, 192, 0.14);
+  --orange: #D07020;
+  --orange-bright: #B06018;
+  --orange-bg: rgba(208, 112, 32, 0.08);
+  --orange-bg-md: rgba(208, 112, 32, 0.14);
+  --purple: #7060C0;
+  --purple-bg: rgba(112, 96, 192, 0.08);
+  --cyan: #2898A8;
+  --cyan-bg: rgba(40, 152, 168, 0.08);
+
+  /* Shadows — lighter for light theme */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-xl: 0 20px 60px rgba(0,0,0,0.12), 0 8px 20px rgba(0,0,0,0.08);
+  --shadow-glow: 0 0 30px -5px rgba(201, 143, 10, 0.1);
+  --shadow-inner: inset 0 1px 2px rgba(0,0,0,0.06);
+
+  /* Overlay & misc */
+  --overlay-bg: rgba(0, 0, 0, 0.35);
+  --accent-text: #FFFFFF;
+  --hover-subtle: rgba(0, 0, 0, 0.04);
+  --toast-success-bg: rgba(230, 248, 238, 0.95);
+  --toast-error-bg: rgba(252, 232, 232, 0.95);
+  --toast-info-bg: rgba(232, 242, 252, 0.95);
+
+  /* Reusable tints */
+  --tint-black-10: rgba(0,0,0,0.06);
+  --tint-black-08: rgba(0,0,0,0.05);
+  --tint-black-12: rgba(0,0,0,0.08);
+  --tint-black-40: rgba(0,0,0,0.15);
+  --tint-black-30: rgba(0,0,0,0.1);
+  --tint-black-05: rgba(0,0,0,0.04);
+  --tint-black-03: rgba(0,0,0,0.02);
+  --tint-accent-25: rgba(201, 143, 10, 0.2);
+  --tint-accent-20: rgba(201, 143, 10, 0.15);
+  --tint-accent-35: rgba(201, 143, 10, 0.25);
+  --tint-accent-05: rgba(201, 143, 10, 0.03);
+  --tint-accent-30: rgba(201, 143, 10, 0.18);
+  --tint-accent-40: rgba(201, 143, 10, 0.3);
+  --tint-red-12: rgba(208, 64, 64, 0.1);
+  --tint-red-20: rgba(208, 64, 64, 0.15);
+  --tint-red-18: rgba(208, 64, 64, 0.12);
+  --tint-red-25: rgba(208, 64, 64, 0.18);
+  --tint-red-35: rgba(208, 64, 64, 0.25);
+  --tint-red-15: rgba(208, 64, 64, 0.12);
+  --tint-green-25: rgba(26, 154, 90, 0.2);
+  --tint-green-18: rgba(26, 154, 90, 0.12);
+  --tint-green-15: rgba(26, 154, 90, 0.1);
+  --tint-yellow-25: rgba(192, 149, 32, 0.2);
+  --tint-yellow-35: rgba(192, 149, 32, 0.3);
+  --tint-yellow-70: rgba(192, 149, 32, 0.6);
+  --tint-yellow-15: rgba(192, 149, 32, 0.12);
+  --tint-yellow-bg-15: rgba(192, 149, 32, 0.12);
+  --tint-blue-25: rgba(48, 112, 192, 0.2);
+  --tint-blue-18: rgba(48, 112, 192, 0.12);
+  --tint-white-03: rgba(0,0,0,0.02);
+}
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -127,7 +275,7 @@ body {
   width: var(--sidebar-w);
   min-width: var(--sidebar-w);
   background:
-    linear-gradient(180deg, var(--bg-1) 0%, #12151C 100%);
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
   border-right: 1px solid var(--border-0);
   display: flex;
   flex-direction: column;
@@ -146,10 +294,10 @@ body {
   width: 1px;
   background: linear-gradient(
     180deg,
-    rgba(229, 168, 25, 0.08) 0%,
+    var(--accent-edge-start) 0%,
     transparent 30%,
     transparent 70%,
-    rgba(229, 168, 25, 0.04) 100%
+    var(--accent-edge-end) 100%
   );
   pointer-events: none;
 }
@@ -233,7 +381,7 @@ body {
   gap: 6px;
   padding: 10px 14px;
   border-bottom: 1px solid var(--border-0);
-  background: rgba(0,0,0,0.1);
+  background: var(--tint-black-10);
 }
 
 #active-env {
@@ -292,7 +440,7 @@ body {
   gap: 8px;
   padding: 8px 14px;
   border-bottom: 1px solid var(--border-0);
-  background: rgba(0,0,0,0.08);
+  background: var(--tint-black-08);
 }
 
 .global-var-icon {
@@ -420,7 +568,7 @@ body {
 
 .tree-item:hover .toggle {
   color: var(--text-2);
-  background: rgba(255,255,255,0.04);
+  background: var(--hover-subtle);
 }
 
 .tree-item .icon {
@@ -498,7 +646,7 @@ body {
   background: var(--bg-3);
   border: 1px solid var(--border-0);
   border-radius: var(--radius);
-  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  box-shadow: 0 8px 24px var(--tint-black-40);
   padding: 4px;
   min-width: 120px;
 }
@@ -522,7 +670,7 @@ body {
   color: var(--red);
 }
 .context-menu-item.danger:hover {
-  background: rgba(239,68,68,.12);
+  background: var(--tint-red-12);
 }
 
 
@@ -609,7 +757,7 @@ body {
 /* ── Send Button ──────────────────────────── */
 #send-btn {
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
-  color: #0E0D0A;
+  color: var(--accent-text);
   border: none;
   padding: 10px 32px;
   border-radius: var(--radius);
@@ -622,7 +770,7 @@ body {
   letter-spacing: 0.3px;
   box-shadow:
     var(--shadow-sm),
-    0 0 20px -5px rgba(229, 168, 25, 0.25);
+    0 0 20px -5px var(--tint-accent-25);
 }
 
 #send-btn::after {
@@ -630,7 +778,7 @@ body {
   position: absolute;
   inset: 0;
   border-radius: var(--radius);
-  box-shadow: 0 0 20px 2px rgba(229, 168, 25, 0.2);
+  box-shadow: 0 0 20px 2px var(--tint-accent-20);
   opacity: 0;
   transition: opacity 300ms var(--ease);
   animation: sendPulse 2.5s ease-in-out infinite;
@@ -641,7 +789,7 @@ body {
   transform: translateY(-1px);
   box-shadow:
     var(--shadow-md),
-    0 0 30px -3px rgba(229, 168, 25, 0.35);
+    0 0 30px -3px var(--tint-accent-35);
 }
 
 #send-btn:hover::after {
@@ -652,7 +800,7 @@ body {
   transform: translateY(0) scale(0.98);
   box-shadow:
     var(--shadow-sm),
-    0 0 12px -4px rgba(229, 168, 25, 0.2);
+    0 0 12px -4px var(--tint-accent-20);
   animation: none;
 }
 
@@ -988,7 +1136,7 @@ body {
 .panel-resizer:hover::before {
   background: var(--accent);
   width: 48px;
-  box-shadow: 0 0 8px -1px rgba(229, 168, 25, 0.3);
+  box-shadow: 0 0 8px -1px var(--tint-accent-30);
 }
 
 .panel-resizer:active {
@@ -1125,7 +1273,7 @@ body {
 .kv-row button:hover {
   background: var(--red-bg-md);
   color: var(--red);
-  border-color: rgba(240, 104, 104, 0.2);
+  border-color: var(--tint-red-20);
 }
 
 .kv-row .kv-enabled {
@@ -1511,25 +1659,25 @@ body {
 .status-2xx {
   background: var(--green-bg-md);
   color: var(--green-bright);
-  box-shadow: 0 0 12px -4px rgba(61, 214, 140, 0.25);
+  box-shadow: 0 0 12px -4px var(--tint-green-25);
 }
 
 .status-3xx {
   background: var(--blue-bg-md);
   color: var(--blue-bright);
-  box-shadow: 0 0 12px -4px rgba(92, 160, 240, 0.25);
+  box-shadow: 0 0 12px -4px var(--tint-blue-25);
 }
 
 .status-4xx {
   background: var(--yellow-bg-md);
   color: var(--yellow-bright);
-  box-shadow: 0 0 12px -4px rgba(240, 190, 48, 0.25);
+  box-shadow: 0 0 12px -4px var(--tint-yellow-25);
 }
 
 .status-5xx {
   background: var(--red-bg-md);
   color: var(--red-bright);
-  box-shadow: 0 0 12px -4px rgba(240, 104, 104, 0.25);
+  box-shadow: 0 0 12px -4px var(--tint-red-25);
 }
 
 #response-time { color: var(--text-2); }
@@ -1607,16 +1755,16 @@ body {
   background: var(--bg-3);
 }
 mark.search-highlight {
-  background: rgba(240, 190, 48, 0.35);
+  background: var(--tint-yellow-35);
   color: inherit;
   border-radius: 2px;
   padding: 0 1px;
 }
 mark.search-highlight.search-highlight-current {
-  background: rgba(240, 190, 48, 0.7);
+  background: var(--tint-yellow-70);
 }
 .vline-search-current {
-  background: rgba(240, 190, 48, 0.15);
+  background: var(--tint-yellow-15);
 }
 
 /* ── Response Format Bar ─────────────────── */
@@ -1656,7 +1804,7 @@ mark.search-highlight.search-highlight-current {
 .format-tab.active {
   color: var(--text-1);
   background: var(--bg-0);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+  box-shadow: 0 1px 2px var(--tint-black-12);
 }
 .search-toggle-btn {
   margin-left: auto;
@@ -1685,7 +1833,7 @@ mark.search-highlight.search-highlight-current {
   min-height: 300px;
   border: 1px solid var(--border-0);
   border-radius: var(--radius);
-  background: #fff;
+  background: var(--bg-1);
   margin: 12px 0;
 }
 
@@ -1802,7 +1950,7 @@ mark.search-highlight.search-highlight-current {
 }
 
 .vline:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--hover-subtle);
 }
 
 .vline-num {
@@ -1826,7 +1974,7 @@ mark.search-highlight.search-highlight-current {
 #modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(6, 8, 12, 0.75);
+  background: var(--overlay-bg);
   backdrop-filter: blur(12px) saturate(120%);
   -webkit-backdrop-filter: blur(12px) saturate(120%);
   display: flex;
@@ -1852,8 +2000,8 @@ mark.search-highlight.search-highlight-current {
   overflow-y: auto;
   box-shadow:
     var(--shadow-xl),
-    0 0 0 1px rgba(229, 168, 25, 0.05) inset,
-    0 1px 0 rgba(255, 255, 255, 0.03) inset;
+    0 0 0 1px var(--tint-accent-05) inset,
+    0 1px 0 var(--tint-white-03) inset;
   animation: modalIn 280ms var(--ease-spring);
 }
 
@@ -1902,16 +2050,16 @@ mark.search-highlight.search-highlight-current {
 
 .modal-btn-primary {
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
-  color: #0E0D0A;
+  color: var(--accent-text);
   border: none;
   font-weight: 700;
-  box-shadow: var(--shadow-sm), 0 0 16px -4px rgba(229, 168, 25, 0.3);
+  box-shadow: var(--shadow-sm), 0 0 16px -4px var(--tint-accent-30);
 }
 
 .modal-btn-primary:hover {
   background: linear-gradient(135deg, var(--accent-hover) 0%, var(--accent) 100%);
   transform: translateY(-1px);
-  box-shadow: var(--shadow-md), 0 0 24px -4px rgba(229, 168, 25, 0.4);
+  box-shadow: var(--shadow-md), 0 0 24px -4px var(--tint-accent-40);
 }
 
 .modal-btn-primary:active {
@@ -1938,14 +2086,14 @@ mark.search-highlight.search-highlight-current {
 .modal-btn-danger {
   background: var(--red-bg-md);
   color: var(--red);
-  border: 1px solid rgba(240, 104, 104, 0.2);
+  border: 1px solid var(--tint-red-20);
 }
 
 .modal-btn-danger:hover {
-  background: rgba(240, 104, 104, 0.25);
-  border-color: rgba(240, 104, 104, 0.35);
+  background: var(--tint-red-25);
+  border-color: var(--tint-red-35);
   transform: translateY(-1px);
-  box-shadow: 0 0 12px -4px rgba(240, 104, 104, 0.3);
+  box-shadow: 0 0 12px -4px var(--tint-red-35);
 }
 
 
@@ -2209,12 +2357,12 @@ mark.search-highlight.search-highlight-current {
 
 .toast-close:hover {
   color: var(--text-0);
-  background: rgba(255,255,255,0.06);
+  background: var(--hover-subtle);
 }
 
 .toast-success {
-  background: rgba(18, 28, 20, 0.92);
-  border-color: rgba(61, 214, 140, 0.18);
+  background: var(--toast-success-bg);
+  border-color: var(--tint-green-18);
   color: var(--green);
 }
 
@@ -2224,8 +2372,8 @@ mark.search-highlight.search-highlight-current {
 }
 
 .toast-error {
-  background: rgba(28, 18, 18, 0.92);
-  border-color: rgba(240, 104, 104, 0.18);
+  background: var(--toast-error-bg);
+  border-color: var(--tint-red-18);
   color: var(--red);
 }
 
@@ -2235,8 +2383,8 @@ mark.search-highlight.search-highlight-current {
 }
 
 .toast-info {
-  background: rgba(18, 22, 28, 0.92);
-  border-color: rgba(92, 160, 240, 0.18);
+  background: var(--toast-info-bg);
+  border-color: var(--tint-blue-18);
   color: var(--blue);
 }
 
@@ -2766,7 +2914,7 @@ textarea:focus-visible {
   background: var(--bg-1);
   border: 1px solid var(--border-1);
   border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  box-shadow: 0 8px 32px var(--tint-black-40);
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -2882,7 +3030,7 @@ textarea:focus-visible {
   background: var(--bg-1);
   border: 1px solid var(--border-1);
   border-radius: 6px;
-  box-shadow: 0 4px 16px rgba(0,0,0,.3);
+  box-shadow: 0 4px 16px var(--tint-black-30);
   z-index: 1001;
   padding: 4px 0;
 }
@@ -3443,11 +3591,11 @@ textarea:focus-visible {
   font-weight: 500;
 }
 .cookie-tab-action.cookie-action-added {
-  background: rgba(76, 175, 80, 0.15);
+  background: var(--tint-green-15);
   color: var(--green);
 }
 .cookie-tab-action.cookie-action-updated {
-  background: rgba(255, 193, 7, 0.15);
+  background: var(--tint-yellow-bg-15);
   color: var(--yellow);
 }
 .cookie-tab-details {
@@ -3471,6 +3619,39 @@ textarea:focus-visible {
 /* ── Collection Runner Panel ──────────────── */
 .runner-panel {
   width: 100%;
+}
+
+.runner-config {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  background: var(--bg-2);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-0);
+}
+
+.runner-config-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.runner-config-input {
+  width: 70px;
+  padding: 4px 6px;
+  background: var(--bg-3);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-xs);
+  color: var(--text-1);
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+
+.runner-config-input:disabled {
+  opacity: 0.5;
 }
 
 .runner-header {
@@ -3628,6 +3809,15 @@ textarea:focus-visible {
 
 .runner-result-status.success { color: var(--green); }
 .runner-result-status.error { color: var(--red); }
+.runner-result-status.retry { color: var(--yellow); }
+
+.runner-retry-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--yellow);
+  margin-left: 6px;
+  flex-shrink: 0;
+}
 
 .runner-result-time {
   font-family: var(--font-mono);

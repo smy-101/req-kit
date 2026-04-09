@@ -1,6 +1,7 @@
 // App entry point - import all components and initialize
 import { store } from './store.js';
 import { initPanelResizer } from './utils/panel-resizer.js';
+import { matchShortcut } from './utils/shortcuts.js';
 
 // Components (side-effect imports — they self-register on the store)
 import './components/tab-bar.js';
@@ -11,6 +12,7 @@ import './components/body-editor.js';
 import './components/response-viewer.js';
 import './components/history-panel.js';
 import './components/sidebar.js';
+import { saveAsNewRequest } from './components/sidebar.js';
 import './components/env-manager.js';
 import './components/auth-panel.js';
 import './components/import-export.js';
@@ -25,6 +27,7 @@ import './components/cookie-manager.js';
 import './components/cookie-tab.js';
 import './components/request-options.js';
 import './components/runner-panel.js';
+import './components/theme-switcher.js';
 
 // Close modal on overlay click
 document.getElementById('modal-overlay').addEventListener('click', (e) => {
@@ -35,24 +38,41 @@ document.getElementById('modal-overlay').addEventListener('click', (e) => {
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
-  // Ctrl+Enter to send
-  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-    document.getElementById('send-btn').click();
-  }
-  // Escape to close modals
-  if (e.key === 'Escape') {
-    document.getElementById('modal-overlay').classList.add('hidden');
-  }
-  // Ctrl+W / Cmd+W to close active tab
-  if (e.key === 'w' && (e.ctrlKey || e.metaKey)) {
-    e.preventDefault();
-    const tab = store.getActiveTab();
-    if (tab) store.closeTab(tab.id);
-  }
-  // Ctrl+T to create new tab
-  if (e.key === 't' && (e.ctrlKey || e.metaKey)) {
-    e.preventDefault();
-    store.createTab();
+  const action = matchShortcut(e, e.target?.tagName, e.target?.isContentEditable);
+  if (!action) return;
+
+  switch (action) {
+    case 'save':
+      e.preventDefault();
+      document.getElementById('save-btn').click();
+      break;
+    case 'send':
+      document.getElementById('send-btn').click();
+      break;
+    case 'close-modal':
+      document.getElementById('modal-overlay').classList.add('hidden');
+      break;
+    case 'new-request':
+      e.preventDefault();
+      saveAsNewRequest();
+      break;
+    case 'close-tab':
+      e.preventDefault();
+      const tab = store.getActiveTab();
+      if (tab) store.closeTab(tab.id);
+      break;
+    case 'next-tab':
+      e.preventDefault();
+      store.switchToNextTab();
+      break;
+    case 'prev-tab':
+      e.preventDefault();
+      store.switchToPrevTab();
+      break;
+    case 'new-tab':
+      e.preventDefault();
+      store.createTab();
+      break;
   }
 });
 

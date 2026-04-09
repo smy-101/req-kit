@@ -248,7 +248,7 @@ export const api = {
   },
 
   // Collection Runner
-  runCollection(collectionId, environmentId, callbacks) {
+  runCollection(collectionId, environmentId, callbacks, options = {}) {
     const controller = new AbortController();
     const signal = controller.signal;
 
@@ -257,7 +257,12 @@ export const api = {
         const res = await fetch('/api/runners/run', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ collection_id: collectionId, environment_id: environmentId }),
+          body: JSON.stringify({
+            collection_id: collectionId,
+            environment_id: environmentId,
+            retry_count: options.retryCount ?? 0,
+            retry_delay_ms: options.retryDelayMs ?? 1000,
+          }),
           signal,
         });
         const reader = res.body.getReader();
@@ -280,6 +285,7 @@ export const api = {
               const data = JSON.parse(line.slice(6));
               if (currentEvent === 'runner:start') callbacks.onStart?.(data);
               else if (currentEvent === 'request:start') callbacks.onRequestStart?.(data);
+              else if (currentEvent === 'request:retry') callbacks.onRequestRetry?.(data);
               else if (currentEvent === 'request:complete') callbacks.onRequestComplete?.(data);
               else if (currentEvent === 'runner:done') callbacks.onDone?.(data);
             }

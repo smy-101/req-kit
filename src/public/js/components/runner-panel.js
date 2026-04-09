@@ -11,7 +11,7 @@ export function openRunnerPanel(collectionId, collectionName) {
   const overlay = document.getElementById('modal-overlay');
   const modal = document.getElementById('modal');
   const state = store.getState();
-  const environmentId = state.activeEnvironmentId || undefined;
+  const environmentId = state.activeEnv || undefined;
 
   // 构建 UI
   const panel = document.createElement('div');
@@ -24,6 +24,14 @@ export function openRunnerPanel(collectionId, collectionName) {
         <span>${escapeHtml(collectionName)}</span>
       </div>
       <button class="runner-stop-btn" id="runner-stop-btn">停止</button>
+    </div>
+    <div class="runner-config">
+      <label class="runner-config-label">重试次数
+        <input type="number" id="runner-retry-count" min="0" max="5" value="0" class="runner-config-input">
+      </label>
+      <label class="runner-config-label">重试间隔 (ms)
+        <input type="number" id="runner-retry-delay" min="500" max="10000" step="500" value="1000" class="runner-config-input">
+      </label>
     </div>
     <div class="runner-progress-bar">
       <div class="runner-progress-fill" id="runner-progress-fill"></div>
@@ -49,6 +57,14 @@ export function openRunnerPanel(collectionId, collectionName) {
   const resultsEl = panel.querySelector('#runner-results');
   const summaryEl = panel.querySelector('#runner-summary');
   const stopBtn = panel.querySelector('#runner-stop-btn');
+  const retryCountInput = panel.querySelector('#runner-retry-count');
+  const retryDelayInput = panel.querySelector('#runner-retry-delay');
+
+  // 禁用重试配置（运行时不可更改）
+  function disableConfig() {
+    retryCountInput.disabled = true;
+    retryDelayInput.disabled = true;
+  }
 
   // 停止按钮
   stopBtn.addEventListener('click', () => {
@@ -124,23 +140,36 @@ export function openRunnerPanel(collectionId, collectionName) {
     el.classList.remove('pending', 'running');
     if (data.error) {
       el.classList.add('failed');
-      icon.textContent = '✗';
+      icon.textContent = '❌';
       statusEl.textContent = data.error.includes('超时') ? 'Timeout' : '错误';
       statusEl.className = 'runner-result-status error';
     } else {
       const hasFailedTest = data.tests && Object.values(data.tests).some(v => !v);
       if (hasFailedTest) {
         el.classList.add('failed');
-        icon.textContent = '✗';
+        icon.textContent = '❌';
       } else {
         el.classList.add('passed');
-        icon.textContent = '✓';
+        icon.textContent = '✅';
       }
       statusEl.textContent = data.status != null ? String(data.status) : '';
       statusEl.className = 'runner-result-status ' + (data.status >= 400 ? 'error' : 'success');
     }
 
     timeEl.textContent = data.time != null ? `${data.time}ms` : '';
+
+    // 重试标记
+    const retryCount = data.retryCount || 0;
+    if (retryCount > 0) {
+      const retryBadge = document.createElement('span');
+      retryBadge.className = 'runner-retry-badge';
+      retryBadge.textContent = `\u21BB${retryCount}`;
+      retryBadge.title = `\u91CD\u8BD5\u4E86 ${retryCount} \u6B21`;
+      // 移除旧的重试标记
+      const oldBadge = el.querySelector('.runner-retry-badge');
+      if (oldBadge) oldBadge.remove();
+      timeEl.after(retryBadge);
+    }
 
     const testPass = data.passed || 0;
     const testFail = data.failed || 0;
@@ -184,6 +213,10 @@ export function openRunnerPanel(collectionId, collectionName) {
   }
 
   // 发起运行
+  const retryCount = Math.max(0, Math.min(5, parseInt(retryCountInput.value) || 0));
+  const retryDelayMs = Math.max(500, Math.min(10000, parseInt(retryDelayInput.value) || 1000));
+  disableConfig();
+
   currentRun = api.runCollection(collectionId, environmentId, {
     onStart(data) {
       totalRequests = data.totalRequests;
@@ -199,6 +232,14 @@ export function openRunnerPanel(collectionId, collectionName) {
       // 标记为运行中
       item.el.classList.add('running');
       item.el.querySelector('.runner-result-icon').textContent = '⏳';
+    },
+    onRequestRetry(data) {
+      const item = requestItems[data.index];
+      if (!item) return;
+      const icon = item.el.querySelector('.runner-result-icon');
+      icon.textContent = '\u{1F504}';
+      item.el.querySelector('.runner-result-status').textContent = `\u91CD\u8BD5 ${data.attempt}/${data.maxRetries}`;
+      item.el.querySelector('.runner-result-status').className = 'runner-result-status retry';
     },
     onRequestComplete(data) {
       completedRequests++;
@@ -230,5 +271,5 @@ export function openRunnerPanel(collectionId, collectionName) {
       switchToClose();
       currentRun = null;
     },
-  });
+  }, { retryCount, retryDelayMs });
 }

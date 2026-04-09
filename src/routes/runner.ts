@@ -5,7 +5,7 @@ export function createRunnerRoutes(runnerService: RunnerService) {
   const router = new Hono();
 
   router.post('/api/runners/run', async (c) => {
-    const body = await c.req.json<{ collection_id: number; environment_id?: number }>();
+    const body = await c.req.json<{ collection_id: number; environment_id?: number; retry_count?: number; retry_delay_ms?: number }>();
 
     if (!body.collection_id) {
       return c.json({ error: '缺少必填字段: collection_id' }, 400);
@@ -37,6 +37,9 @@ export function createRunnerRoutes(runnerService: RunnerService) {
               onRequestStart(index, name, method, url) {
                 send('request:start', { index, name, method, url });
               },
+              onRequestRetry(data) {
+                send('request:retry', data);
+              },
               onRequestComplete(data) {
                 // 计算测试通过/失败数
                 let testsPassed = 0;
@@ -59,7 +62,9 @@ export function createRunnerRoutes(runnerService: RunnerService) {
                 controller.close();
               },
             },
-            ac.signal
+            ac.signal,
+            body.retry_count ?? 0,
+            body.retry_delay_ms ?? 1000
           );
         } catch (err: any) {
           send('runner:done', { passed: 0, failed: 0, total: 0, totalTime: 0, error: err.message });

@@ -1,8 +1,4 @@
-## Purpose
-
-Collection runner capability for executing all requests in a collection sequentially, with real-time progress reporting via SSE and inter-request variable passing.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: 集合运行器后端服务
 

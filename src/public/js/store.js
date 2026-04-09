@@ -106,6 +106,23 @@ export const store = {
     this.emit('tab:closed', id);
   },
 
+  // Switch to next/previous tab (circular)
+  switchToNextTab() {
+    const tabs = this.state.tabs;
+    if (tabs.length <= 1) return;
+    const currentIdx = tabs.findIndex(t => t.id === this.state.activeTabId);
+    const nextIdx = (currentIdx + 1) % tabs.length;
+    this.switchTab(tabs[nextIdx].id);
+  },
+
+  switchToPrevTab() {
+    const tabs = this.state.tabs;
+    if (tabs.length <= 1) return;
+    const currentIdx = tabs.findIndex(t => t.id === this.state.activeTabId);
+    const prevIdx = (currentIdx - 1 + tabs.length) % tabs.length;
+    this.switchTab(tabs[prevIdx].id);
+  },
+
   // Find a tab associated with a saved request
   findTabByRequestId(requestId) {
     return this.state.tabs.find(t => t.requestId === requestId) || null;

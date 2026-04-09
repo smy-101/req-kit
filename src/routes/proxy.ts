@@ -38,6 +38,8 @@ export interface PipelineResult {
   postScriptVariables?: Record<string, string>;
   setCookies?: any[];
   error?: string;
+  /** 标记此错误是否可重试（网络超时、不可达等），脚本错误不设置此字段 */
+  retryable?: boolean;
 }
 
 export interface PipelineServices {
@@ -210,12 +212,12 @@ export async function executeRequestPipeline(
     result = await proxyService.sendRequest(proxyReq);
   } catch (err: any) {
     if (err instanceof ProxyTimeoutError) {
-      return { error: '请求超时', scriptLogs, scriptVariables };
+      return { error: '请求超时', scriptLogs, scriptVariables, retryable: true };
     }
     if (err instanceof ProxyUnreachableError) {
-      return { error: '目标服务器不可达', scriptLogs, scriptVariables };
+      return { error: '目标服务器不可达', scriptLogs, scriptVariables, retryable: true };
     }
-    return { error: err.message, scriptLogs, scriptVariables };
+    return { error: err.message, scriptLogs, scriptVariables, retryable: true };
   }
 
   // Step 5: Extract Set-Cookie

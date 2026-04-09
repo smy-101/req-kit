@@ -308,6 +308,88 @@ newColBtn.addEventListener('click', async () => {
   }
 });
 
+// Save request as new (always opens collection selector, regardless of existing requestId)
+export async function saveAsNewRequest() {
+  const tab = store.getActiveTab();
+  if (!tab) return;
+
+  let cols = store.getState().collections;
+  if (cols.length === 0) {
+    const name = await Dialogs.prompt('Create a Collection', 'Collection name');
+    if (!name) return;
+    await api.createCollection(name);
+    await refreshCollections();
+  }
+  cols = store.getState().collections;
+  const items = cols.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+
+  const choice = await new Promise((resolve) => {
+    const overlay = document.getElementById('modal-overlay');
+    const modal = document.getElementById('modal');
+    const dialog = document.createElement('div');
+    dialog.className = 'confirm-dialog';
+    dialog.addEventListener('click', e => e.stopPropagation());
+
+    dialog.innerHTML = `
+      <div class="confirm-dialog-title">Save Request</div>
+      <input type="text" id="save-req-name" class="save-modal-name-input"
+        value="${escapeHtml(tab.method + ' ' + tab.url)}" placeholder="Request name">
+      <select id="save-col-select" class="save-modal-select">
+        ${items}
+      </select>
+      <div class="confirm-dialog-actions save-modal-actions">
+        <button class="modal-btn modal-btn-secondary" id="save-cancel">Cancel</button>
+        <button class="modal-btn modal-btn-primary" id="save-confirm">Save</button>
+      </div>
+    `;
+
+    modal.innerHTML = '';
+    modal.appendChild(dialog);
+    overlay.classList.remove('hidden');
+
+    dialog.querySelector('#save-confirm').onclick = () => {
+      overlay.classList.add('hidden');
+      resolve({
+        collectionId: dialog.querySelector('#save-col-select').value,
+        name: dialog.querySelector('#save-req-name').value.trim(),
+      });
+    };
+    dialog.querySelector('#save-cancel').onclick = () => {
+      overlay.classList.add('hidden');
+      resolve(null);
+    };
+    overlay.onclick = (e) => {
+      if (e.target === overlay) { overlay.classList.add('hidden'); resolve(null); }
+    };
+  });
+
+  if (!choice) return;
+  const col = cols.find(c => c.id == choice.collectionId);
+  if (!col) return;
+
+  const reqName = choice.name || `${tab.method} ${tab.url}`;
+
+  const savedReq = await api.addRequest(col.id, {
+    name: reqName,
+    method: tab.method,
+    url: tab.url,
+    headers: JSON.stringify(kvToArray(tab.headers)),
+    params: JSON.stringify(kvToArray(tab.params)),
+    body: serializeBody(tab),
+    body_type: tab.bodyType,
+    auth_type: tab.authType,
+    auth_config: JSON.stringify(tab.authConfig),
+    pre_request_script: tab.preRequestScript,
+    post_response_script: tab.postResponseScript,
+  });
+  Toast.success('Request saved');
+
+  if (savedReq && savedReq.id) {
+    store.setState({ requestId: savedReq.id, collectionId: col.id, dirty: false });
+  }
+  refreshCollections();
+}
+
 // Save request button
 saveBtn.addEventListener('click', async () => {
   const tab = store.getActiveTab();
@@ -330,86 +412,11 @@ saveBtn.addEventListener('click', async () => {
     });
     Toast.success('Request updated');
     store.setState({ dirty: false });
+    refreshCollections();
   } else {
     // Save new - need to pick a collection
-    const state = store.getState();
-    const collections = state.collections;
-    if (collections.length === 0) {
-      const name = await Dialogs.prompt('Create a Collection', 'Collection name');
-      if (!name) return;
-      await api.createCollection(name);
-      await refreshCollections();
-    }
-    const cols = store.getState().collections;
-    const items = cols.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
-
-    const choice = await new Promise((resolve) => {
-      const overlay = document.getElementById('modal-overlay');
-      const modal = document.getElementById('modal');
-      const dialog = document.createElement('div');
-      dialog.className = 'confirm-dialog';
-      dialog.addEventListener('click', e => e.stopPropagation());
-
-      dialog.innerHTML = `
-        <div class="confirm-dialog-title">Save Request</div>
-        <input type="text" id="save-req-name" class="save-modal-name-input"
-          value="${escapeHtml(tab.method + ' ' + tab.url)}" placeholder="Request name">
-        <select id="save-col-select" class="save-modal-select">
-          ${items}
-        </select>
-        <div class="confirm-dialog-actions save-modal-actions">
-          <button class="modal-btn modal-btn-secondary" id="save-cancel">Cancel</button>
-          <button class="modal-btn modal-btn-primary" id="save-confirm">Save</button>
-        </div>
-      `;
-
-      modal.innerHTML = '';
-      modal.appendChild(dialog);
-      overlay.classList.remove('hidden');
-
-      dialog.querySelector('#save-confirm').onclick = () => {
-        overlay.classList.add('hidden');
-        resolve({
-          collectionId: dialog.querySelector('#save-col-select').value,
-          name: dialog.querySelector('#save-req-name').value.trim(),
-        });
-      };
-      dialog.querySelector('#save-cancel').onclick = () => {
-        overlay.classList.add('hidden');
-        resolve(null);
-      };
-      overlay.onclick = (e) => {
-        if (e.target === overlay) { overlay.classList.add('hidden'); resolve(null); }
-      };
-    });
-
-    if (!choice) return;
-    const col = cols.find(c => c.id == choice.collectionId);
-    if (!col) return;
-
-    const reqName = choice.name || `${tab.method} ${tab.url}`;
-
-    const savedReq = await api.addRequest(col.id, {
-      name: reqName,
-      method: tab.method,
-      url: tab.url,
-      headers: JSON.stringify(kvToArray(tab.headers)),
-      params: JSON.stringify(kvToArray(tab.params)),
-      body: serializeBody(tab),
-      body_type: tab.bodyType,
-      auth_type: tab.authType,
-      auth_config: JSON.stringify(tab.authConfig),
-      pre_request_script: tab.preRequestScript,
-      post_response_script: tab.postResponseScript,
-    });
-    Toast.success('Request saved');
-
-    // Associate the new tab with the saved request
-    if (savedReq && savedReq.id) {
-      store.setState({ requestId: savedReq.id, collectionId: col.id, dirty: false });
-    }
+    await saveAsNewRequest();
   }
-  refreshCollections();
 });
 
 function kvToArray(rows) {
