@@ -1,0 +1,324 @@
+/* ── Modal ────────────────────────────────── */
+#modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-bg);
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 180ms var(--ease);
+}
+
+#modal-overlay.hidden {
+  display: none;
+}
+
+#modal {
+  background:
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  min-width: 440px;
+  max-width: 800px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow:
+    var(--shadow-xl),
+    0 0 0 1px var(--tint-accent-05) inset,
+    0 1px 0 var(--tint-white-03) inset;
+  animation: modalIn 280ms var(--ease-spring);
+}
+
+#modal h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--text-0);
+  letter-spacing: 0.3px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-0);
+  position: relative;
+}
+
+#modal h3::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 32px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 1px;
+}
+
+#modal .modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-0);
+}
+
+.modal-btn {
+  padding: 8px 20px;
+  border-radius: var(--radius);
+  font-size: 12.5px;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border-0);
+  transition: background 160ms var(--ease), color 160ms var(--ease), border-color 160ms var(--ease), transform 160ms var(--ease), box-shadow 160ms var(--ease);
+  letter-spacing: 0.2px;
+}
+
+.modal-btn-primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
+  color: var(--accent-text);
+  border: none;
+  font-weight: 700;
+  box-shadow: var(--shadow-sm), 0 0 16px -4px var(--tint-accent-30);
+}
+
+.modal-btn-primary:hover {
+  background: linear-gradient(135deg, var(--accent-hover) 0%, var(--accent) 100%);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md), 0 0 24px -4px var(--tint-accent-40);
+}
+
+.modal-btn-primary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.modal-btn-secondary {
+  background: var(--bg-3);
+  color: var(--text-1);
+  border: 1px solid var(--border-0);
+}
+
+.modal-btn-secondary:hover {
+  color: var(--text-0);
+  background: var(--bg-4);
+  border-color: var(--border-1);
+  transform: translateY(-1px);
+}
+
+.modal-btn-secondary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.modal-btn-danger {
+  background: var(--red-bg-md);
+  color: var(--red);
+  border: 1px solid var(--tint-red-20);
+}
+
+.modal-btn-danger:hover {
+  background: var(--tint-red-25);
+  border-color: var(--tint-red-35);
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px -4px var(--tint-red-35);
+}
+
+
+/* ── Env Manager ──────────────────────────── */
+.env-split-panel {
+  display: flex;
+  gap: 16px;
+  min-height: 400px;
+}
+
+/* 环境管理弹窗需要更宽的容器 */
+#modal:has(.env-split-panel) {
+  min-width: 680px;
+}
+
+.env-panel-left {
+  width: 200px;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.env-panel-right {
+  flex: 1;
+  min-width: 420px;
+}
+
+.env-editor-content {
+  min-height: 300px;
+}
+
+.env-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: var(--text-4);
+  font-size: 13px;
+  border: 1px dashed var(--border-1);
+  border-radius: var(--radius);
+}
+
+.env-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.env-item {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 8px 10px;
+  background: var(--bg-2);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-0);
+  cursor: pointer;
+  transition: background 150ms var(--ease), border-color 150ms var(--ease);
+}
+
+.env-item:hover {
+  border-color: var(--border-1);
+  background: var(--bg-3);
+}
+
+.env-item .env-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.env-rename-input {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-1);
+  border: 1px solid var(--accent-border);
+  color: var(--text-1);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: var(--font-ui);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-bg);
+}
+
+.env-delete-msg {
+  color: var(--red);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.env-item .env-item-actions {
+  display: flex;
+  gap: 3px;
+  opacity: 0;
+  transition: opacity 150ms var(--ease);
+}
+
+.env-item:hover .env-item-actions {
+  opacity: 1;
+}
+
+.env-action-btn {
+  padding: 2px 8px !important;
+  font-size: 11px !important;
+}
+
+.env-item.active {
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+}
+
+.env-item.active .env-name {
+  color: var(--accent);
+}
+
+.env-item.active .env-item-actions {
+  opacity: 1;
+}
+
+.env-new-area {
+  display: flex;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-0);
+  margin-top: 4px;
+}
+
+.env-create-btn {
+  font-size: 11px !important;
+  padding: 6px 14px !important;
+}
+
+.env-new-input {
+  flex: 1;
+  background: var(--bg-2);
+  border: 1px solid var(--border-0);
+  color: var(--text-1);
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  outline: none;
+  transition: border-color 150ms var(--ease);
+}
+.env-new-input:focus {
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 2px var(--accent-bg);
+}
+
+/* Duplicate key warning */
+.kv-row.kv-duplicate .kv-key {
+  border-color: var(--red) !important;
+  box-shadow: 0 0 0 2px var(--red-bg-md) !important;
+}
+
+.kv-dup-warn {
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 4px;
+  cursor: help;
+}
+
+/* ── Import / Export ──────────────────────── */
+.import-textarea {
+  width: 100%;
+  min-height: 160px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-0);
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.65;
+  padding: 14px;
+  border-radius: var(--radius);
+  resize: vertical;
+  outline: none;
+  margin: 10px 0;
+  transition: border-color 180ms var(--ease), box-shadow 180ms var(--ease);
+}
+
+.import-textarea:hover {
+  border-color: var(--border-1);
+}
+
+.import-textarea:focus {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 3px var(--accent-bg),
+    var(--shadow-glow);
+}
+

@@ -1,0 +1,21 @@
+/* ── Base Typography & Body ───────────────── */
+body {
+  font-family: var(--font-ui);
+  background-color: var(--bg-0);
+  color: var(--text-1);
+  height: 100vh;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+#app {
+  display: flex;
+  height: 100vh;
+  position: relative;
+}
+
+.hidden { display: none !important; }

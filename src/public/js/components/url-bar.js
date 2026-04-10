@@ -74,7 +74,7 @@ sendBtn.addEventListener('click', async () => {
       reqBody = tab.binaryFile || undefined;
     } else if (tab.bodyType === 'graphql') {
       // 序列化 GraphQL body：仅对 variables 做模板替换，query 不替换
-      const graphqlBody: Record<string, string> = { query: tab.graphqlQuery || '' };
+      const graphqlBody = { query: tab.graphqlQuery || '' };
       if (tab.graphqlVariables?.trim()) {
         try {
           graphqlBody.variables = JSON.parse(tab.graphqlVariables.trim());

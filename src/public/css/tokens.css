@@ -1,0 +1,251 @@
+/* ============================================
+   req-kit — "Midnight Forge"
+
+   Deep dark · Warm amber forge · Precise geometry
+   Outfit (UI) · JetBrains Mono (Code)
+
+   A premium, forge-inspired dark theme.
+   Think Linear meets a high-end terminal.
+   ============================================ */
+
+/* ── Properties ───────────────────────────── */
+:root {
+  /* Backgrounds — deep charcoal with warm undertone */
+  --bg-0: #111318;
+  --bg-1: #161A22;
+  --bg-2: #1C2028;
+  --bg-3: #252A34;
+  --bg-4: #2F3540;
+  --bg-5: #3A4150;
+  --bg-glass: rgba(22, 26, 34, 0.85);
+
+  /* Borders — cool slate with warmth */
+  --border-0: #262C38;
+  --border-1: #363E50;
+  --border-2: #465060;
+
+  /* Text — warm off-whites */
+  --text-0: #F2F0ED;
+  --text-1: #CDD2DA;
+  --text-2: #96A0B0;
+  --text-3: #6A7486;
+  --text-4: #4D5666;
+
+  /* Accent — amber/gold forge glow */
+  --accent: #E5A819;
+  --accent-hover: #F2BA30;
+  --accent-dim: #B8871A;
+  --accent-bg: rgba(229, 168, 25, 0.08);
+  --accent-bg-md: rgba(229, 168, 25, 0.14);
+  --accent-border: rgba(229, 168, 25, 0.22);
+  --accent-glow: rgba(229, 168, 25, 0.06);
+  --accent-edge-start: rgba(229, 168, 25, 0.08);
+  --accent-edge-end: rgba(229, 168, 25, 0.04);
+
+  /* Semantic Colors */
+  --green: #3DD68C;
+  --green-bright: #5AEAA4;
+  --green-bg: rgba(61, 214, 140, 0.1);
+  --green-bg-md: rgba(61, 214, 140, 0.18);
+  --red: #F06868;
+  --red-bright: #FF8A8A;
+  --red-bg: rgba(240, 104, 104, 0.1);
+  --red-bg-md: rgba(240, 104, 104, 0.18);
+  --yellow: #F0BE30;
+  --yellow-bright: #FFD54F;
+  --yellow-bg: rgba(240, 190, 48, 0.1);
+  --yellow-bg-md: rgba(240, 190, 48, 0.18);
+  --blue: #5CA0F0;
+  --blue-bright: #7DBAFF;
+  --blue-bg: rgba(92, 160, 240, 0.1);
+  --blue-bg-md: rgba(92, 160, 240, 0.18);
+  --orange: #F09040;
+  --orange-bright: #FFAB5E;
+  --orange-bg: rgba(240, 144, 64, 0.1);
+  --orange-bg-md: rgba(240, 144, 64, 0.18);
+  --purple: #A488F0;
+  --purple-bg: rgba(164, 136, 240, 0.1);
+  --cyan: #50C8D8;
+  --cyan-bg: rgba(80, 200, 216, 0.1);
+
+  /* Layout */
+  --sidebar-w: 280px;
+  --topbar-h: auto;
+  --font-ui: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius: 7px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.15);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.2);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.45), 0 4px 12px rgba(0,0,0,0.25);
+  --shadow-xl: 0 20px 60px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.3);
+  --shadow-glow: 0 0 30px -5px rgba(229, 168, 25, 0.15);
+  --shadow-inner: inset 0 1px 2px rgba(0,0,0,0.2);
+
+  /* Overlay & misc */
+  --overlay-bg: rgba(6, 8, 12, 0.75);
+  --accent-text: #0E0D0A;
+  --hover-subtle: rgba(255, 255, 255, 0.04);
+  --toast-success-bg: rgba(18, 28, 20, 0.92);
+  --toast-error-bg: rgba(28, 18, 18, 0.92);
+  --toast-info-bg: rgba(18, 22, 28, 0.92);
+
+  /* Reusable tints */
+  --tint-black-10: rgba(0,0,0,0.1);
+  --tint-black-08: rgba(0,0,0,0.08);
+  --tint-black-12: rgba(0,0,0,0.12);
+  --tint-black-40: rgba(0,0,0,0.4);
+  --tint-black-30: rgba(0,0,0,0.3);
+  --tint-black-05: rgba(0,0,0,0.05);
+  --tint-black-03: rgba(0,0,0,0.03);
+  --tint-accent-25: rgba(229, 168, 25, 0.25);
+  --tint-accent-20: rgba(229, 168, 25, 0.20);
+  --tint-accent-35: rgba(229, 168, 25, 0.35);
+  --tint-accent-05: rgba(229, 168, 25, 0.05);
+  --tint-accent-30: rgba(229, 168, 25, 0.30);
+  --tint-accent-40: rgba(229, 168, 25, 0.40);
+  --tint-red-12: rgba(239,68,68,0.12);
+  --tint-red-20: rgba(240,104,104,0.2);
+  --tint-red-18: rgba(240,104,104,0.18);
+  --tint-red-25: rgba(240,104,104,0.25);
+  --tint-red-35: rgba(240,104,104,0.35);
+  --tint-red-15: rgba(240,104,104,0.15);
+  --tint-green-25: rgba(61,214,140,0.25);
+  --tint-green-18: rgba(61,214,140,0.18);
+  --tint-green-15: rgba(76,175,80,0.15);
+  --tint-yellow-25: rgba(240,190,48,0.25);
+  --tint-yellow-35: rgba(240,190,48,0.3);
+  --tint-yellow-70: rgba(240,190,48,0.7);
+  --tint-yellow-15: rgba(240,190,48,0.15);
+  --tint-yellow-bg-15: rgba(255,193,7,0.15);
+  --tint-blue-25: rgba(92,160,240,0.25);
+  --tint-blue-18: rgba(92,160,240,0.18);
+  --tint-white-03: rgba(255,255,255,0.03);
+
+  /* Layout */
+}
+
+/* ── Light Theme ───────────────────────────── */
+[data-theme="light"] {
+  /* Backgrounds — warm off-whites */
+  --bg-0: #F5F5F4;
+  --bg-1: #FFFFFF;
+  --bg-2: #F0F0EE;
+  --bg-3: #E8E8E5;
+  --bg-4: #DEDEDA;
+  --bg-5: #D0D0CC;
+  --bg-glass: rgba(255, 255, 255, 0.85);
+
+  /* Borders — warm grays */
+  --border-0: #E2E2DE;
+  --border-1: #D0D0CC;
+  --border-2: #B8B8B2;
+
+  /* Text — deep charcoals */
+  --text-0: #1A1A1A;
+  --text-1: #3A3A3A;
+  --text-2: #5A5A5A;
+  --text-3: #8A8A8A;
+  --text-4: #ABABAB;
+
+  /* Accent — amber/gold (slightly deeper for light bg) */
+  --accent: #C98F0A;
+  --accent-hover: #A87808;
+  --accent-dim: #E5A819;
+  --accent-bg: rgba(201, 143, 10, 0.06);
+  --accent-bg-md: rgba(201, 143, 10, 0.1);
+  --accent-border: rgba(201, 143, 10, 0.18);
+  --accent-glow: rgba(201, 143, 10, 0.04);
+  --accent-edge-start: rgba(201, 143, 10, 0.06);
+  --accent-edge-end: rgba(201, 143, 10, 0.03);
+
+  /* Semantic Colors */
+  --green: #1A9A5A;
+  --green-bright: #15804A;
+  --green-bg: rgba(26, 154, 90, 0.08);
+  --green-bg-md: rgba(26, 154, 90, 0.14);
+  --red: #D04040;
+  --red-bright: #B03030;
+  --red-bg: rgba(208, 64, 64, 0.08);
+  --red-bg-md: rgba(208, 64, 64, 0.14);
+  --yellow: #C09520;
+  --yellow-bright: #A07A18;
+  --yellow-bg: rgba(192, 149, 32, 0.08);
+  --yellow-bg-md: rgba(192, 149, 32, 0.14);
+  --blue: #3070C0;
+  --blue-bright: #2860A0;
+  --blue-bg: rgba(48, 112, 192, 0.08);
+  --blue-bg-md: rgba(48, 112, 192, 0.14);
+  --orange: #D07020;
+  --orange-bright: #B06018;
+  --orange-bg: rgba(208, 112, 32, 0.08);
+  --orange-bg-md: rgba(208, 112, 32, 0.14);
+  --purple: #7060C0;
+  --purple-bg: rgba(112, 96, 192, 0.08);
+  --cyan: #2898A8;
+  --cyan-bg: rgba(40, 152, 168, 0.08);
+
+  /* Shadows — lighter for light theme */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-xl: 0 20px 60px rgba(0,0,0,0.12), 0 8px 20px rgba(0,0,0,0.08);
+  --shadow-glow: 0 0 30px -5px rgba(201, 143, 10, 0.1);
+  --shadow-inner: inset 0 1px 2px rgba(0,0,0,0.06);
+
+  /* Overlay & misc */
+  --overlay-bg: rgba(0, 0, 0, 0.35);
+  --accent-text: #FFFFFF;
+  --hover-subtle: rgba(0, 0, 0, 0.04);
+  --toast-success-bg: rgba(230, 248, 238, 0.95);
+  --toast-error-bg: rgba(252, 232, 232, 0.95);
+  --toast-info-bg: rgba(232, 242, 252, 0.95);
+
+  /* Reusable tints */
+  --tint-black-10: rgba(0,0,0,0.06);
+  --tint-black-08: rgba(0,0,0,0.05);
+  --tint-black-12: rgba(0,0,0,0.08);
+  --tint-black-40: rgba(0,0,0,0.15);
+  --tint-black-30: rgba(0,0,0,0.1);
+  --tint-black-05: rgba(0,0,0,0.04);
+  --tint-black-03: rgba(0,0,0,0.02);
+  --tint-accent-25: rgba(201, 143, 10, 0.2);
+  --tint-accent-20: rgba(201, 143, 10, 0.15);
+  --tint-accent-35: rgba(201, 143, 10, 0.25);
+  --tint-accent-05: rgba(201, 143, 10, 0.03);
+  --tint-accent-30: rgba(201, 143, 10, 0.18);
+  --tint-accent-40: rgba(201, 143, 10, 0.3);
+  --tint-red-12: rgba(208, 64, 64, 0.1);
+  --tint-red-20: rgba(208, 64, 64, 0.15);
+  --tint-red-18: rgba(208, 64, 64, 0.12);
+  --tint-red-25: rgba(208, 64, 64, 0.18);
+  --tint-red-35: rgba(208, 64, 64, 0.25);
+  --tint-red-15: rgba(208, 64, 64, 0.12);
+  --tint-green-25: rgba(26, 154, 90, 0.2);
+  --tint-green-18: rgba(26, 154, 90, 0.12);
+  --tint-green-15: rgba(26, 154, 90, 0.1);
+  --tint-yellow-25: rgba(192, 149, 32, 0.2);
+  --tint-yellow-35: rgba(192, 149, 32, 0.3);
+  --tint-yellow-70: rgba(192, 149, 32, 0.6);
+  --tint-yellow-15: rgba(192, 149, 32, 0.12);
+  --tint-yellow-bg-15: rgba(192, 149, 32, 0.12);
+  --tint-blue-25: rgba(48, 112, 192, 0.2);
+  --tint-blue-18: rgba(48, 112, 192, 0.12);
+  --tint-white-03: rgba(0,0,0,0.02);
+}
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
