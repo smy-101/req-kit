@@ -1,15 +1,19 @@
 import { Hono } from 'hono';
+import { z } from 'zod';
 import { ImportExportService } from '../services/import-export';
+import { parseBody, parseParam } from '../lib/validation';
+
+const ImportSchema = z.object({
+  type: z.string().min(1),
+  content: z.string().min(1),
+  collection_id: z.number().optional(),
+});
 
 export function createImportExportRoutes(importExportService: ImportExportService) {
   const router = new Hono();
 
   router.post('/api/import', async (c) => {
-    const body = await c.req.json<{ type: string; content: string; collection_id?: number }>();
-
-    if (!body.type || !body.content) {
-      return c.json({ error: '缺少必填字段: type, content' }, 400);
-    }
+    const body = await parseBody(c, ImportSchema);
 
     if (body.type === 'curl') {
       if (!body.collection_id) {
@@ -40,7 +44,7 @@ export function createImportExportRoutes(importExportService: ImportExportServic
   });
 
   router.get('/api/export/collections/:id', (c) => {
-    const id = parseInt(c.req.param('id'));
+    const id = parseParam(c, 'id');
     const result = importExportService.exportPostmanCollection(id);
     if (!result) {
       return c.json({ error: '集合不存在' }, 404);
@@ -49,7 +53,7 @@ export function createImportExportRoutes(importExportService: ImportExportServic
   });
 
   router.get('/api/export/requests/:id/curl', (c) => {
-    const id = parseInt(c.req.param('id'));
+    const id = parseParam(c, 'id');
     const result = importExportService.exportCurl(id);
     if (!result) {
       return c.json({ error: '请求不存在' }, 404);

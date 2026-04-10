@@ -1,5 +1,21 @@
 import { Hono } from 'hono';
+import { z } from 'zod';
 import { EnvService } from '../services/environment';
+import { parseBody, parseParam } from '../lib/validation';
+
+const CreateEnvironmentSchema = z.object({
+  name: z.string().min(1, 'name 不能为空').transform(s => s.trim()),
+});
+
+const UpdateEnvironmentSchema = z.object({
+  name: z.string().min(1, 'name 不能为空').transform(s => s.trim()),
+});
+
+const ReplaceVariablesSchema = z.array(z.object({
+  key: z.string().min(1),
+  value: z.string().optional(),
+  enabled: z.boolean().optional(),
+}));
 
 export function createEnvironmentRoutes(envService: EnvService) {
   const router = new Hono();
@@ -10,38 +26,29 @@ export function createEnvironmentRoutes(envService: EnvService) {
   });
 
   router.post('/api/environments', async (c) => {
-    const body = await c.req.json<{ name: string }>();
-    if (!body.name?.trim()) {
-      return c.json({ error: '缺少必填字段: name' }, 400);
-    }
-    const env = envService.createEnvironment(body.name.trim());
+    const body = await parseBody(c, CreateEnvironmentSchema);
+    const env = envService.createEnvironment(body.name);
     return c.json(env, 201);
   });
 
   router.put('/api/environments/:id', async (c) => {
-    const id = parseInt(c.req.param('id'));
-    const body = await c.req.json<{ name: string }>();
-    if (!body.name?.trim()) {
-      return c.json({ error: '缺少必填字段: name' }, 400);
-    }
-    const updated = envService.updateEnvironment(id, body.name.trim());
+    const id = parseParam(c, 'id');
+    const body = await parseBody(c, UpdateEnvironmentSchema);
+    const updated = envService.updateEnvironment(id, body.name);
     if (!updated) return c.json({ error: '环境不存在' }, 404);
     return c.json({ success: true });
   });
 
   router.delete('/api/environments/:id', (c) => {
-    const id = parseInt(c.req.param('id'));
+    const id = parseParam(c, 'id');
     const deleted = envService.deleteEnvironment(id);
     if (!deleted) return c.json({ error: '环境不存在' }, 404);
     return c.json({ success: true });
   });
 
   router.put('/api/environments/:id/variables', async (c) => {
-    const id = parseInt(c.req.param('id'));
-    const body = await c.req.json<{ key: string; value?: string; enabled?: boolean }[]>();
-    if (!Array.isArray(body)) {
-      return c.json({ error: '请求体必须为变量数组' }, 400);
-    }
+    const id = parseParam(c, 'id');
+    const body = await parseBody(c, ReplaceVariablesSchema);
     const vars = envService.replaceVariables(id, body);
     return c.json(vars);
   });

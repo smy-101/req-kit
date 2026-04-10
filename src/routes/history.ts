@@ -1,20 +1,26 @@
 import { Hono } from 'hono';
+import { z } from 'zod';
 import { HistoryService } from '../services/history';
+import { parseParam, parseQuery } from '../lib/validation';
+
+const HistoryQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().default(50),
+  search: z.string().optional(),
+  method: z.string().optional(),
+});
 
 export function createHistoryRoutes(historyService: HistoryService) {
   const router = new Hono();
 
   router.get('/api/history', (c) => {
-    const page = parseInt(c.req.query('page') || '1');
-    const limit = parseInt(c.req.query('limit') || '50');
-    const search = c.req.query('search') || undefined;
-    const method = c.req.query('method') || undefined;
+    const { page, limit, search, method } = parseQuery(c, HistoryQuerySchema);
     const result = historyService.list(page, limit, search, method);
     return c.json(result);
   });
 
   router.get('/api/history/:id', (c) => {
-    const id = parseInt(c.req.param('id'));
+    const id = parseParam(c, 'id');
     const record = historyService.getById(id);
     if (!record) {
       return c.json({ error: '记录不存在' }, 404);
@@ -23,7 +29,7 @@ export function createHistoryRoutes(historyService: HistoryService) {
   });
 
   router.delete('/api/history/:id', (c) => {
-    const id = parseInt(c.req.param('id'));
+    const id = parseParam(c, 'id');
     const deleted = historyService.deleteById(id);
     if (!deleted) {
       return c.json({ error: '记录不存在' }, 404);

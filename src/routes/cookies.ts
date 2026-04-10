@@ -1,20 +1,23 @@
 import { Hono } from 'hono';
+import { z } from 'zod';
 import { CookieService } from '../services/cookie';
+import { parseParam, parseQuery } from '../lib/validation';
+
+const CookieQuerySchema = z.object({
+  domain: z.string().optional(),
+});
 
 export function createCookieRoutes(cookieService: CookieService) {
   const router = new Hono();
 
   router.get('/api/cookies', (c) => {
-    const domain = c.req.query('domain');
-    const cookies = cookieService.getAll(domain || undefined);
+    const { domain } = parseQuery(c, CookieQuerySchema);
+    const cookies = cookieService.getAll(domain);
     return c.json({ cookies });
   });
 
   router.delete('/api/cookies/:id', (c) => {
-    const id = Number(c.req.param('id'));
-    if (isNaN(id)) {
-      return c.json({ error: '无效的 cookie ID' }, 400);
-    }
+    const id = parseParam(c, 'id');
     const ok = cookieService.deleteById(id);
     if (!ok) {
       return c.json({ error: 'Cookie 不存在' }, 404);
@@ -23,7 +26,7 @@ export function createCookieRoutes(cookieService: CookieService) {
   });
 
   router.delete('/api/cookies', (c) => {
-    const domain = c.req.query('domain');
+    const { domain } = parseQuery(c, CookieQuerySchema);
     if (domain) {
       const deleted = cookieService.deleteByDomain(domain);
       return c.json({ success: true, deleted });

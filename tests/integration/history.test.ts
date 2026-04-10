@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import { createHistoryRoutes } from '../../src/routes/history';
 import { HistoryService } from '../../src/services/history';
 import { Database } from '../../src/db/index';
+import { errorHandler } from '../../src/lib/error-handler';
 
 describe('History Routes Integration', () => {
   let app: Hono;
@@ -14,6 +15,7 @@ describe('History Routes Integration', () => {
     const historyService = new HistoryService(db);
     app = new Hono();
     app.route('/', createHistoryRoutes(historyService));
+    app.onError(errorHandler);
   });
 
   test('GET /api/history - returns empty list', async () => {

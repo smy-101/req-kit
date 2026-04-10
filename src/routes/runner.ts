@@ -1,15 +1,21 @@
 import { Hono } from 'hono';
+import { z } from 'zod';
 import { RunnerService } from '../services/runner';
+import { parseBody } from '../lib/validation';
+import { getErrorMessage } from '../lib/validation';
+
+const RunSchema = z.object({
+  collection_id: z.number().int().positive(),
+  environment_id: z.number().int().optional(),
+  retry_count: z.number().int().min(0).optional(),
+  retry_delay_ms: z.number().int().min(0).optional(),
+});
 
 export function createRunnerRoutes(runnerService: RunnerService) {
   const router = new Hono();
 
   router.post('/api/runners/run', async (c) => {
-    const body = await c.req.json<{ collection_id: number; environment_id?: number; retry_count?: number; retry_delay_ms?: number }>();
-
-    if (!body.collection_id) {
-      return c.json({ error: '缺少必填字段: collection_id' }, 400);
-    }
+    const body = await parseBody(c, RunSchema);
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -66,8 +72,8 @@ export function createRunnerRoutes(runnerService: RunnerService) {
             body.retry_count ?? 0,
             body.retry_delay_ms ?? 1000
           );
-        } catch (err: any) {
-          send('runner:done', { passed: 0, failed: 0, total: 0, totalTime: 0, error: err.message });
+        } catch (err: unknown) {
+          send('runner:done', { passed: 0, failed: 0, total: 0, totalTime: 0, error: getErrorMessage(err) });
           cleanup();
           if (!controller.closed) controller.close();
         }

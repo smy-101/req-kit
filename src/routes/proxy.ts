@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { z } from 'zod';
 import { ProxyService, ProxyTimeoutError, ProxyUnreachableError } from '../services/proxy';
 import type { ProxyRequest } from '../services/proxy';
 import { HistoryService } from '../services/history';
@@ -6,6 +7,8 @@ import { VariableService } from '../services/variable';
 import { ScriptService } from '../services/script';
 import { injectAuth } from '../services/auth';
 import { CookieService } from '../services/cookie';
+import { parseBody } from '../lib/validation';
+import { getErrorMessage } from '../lib/validation';
 
 export interface PipelineInput {
   url: string;
@@ -224,14 +227,14 @@ export async function executeRequestPipeline(
   let result;
   try {
     result = await proxyService.sendRequest(proxyReq);
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (err instanceof ProxyTimeoutError) {
       return { error: '请求超时', scriptLogs, scriptVariables, retryable: true };
     }
     if (err instanceof ProxyUnreachableError) {
       return { error: '目标服务器不可达', scriptLogs, scriptVariables, retryable: true };
     }
-    return { error: err.message, scriptLogs, scriptVariables, retryable: true };
+    return { error: getErrorMessage(err), scriptLogs, scriptVariables, retryable: true };
   }
 
   // Step 5: Extract Set-Cookie
@@ -316,7 +319,7 @@ export function createProxyRoutes(
   const services: PipelineServices = { proxyService, historyService, variableService, scriptService, cookieService };
 
   router.post('/api/proxy', async (c) => {
-    const body = await c.req.json<Partial<PipelineInput> & { stream?: boolean }>();
+    const body = await parseBody(c, z.object({ url: z.string().optional() }).passthrough());
 
     if (!body.url) {
       return c.json({ error: '缺少必填字段: url' }, 400);
@@ -543,13 +546,13 @@ function streamProxyResponse(
               controller.close();
             },
           });
-        } catch (err: any) {
+        } catch (err: unknown) {
           if (err instanceof ProxyTimeoutError) {
             send('error', { error: '请求超时' });
           } else if (err instanceof ProxyUnreachableError) {
-            send('error', { error: '目标服务器不可达', detail: err.detail });
+            send('error', { error: '目标服务器不可达', detail: (err as ProxyUnreachableError).detail });
           } else {
-            send('error', { error: err.message });
+            send('error', { error: getErrorMessage(err) });
           }
           controller.close();
         }

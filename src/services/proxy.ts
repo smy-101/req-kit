@@ -15,6 +15,8 @@ export interface ProxyRequest {
   follow_redirects?: boolean;
 }
 
+import { getErrorMessage } from '../lib/validation';
+
 export interface ProxyResponse {
   status: number;
   headers: Record<string, string>;
@@ -83,12 +85,12 @@ export class ProxyService {
         size: new TextEncoder().encode(finalBody).length,
         truncated,
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
       clearTimeout(timeout);
-      if (err.name === 'AbortError') {
+      if (err instanceof Error && err.name === 'AbortError') {
         throw new ProxyTimeoutError();
       }
-      throw new ProxyUnreachableError(err.message);
+      throw new ProxyUnreachableError(getErrorMessage(err));
     }
   }
 
@@ -149,12 +151,12 @@ export class ProxyService {
       }
 
       callbacks.onDone(Date.now() - startTime, totalSize, truncated);
-    } catch (err: any) {
+    } catch (err: unknown) {
       clearTimeout(timeout);
-      if (err.name === 'AbortError') {
+      if (err instanceof Error && err.name === 'AbortError') {
         throw new ProxyTimeoutError();
       }
-      throw new ProxyUnreachableError(err.message);
+      throw new ProxyUnreachableError(getErrorMessage(err));
     }
   }
 

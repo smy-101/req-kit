@@ -6,6 +6,7 @@ import { VariableService } from '../../src/services/variable';
 import { EnvService } from '../../src/services/environment';
 import { CollectionService } from '../../src/services/collection';
 import { Database } from '../../src/db/index';
+import { errorHandler } from '../../src/lib/error-handler';
 
 describe('Variable Routes Integration', () => {
   let app: Hono;
@@ -18,6 +19,9 @@ describe('Variable Routes Integration', () => {
     const envService = new EnvService(db);
     const variableService = new VariableService(db, envService);
     app = new Hono();
+    app.route('/', createGlobalVariableRoutes(variableService));
+    app.route('/', createCollectionRoutes(collectionService, variableService));
+    app.onError(errorHandler);
     app.route('/', createGlobalVariableRoutes(variableService));
     app.route('/', createCollectionRoutes(collectionService, variableService));
   });

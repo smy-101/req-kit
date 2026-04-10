@@ -7,6 +7,7 @@ import { CollectionService } from '../../src/services/collection';
 import { EnvService } from '../../src/services/environment';
 import { VariableService } from '../../src/services/variable';
 import { Database } from '../../src/db/index';
+import { errorHandler } from '../../src/lib/error-handler';
 
 describe('Import-Export Routes Integration', () => {
   let app: Hono;
@@ -22,6 +23,7 @@ describe('Import-Export Routes Integration', () => {
     app = new Hono();
     app.route('/', createImportExportRoutes(importExportService));
     app.route('/', createCollectionRoutes(collectionService, variableService));
+    app.onError(errorHandler);
   });
 
   test('POST /api/import - imports curl', async () => {

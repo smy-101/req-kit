@@ -9,6 +9,7 @@ import { VariableService } from '../../src/services/variable';
 import { ScriptService } from '../../src/services/script';
 import { CookieService } from '../../src/services/cookie';
 import { Database } from '../../src/db/index';
+import { errorHandler } from '../../src/lib/error-handler';
 
 describe('Cookie Routes Integration', () => {
   let app: Hono;
@@ -20,6 +21,7 @@ describe('Cookie Routes Integration', () => {
     const cookieService = new CookieService(db);
     app = new Hono();
     app.route('/', createCookieRoutes(cookieService));
+    app.onError(errorHandler);
   });
 
   test('GET /api/cookies returns empty list initially', async () => {

@@ -1,5 +1,13 @@
 import { Hono } from 'hono';
+import { z } from 'zod';
 import { VariableService } from '../services/variable';
+import { parseBody } from '../lib/validation';
+
+const ReplaceVariablesSchema = z.array(z.object({
+  key: z.string().min(1),
+  value: z.string().optional(),
+  enabled: z.boolean().optional(),
+}));
 
 export function createGlobalVariableRoutes(variableService: VariableService) {
   const router = new Hono();
@@ -10,10 +18,7 @@ export function createGlobalVariableRoutes(variableService: VariableService) {
   });
 
   router.put('/api/global-variables', async (c) => {
-    const body = await c.req.json<{ key: string; value?: string; enabled?: boolean }[]>();
-    if (!Array.isArray(body)) {
-      return c.json({ error: '请求体必须是数组' }, 400);
-    }
+    const body = await parseBody(c, ReplaceVariablesSchema);
     const variables = variableService.replaceGlobal(body);
     return c.json(variables);
   });

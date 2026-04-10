@@ -25,19 +25,21 @@ export class VariableService {
   }
 
   replaceGlobal(variables: { key: string; value?: string; enabled?: boolean }[]): { id: number; key: string; value: string | null; enabled: number }[] {
-    this.db.run('DELETE FROM global_variables');
-    // Deduplicate: last occurrence wins for duplicate keys
-    const seen = new Map<string, { key: string; value?: string; enabled?: boolean }>();
-    for (const v of variables) {
-      seen.set(v.key, v);
-    }
-    for (const v of seen.values()) {
-      this.db.run(
-        'INSERT INTO global_variables (key, value, enabled) VALUES (?, ?, ?)',
-        [v.key, v.value || null, v.enabled !== false ? 1 : 0]
-      );
-    }
-    return this.getAllGlobal();
+    return this.db.transaction(() => {
+      this.db.run('DELETE FROM global_variables');
+      // Deduplicate: last occurrence wins for duplicate keys
+      const seen = new Map<string, { key: string; value?: string; enabled?: boolean }>();
+      for (const v of variables) {
+        seen.set(v.key, v);
+      }
+      for (const v of seen.values()) {
+        this.db.run(
+          'INSERT INTO global_variables (key, value, enabled) VALUES (?, ?, ?)',
+          [v.key, v.value || null, v.enabled !== false ? 1 : 0]
+        );
+      }
+      return this.getAllGlobal();
+    });
   }
 
   // --- 集合变量 CRUD ---
@@ -50,14 +52,16 @@ export class VariableService {
   }
 
   replaceForCollection(collectionId: number, variables: { key: string; value?: string; enabled?: boolean }[]): { id: number; key: string; value: string | null; enabled: number }[] {
-    this.db.run('DELETE FROM collection_variables WHERE collection_id = ?', [collectionId]);
-    for (const v of variables) {
-      this.db.run(
-        'INSERT INTO collection_variables (collection_id, key, value, enabled) VALUES (?, ?, ?, ?)',
-        [collectionId, v.key, v.value || null, v.enabled !== false ? 1 : 0]
-      );
-    }
-    return this.getByCollection(collectionId);
+    return this.db.transaction(() => {
+      this.db.run('DELETE FROM collection_variables WHERE collection_id = ?', [collectionId]);
+      for (const v of variables) {
+        this.db.run(
+          'INSERT INTO collection_variables (collection_id, key, value, enabled) VALUES (?, ?, ?, ?)',
+          [collectionId, v.key, v.value || null, v.enabled !== false ? 1 : 0]
+        );
+      }
+      return this.getByCollection(collectionId);
+    });
   }
 
   // --- 集合树追溯 ---

@@ -65,18 +65,20 @@ export class EnvService {
   }
 
   replaceVariables(environmentId: number, variables: Omit<EnvVariable, 'id' | 'environment_id'>[]): EnvVariable[] {
-    // Delete existing variables
-    this.db.run('DELETE FROM env_variables WHERE environment_id = ?', [environmentId]);
+    return this.db.transaction(() => {
+      // Delete existing variables
+      this.db.run('DELETE FROM env_variables WHERE environment_id = ?', [environmentId]);
 
-    // Insert new variables
-    for (const v of variables) {
-      this.db.run(
-        'INSERT INTO env_variables (environment_id, key, value, enabled) VALUES (?, ?, ?, ?)',
-        [environmentId, v.key, v.value || null, v.enabled !== false ? 1 : 0]
-      );
-    }
+      // Insert new variables
+      for (const v of variables) {
+        this.db.run(
+          'INSERT INTO env_variables (environment_id, key, value, enabled) VALUES (?, ?, ?, ?)',
+          [environmentId, v.key, v.value || null, v.enabled !== false ? 1 : 0]
+        );
+      }
 
-    return this.getVariables(environmentId);
+      return this.getVariables(environmentId);
+    });
   }
 
   replaceTemplateValues(text: string, environmentId: number): string {

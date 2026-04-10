@@ -18,6 +18,7 @@ import { CookieService } from './services/cookie';
 import { createCookieRoutes } from './routes/cookies';
 import { RunnerService } from './services/runner';
 import { createRunnerRoutes } from './routes/runner';
+import { errorHandler } from './lib/error-handler';
 
 const db = new Database('req-kit.db');
 db.migrate();
@@ -43,6 +44,9 @@ app.route('/', createImportExportRoutes(importExportService));
 app.route('/', createGlobalVariableRoutes(variableService));
 app.route('/', createCookieRoutes(cookieService));
 app.route('/', createRunnerRoutes(runnerService));
+
+// 全局错误处理
+app.onError(errorHandler);
 
 // Serve static files from src/public (must be last)
 app.use('/*', serveStatic({ root: './src/public' }));

@@ -7,7 +7,8 @@
     "build:js": "bun build src/public/js/app.js --outfile src/public/dist/bundle.js --target browser"
   },
   "dependencies": {
-    "hono": "^4.12.10"
+    "hono": "^4.12.10",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/bun": "latest"

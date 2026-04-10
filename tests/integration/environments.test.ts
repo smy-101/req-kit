@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import { createEnvironmentRoutes } from '../../src/routes/environments';
 import { EnvService } from '../../src/services/environment';
 import { Database } from '../../src/db/index';
+import { errorHandler } from '../../src/lib/error-handler';
 
 function createTestApp() {
   const db = new Database(':memory:');
@@ -10,6 +11,7 @@ function createTestApp() {
   const envService = new EnvService(db);
   const app = new Hono();
   app.route('/', createEnvironmentRoutes(envService));
+  app.onError(errorHandler);
   return app;
 }
 

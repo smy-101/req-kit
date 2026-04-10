@@ -9,6 +9,7 @@ import { CollectionService } from '../../src/services/collection';
 import { ScriptService } from '../../src/services/script';
 import { CookieService } from '../../src/services/cookie';
 import { Database } from '../../src/db/index';
+import { errorHandler } from '../../src/lib/error-handler';
 
 describe('Proxy Routes Integration', () => {
   let app: Hono;
@@ -31,6 +32,7 @@ describe('Proxy Routes Integration', () => {
     const cookieService = new CookieService(db);
     app = new Hono();
     app.route('/', createProxyRoutes(proxyService, historyService, variableService, scriptService, cookieService));
+    app.onError(errorHandler);
 
     // Create target server for integration testing
     const targetApp = new Hono();

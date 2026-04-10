@@ -73,4 +73,8 @@ export class Database {
   close() {
     this.db.close();
   }
+
+  transaction<T>(fn: () => T): T {
+    return this.db.transaction(fn)();
+  }
 }

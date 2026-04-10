@@ -1,4 +1,5 @@
 import { runInNewContext } from 'node:vm';
+import { getErrorMessage } from '../lib/validation';
 
 export interface ScriptContext {
   environment?: Record<string, string>;
@@ -111,8 +112,8 @@ export class ScriptService {
         logs,
         variables: scriptVars,
       };
-    } catch (err: any) {
-      const errorMessage = err.message || String(err);
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
       if (isTimeoutError(errorMessage)) {
         return {
           success: false,
@@ -199,8 +200,8 @@ export class ScriptService {
         logs,
         variables: scriptVars,
       };
-    } catch (err: any) {
-      const errorMessage = err.message || String(err);
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
       if (isTimeoutError(errorMessage)) {
         return {
           success: false,

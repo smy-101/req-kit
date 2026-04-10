@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import { createCollectionRoutes } from '../../src/routes/collections';
 import { CollectionService } from '../../src/services/collection';
 import { Database } from '../../src/db/index';
+import { errorHandler } from '../../src/lib/error-handler';
 
 describe('Collections Routes Integration', () => {
   let app: Hono;
@@ -13,6 +14,7 @@ describe('Collections Routes Integration', () => {
     const collectionService = new CollectionService(db);
     app = new Hono();
     app.route('/', createCollectionRoutes(collectionService));
+    app.onError(errorHandler);
   });
 
   test('POST /api/collections - creates collection', async () => {
