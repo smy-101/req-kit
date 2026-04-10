@@ -24,6 +24,7 @@ let state = {
 };
 
 let debounceTimer = null;
+let refreshDebounceTimer = null;
 
 // Build the static skeleton once (search + chips + list container + footer container)
 function render(container) {
@@ -260,21 +261,29 @@ function escapeAttr(str) {
   return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-// Auto-refresh when a request completes
+// Auto-refresh when a request completes (debounced 500ms)
 store.on('request:complete', () => {
-  if (containerEl) HistoryPanel.refresh();
+  if (containerEl) {
+    clearTimeout(refreshDebounceTimer);
+    refreshDebounceTimer = setTimeout(() => HistoryPanel.refresh(), 500);
+  }
 });
 store.on('request:error', () => {
-  if (containerEl) HistoryPanel.refresh();
+  if (containerEl) {
+    clearTimeout(refreshDebounceTimer);
+    refreshDebounceTimer = setTimeout(() => HistoryPanel.refresh(), 500);
+  }
 });
 
 // Public API for sidebar to call
 export const HistoryPanel = {
   mount(container) {
+    clearTimeout(refreshDebounceTimer);
     render(container);
     loadHistory();
   },
   refresh() {
+    clearTimeout(refreshDebounceTimer);
     state.page = 1;
     loadHistory();
   },

@@ -110,20 +110,19 @@ sendBtn.addEventListener('click', async () => {
       follow_redirects: tab.options?.followRedirects,
     });
 
-    // 合并脚本返回的 runtime 变量
-    if (data.script_variables) {
-      const merged = { ...store.getState().runtimeVars, ...data.script_variables };
-      store.setState({ runtimeVars: merged });
-    }
-    if (data.post_script_variables) {
-      const merged = { ...store.getState().runtimeVars, ...data.post_script_variables };
-      store.setState({ runtimeVars: merged });
-    }
+    // 合并脚本返回的 runtime 变量、测试结果和响应到单次 setState
+    const updates = { response: data };
     if (data.script_tests) {
-      store.setState({ scriptTests: data.script_tests });
+      updates.scriptTests = data.script_tests;
     }
-
-    store.setState({ response: data });
+    // 合并 pre/post 脚本返回的 runtime 变量
+    let mergedVars = { ...store.getState().runtimeVars };
+    if (data.script_variables) Object.assign(mergedVars, data.script_variables);
+    if (data.post_script_variables) Object.assign(mergedVars, data.post_script_variables);
+    if (Object.keys(mergedVars).length > 0) {
+      updates.runtimeVars = mergedVars;
+    }
+    store.setState(updates);
     store.emit('request:complete', data);
 
     // 请求完成后刷新 cookie 数量（可能有新的 Set-Cookie）

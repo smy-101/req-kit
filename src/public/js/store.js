@@ -181,7 +181,6 @@ export const store = {
 
     this.emit('change', this.state);
     if (Object.keys(tabUpdates).length > 0) {
-      this.emit('tab:update', this.getActiveTab());
       // Tab bar only needs to re-render when title (method/url) changes or dirty state changes
       if ('method' in tabUpdates || 'url' in tabUpdates || 'dirty' in tabUpdates) {
         this.emit('tab:title-change', this.getActiveTab());

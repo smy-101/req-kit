@@ -3,14 +3,15 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "build": "bun run build:css && bun run build:js",
-    "build:css": "bun build src/public/css/index.css --outfile src/public/dist/bundle.css",
-    "build:js": "bun build src/public/js/app.js --outfile src/public/dist/bundle.js --target browser"
+    "build:css": "bun x lightningcss --minify --bundle src/public/css/index.css -o src/public/dist/bundle.css",
+    "build:js": "bun build src/public/js/app.js --outfile src/public/dist/bundle.js --target browser --minify"
   },
   "dependencies": {
     "hono": "^4.12.10",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "lightningcss-cli": "^1.32.0"
   }
 }

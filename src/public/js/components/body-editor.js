@@ -320,13 +320,14 @@ graphqlOperationName.addEventListener('input', () => {
 
 typeSelect.addEventListener('change', () => {
   const newType = typeSelect.value;
-  store.setState({ bodyType: newType });
+  const updates = { bodyType: newType };
   if (newType === 'multipart') {
     const tab = store.getActiveTab();
     if (tab && (!tab.multipartParts || tab.multipartParts.length === 0)) {
-      store.setState({ multipartParts: [{ key: '', type: 'text', value: '' }] });
+      updates.multipartParts = [{ key: '', type: 'text', value: '' }];
     }
   }
+  store.setState(updates);
   renderBodyEditor(newType);
 });
 
