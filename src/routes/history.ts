@@ -10,6 +10,10 @@ const HistoryQuerySchema = z.object({
   method: z.string().optional(),
 });
 
+const CleanupQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().optional(),
+});
+
 export function createHistoryRoutes(historyService: HistoryService) {
   const router = new Hono();
 
@@ -26,6 +30,13 @@ export function createHistoryRoutes(historyService: HistoryService) {
       return c.json({ error: '记录不存在' }, 404);
     }
     return c.json(record);
+  });
+
+  // Must be registered before /api/history/:id to avoid "cleanup" being captured as :id
+  router.delete('/api/history/cleanup', (c) => {
+    const { limit } = parseQuery(c, CleanupQuerySchema);
+    const deleted = historyService.cleanup(limit);
+    return c.json({ deleted });
   });
 
   router.delete('/api/history/:id', (c) => {

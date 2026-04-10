@@ -40,6 +40,7 @@ export interface PipelineResult {
   scriptVariables?: Record<string, string>;
   postScriptVariables?: Record<string, string>;
   setCookies?: any[];
+  cleaned?: number;
   error?: string;
   /** 标记此错误是否可重试（网络超时、不可达等），脚本错误不设置此字段 */
   retryable?: boolean;
@@ -177,10 +178,11 @@ export async function executeRequestPipeline(
       const failBody = (bodyType === 'multipart' || bodyType === 'binary')
         ? JSON.stringify(originalBodyForHistory)
         : (proxyBody as string | undefined) || null;
-      recordHistory(historyService, failReq, { status: 0, headers: {}, body: '', time: 0, size: 0 }, scriptLogs, input.auth_type, input.auth_config, bodyType, input.pre_request_script, input.post_response_script, failBody);
+      const cleaned = recordHistory(historyService, failReq, { status: 0, headers: {}, body: '', time: 0, size: 0 }, scriptLogs, input.auth_type, input.auth_config, bodyType, input.pre_request_script, input.post_response_script, failBody);
       return {
         scriptLogs: scriptResult.logs,
         scriptVariables: scriptResult.variables,
+        cleaned,
         error: scriptResult.error,
       };
     }
@@ -269,7 +271,7 @@ export async function executeRequestPipeline(
 
     if (!postResult.success) {
       // Record history even on script failure
-      recordHistory(historyService, proxyReq, result, scriptLogs, input.auth_type, input.auth_config, bodyType, input.pre_request_script, input.post_response_script, historyBody);
+      const cleaned = recordHistory(historyService, proxyReq, result, scriptLogs, input.auth_type, input.auth_config, bodyType, input.pre_request_script, input.post_response_script, historyBody);
       return {
         status: result.status,
         headers: result.headers,
@@ -282,13 +284,14 @@ export async function executeRequestPipeline(
         scriptVariables,
         postScriptVariables,
         setCookies,
+        cleaned,
         error: postResult.error,
       };
     }
   }
 
   // Step 7: History recording
-  recordHistory(historyService, proxyReq, result, scriptLogs, input.auth_type, input.auth_config, bodyType, input.pre_request_script, input.post_response_script, historyBody);
+  const cleaned = recordHistory(historyService, proxyReq, result, scriptLogs, input.auth_type, input.auth_config, bodyType, input.pre_request_script, input.post_response_script, historyBody);
 
   const response: PipelineResult = {
     status: result.status,
@@ -299,6 +302,7 @@ export async function executeRequestPipeline(
     scriptLogs,
     scriptVariables,
     setCookies,
+    cleaned,
   };
   if (input.post_response_script) {
     response.scriptTests = scriptTests ?? {};
@@ -341,6 +345,7 @@ export function createProxyRoutes(
       if (result.scriptVariables && Object.keys(result.scriptVariables).length > 0) response.script_variables = result.scriptVariables;
       if (result.postScriptLogs?.length) response.post_script_logs = result.postScriptLogs;
       if (result.postScriptVariables) response.post_script_variables = result.postScriptVariables;
+      if (result.cleaned) response.cleaned = result.cleaned;
       return c.json(response, status);
     }
 
@@ -358,6 +363,7 @@ export function createProxyRoutes(
     if (result.postScriptLogs) response.post_script_logs = result.postScriptLogs;
     if (result.postScriptVariables) response.post_script_variables = result.postScriptVariables;
     if (result.setCookies?.length) response.set_cookies = result.setCookies;
+    if (result.cleaned) response.cleaned = result.cleaned;
 
     if (result.error) {
       // Post-response script error — HTTP 400 with full response data
@@ -382,9 +388,9 @@ function recordHistory(
   preRequestScript?: string,
   postResponseScript?: string,
   historyBody?: string | null
-) {
+): number {
   try {
-    historyService.create({
+    const { cleaned } = historyService.create({
       method: req.method,
       url: req.url,
       request_headers: JSON.stringify(req.headers),
@@ -401,8 +407,10 @@ function recordHistory(
       response_time: result.time,
       response_size: result.size,
     });
+    return cleaned;
   } catch {
     // History recording should not block proxy responses
+    return 0;
   }
 }
 

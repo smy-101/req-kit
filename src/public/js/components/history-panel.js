@@ -262,7 +262,10 @@ function escapeAttr(str) {
 }
 
 // Auto-refresh when a request completes (debounced 500ms)
-store.on('request:complete', () => {
+store.on('request:complete', (data) => {
+  if (data?.cleaned > 0) {
+    Toast.info(`已自动清理 ${data.cleaned} 条旧记录`);
+  }
   if (containerEl) {
     clearTimeout(refreshDebounceTimer);
     refreshDebounceTimer = setTimeout(() => HistoryPanel.refresh(), 500);

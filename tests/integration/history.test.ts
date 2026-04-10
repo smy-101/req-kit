@@ -47,7 +47,7 @@ describe('History Routes Integration', () => {
 
   test('GET /api/history/:id - returns record', async () => {
     const historyService = new HistoryService(db);
-    const id = historyService.create({
+    const { id } = historyService.create({
       method: 'POST',
       url: 'https://api.example.com/users',
       request_body: '{"name":"test"}',
@@ -70,7 +70,7 @@ describe('History Routes Integration', () => {
 
   test('DELETE /api/history/:id - deletes record', async () => {
     const historyService = new HistoryService(db);
-    const id = historyService.create({
+    const { id } = historyService.create({
       method: 'GET',
       url: 'https://api.example.com/temp',
       status: 200,
@@ -87,5 +87,30 @@ describe('History Routes Integration', () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.deleted).toBeGreaterThanOrEqual(0);
+  });
+
+  test('DELETE /api/history/cleanup - default limit', async () => {
+    const historyService = new HistoryService(db);
+    // Create some records (under 500, so no cleanup needed)
+    historyService.create({ method: 'GET', url: 'https://api.example.com/cleanup-test', status: 200, response_time: 100, response_size: 50 });
+
+    const res = await app.request('/api/history/cleanup', { method: 'DELETE' });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.deleted).toBe(0);
+  });
+
+  test('DELETE /api/history/cleanup - custom limit', async () => {
+    const historyService = new HistoryService(db);
+    // Clear existing records first for predictable count
+    historyService.deleteAll();
+    for (let i = 0; i < 10; i++) {
+      historyService.create({ method: 'GET', url: `https://api.example.com/limit/${i}`, status: 200, response_time: 100, response_size: 50 });
+    }
+
+    const res = await app.request('/api/history/cleanup?limit=5', { method: 'DELETE' });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.deleted).toBe(5);
   });
 });

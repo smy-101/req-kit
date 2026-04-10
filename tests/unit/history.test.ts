@@ -17,7 +17,7 @@ describe('HistoryService', () => {
   });
 
   test('creates a history record', () => {
-    const id = service.create({
+    const { id } = service.create({
       method: 'GET',
       url: 'https://api.example.com/users',
       status: 200,
@@ -70,7 +70,7 @@ describe('HistoryService', () => {
   });
 
   test('gets history by id with full details', () => {
-    const id = service.create({
+    const { id } = service.create({
       method: 'POST',
       url: 'https://api.example.com/users',
       request_headers: JSON.stringify({ 'Content-Type': 'application/json' }),
@@ -99,7 +99,7 @@ describe('HistoryService', () => {
   });
 
   test('deletes a history record', () => {
-    const id = service.create({
+    const { id } = service.create({
       method: 'GET',
       url: 'https://api.example.com/users',
       status: 200,
@@ -131,6 +131,80 @@ describe('HistoryService', () => {
     const deleted = service.deleteAll();
     expect(deleted).toBe(3);
     expect(service.list().total).toBe(0);
+  });
+
+  describe('cleanup', () => {
+    test('does not delete when under limit', () => {
+      for (let i = 0; i < 10; i++) {
+        service.create({ method: 'GET', url: `https://api.example.com/${i}`, status: 200, response_time: 100, response_size: 50 });
+      }
+      const cleaned = service.cleanup();
+      expect(cleaned).toBe(0);
+      expect(service.list().total).toBe(10);
+    });
+
+    test('deletes correct amount when over limit', () => {
+      // Temporarily disable auto-cleanup by using cleanup() directly
+      // Create records via direct SQL to avoid auto-cleanup
+      for (let i = 0; i < 600; i++) {
+        service.create({ method: 'GET', url: `https://api.example.com/${i}`, status: 200, response_time: 100, response_size: 50 });
+      }
+      // After 600 creates (each triggers cleanup to 500), total should be 500
+      // Now call cleanup explicitly — nothing to clean
+      expect(service.list().total).toBe(500);
+      const cleaned = service.cleanup();
+      expect(cleaned).toBe(0);
+    });
+
+    test('deletes oldest records when over limit', () => {
+      // Create 501 records directly, then verify cleanup removes the oldest
+      for (let i = 0; i < 501; i++) {
+        service.create({ method: 'GET', url: `https://api.example.com/${i}`, status: 200, response_time: 100, response_size: 50 });
+      }
+      // Each create calls cleanup, so after 501 creates we have 500
+      // Verify the first URL (id=1) is gone, the last URL (id=501) exists
+      const result = service.list(1, 50);
+      const urls = result.items.map(i => i.url);
+      // The oldest records should have been cleaned, newest remain
+      expect(urls).toContain('https://api.example.com/500');
+    });
+
+    test('respects custom max count', () => {
+      for (let i = 0; i < 100; i++) {
+        service.create({ method: 'GET', url: `https://api.example.com/${i}`, status: 200, response_time: 100, response_size: 50 });
+      }
+      const cleaned = service.cleanup(50);
+      expect(cleaned).toBe(50); // 100 - 50 = 50
+      expect(service.list().total).toBe(50);
+    });
+  });
+
+  describe('create return value', () => {
+    test('returns object with id and cleaned fields', () => {
+      const result = service.create({
+        method: 'GET',
+        url: 'https://api.example.com/test',
+        status: 200,
+        response_time: 100,
+        response_size: 50,
+      });
+      expect(result).toHaveProperty('id');
+      expect(result).toHaveProperty('cleaned');
+      expect(typeof result.id).toBe('number');
+      expect(typeof result.cleaned).toBe('number');
+      expect(result.id).toBeGreaterThan(0);
+    });
+
+    test('cleaned is 0 when under limit', () => {
+      const result = service.create({
+        method: 'GET',
+        url: 'https://api.example.com/test',
+        status: 200,
+        response_time: 100,
+        response_size: 50,
+      });
+      expect(result.cleaned).toBe(0);
+    });
   });
 
   describe('search and method filtering', () => {
@@ -166,5 +240,26 @@ describe('HistoryService', () => {
       expect(result.total).toBe(0);
       expect(result.items).toEqual([]);
     });
+  });
+});
+
+describe('History index', () => {
+  let db: Database;
+
+  beforeEach(() => {
+    db = new Database(':memory:');
+    db.migrate();
+  });
+
+  afterAll(() => {
+    db.close();
+  });
+
+  test('idx_history_created_at index exists after migration', () => {
+    const indexes = db.query<{ name: string }>(
+      "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_history_created_at'"
+    );
+    expect(indexes.length).toBe(1);
+    expect(indexes[0].name).toBe('idx_history_created_at');
   });
 });

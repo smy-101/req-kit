@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS history (
     response_size     INTEGER,
     created_at        TEXT DEFAULT (datetime('now'))
 );
+CREATE INDEX IF NOT EXISTS idx_history_created_at ON history(created_at);
 
 -- 全局变量（始终生效，优先级最低）
 CREATE TABLE IF NOT EXISTS global_variables (

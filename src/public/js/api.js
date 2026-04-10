@@ -104,6 +104,10 @@ export const api = {
   async clearHistory() {
     return fetch('/api/history', { method: 'DELETE' }).then(r => r.json());
   },
+  async cleanupHistory(limit) {
+    const params = limit != null ? `?limit=${encodeURIComponent(limit)}` : '';
+    return fetch(`/api/history/cleanup${params}`, { method: 'DELETE' }).then(r => r.json());
+  },
 
   // Collections
   async getCollections() {

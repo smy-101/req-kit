@@ -29,12 +29,26 @@ export interface HistoryListResult {
 
 export class HistoryService {
   private db: Database;
+  static readonly MAX_HISTORY_COUNT = 500;
 
   constructor(db: Database) {
     this.db = db;
   }
 
-  create(record: Omit<HistoryRecord, 'id' | 'created_at'>): number {
+  cleanup(maxCount?: number): number {
+    const limit = maxCount ?? HistoryService.MAX_HISTORY_COUNT;
+    const countResult = this.db.queryOne<{ count: number }>('SELECT COUNT(*) as count FROM history');
+    const total = countResult?.count ?? 0;
+    if (total <= limit) return 0;
+    const excess = total - limit;
+    this.db.run(
+      'DELETE FROM history WHERE id IN (SELECT id FROM history ORDER BY created_at ASC LIMIT ?)',
+      [excess]
+    );
+    return excess;
+  }
+
+  create(record: Omit<HistoryRecord, 'id' | 'created_at'>): { id: number; cleaned: number } {
     const result = this.db.run(
       `INSERT INTO history (method, url, request_headers, request_params, request_body, body_type, pre_request_script, post_response_script, auth_type, auth_config, status, response_headers, response_body, response_time, response_size)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -56,7 +70,8 @@ export class HistoryService {
         record.response_size || null,
       ]
     );
-    return result.lastInsertRowid;
+    const cleaned = this.cleanup();
+    return { id: result.lastInsertRowid, cleaned };
   }
 
   list(page: number = 1, limit: number = 50, search?: string, method?: string): HistoryListResult {
