@@ -1,40 +1,37 @@
-// App entry point - import all components and initialize
+// App entry point - explicit init() calls, no side-effect imports
 import { store } from './store.js';
+import { api } from './api.js';
 import { initPanelResizer } from './utils/panel-resizer.js';
 import { matchShortcut } from './utils/shortcuts.js';
 
-// Components (side-effect imports — they self-register on the store)
-import './components/tab-bar.js';
-import './components/url-bar.js';
-import './components/tab-panel.js';
-import './components/headers-editor.js';
-import './components/body-editor.js';
-import './components/response-viewer.js';
-import './components/history-panel.js';
-import './components/sidebar.js';
-import { saveAsNewRequest } from './components/sidebar.js';
-import './components/env-manager.js';
-import './components/auth-panel.js';
-import './components/import-export.js';
-import './components/script-editor.js';
-import './components/post-script-editor.js';
-import './components/test-results.js';
-import './components/variable-preview.js';
-import './components/global-var-modal.js';
-import './components/collection-var-editor.js';
-import './components/variable-autocomplete.js';
-import './components/cookie-manager.js';
-import './components/cookie-tab.js';
-import './components/request-options.js';
-import './components/runner-panel.js';
-import './components/theme-switcher.js';
+// Simple components (no return value)
+import { init as initUrlBar } from './components/url-bar.js';
+import { init as initTabBar } from './components/tab-bar.js';
+import { init as initTabPanel } from './components/tab-panel.js';
+import { init as initHeadersEditor } from './components/headers-editor.js';
+import { init as initBodyEditor } from './components/body-editor.js';
+import { init as initAuthPanel } from './components/auth-panel.js';
+import { init as initScriptEditor } from './components/script-editor.js';
+import { init as initPostScriptEditor } from './components/post-script-editor.js';
+import { init as initTestResults } from './components/test-results.js';
+import { init as initCookieTab } from './components/cookie-tab.js';
+import { init as initRequestOptions } from './components/request-options.js';
+import { init as initVariableAutocomplete } from './components/variable-autocomplete.js';
+import { init as initCollectionVarEditor } from './components/collection-var-editor.js';
+import { init as initImportExport } from './components/import-export.js';
+import { init as initThemeSwitcher } from './components/theme-switcher.js';
 
-// Close modal on overlay click
-document.getElementById('modal-overlay').addEventListener('click', (e) => {
-  if (e.target.id === 'modal-overlay') {
-    e.target.classList.add('hidden');
-  }
-});
+// Components with public API
+import { init as initResponseViewer } from './components/response-viewer.js';
+import { init as initSidebar } from './components/sidebar.js';
+import { init as initEnvManager } from './components/env-manager.js';
+import { init as initHistoryPanel } from './components/history-panel.js';
+import { init as initCookieManager } from './components/cookie-manager.js';
+import { init as initVariablePreview } from './components/variable-preview.js';
+import { init as initGlobalVarModal } from './components/global-var-modal.js';
+import { init as initRunnerPanel } from './components/runner-panel.js';
+
+import { Modal } from './utils/modal.js';
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
@@ -47,14 +44,15 @@ document.addEventListener('keydown', (e) => {
       document.getElementById('save-btn').click();
       break;
     case 'send':
+      e.preventDefault();
       document.getElementById('send-btn').click();
       break;
     case 'close-modal':
-      document.getElementById('modal-overlay').classList.add('hidden');
+      Modal.close();
       break;
     case 'new-request':
       e.preventDefault();
-      saveAsNewRequest();
+      sidebar.saveAsNewRequest();
       break;
     case 'close-tab':
       e.preventDefault();
@@ -79,11 +77,54 @@ document.addEventListener('keydown', (e) => {
 // Initialize panel resizer
 initPanelResizer();
 
-// Log state changes in development
-store.on('change', (state) => {
-  // Uncomment for debugging:
-  // console.log('State:', state);
-});
+// Initialize cookie manager
+const cookieManager = initCookieManager();
+
+// Initialize variable preview (needs showGlobalVarModal)
+// Pass a stub; will be updated after global-var-modal init
+let _showGlobalVarModal = () => {};
+const variablePreview = initVariablePreview(() => { _showGlobalVarModal(); });
+const { refreshGlobalVars: refreshGlobalVars } = variablePreview;
+
+// Initialize global-var-modal (needs refreshGlobalVars)
+const globalVarModal = initGlobalVarModal(refreshGlobalVars);
+_showGlobalVarModal = globalVarModal.showGlobalVarModal;
+
+// Initialize simple components (no return value)
+initUrlBar();
+initTabBar();
+initTabPanel();
+initHeadersEditor();
+initBodyEditor();
+initAuthPanel();
+initScriptEditor();
+initPostScriptEditor();
+initTestResults();
+initCookieTab();
+initRequestOptions();
+initVariableAutocomplete();
+initThemeSwitcher();
+
+// Initialize history panel (returns HistoryPanel)
+const { HistoryPanel } = initHistoryPanel();
+
+// Initialize runner panel (returns openRunnerPanel)
+const runnerPanel = initRunnerPanel();
+
+// Initialize sidebar (needs HistoryPanel for tree rendering)
+const sidebar = initSidebar(runnerPanel.openRunnerPanel, HistoryPanel);
+
+// Initialize response viewer (async — dynamically imports response-search)
+initResponseViewer();
+
+// Initialize env manager
+initEnvManager();
+
+// Initialize import-export (needs sidebar.refreshCollections)
+initImportExport(() => sidebar.refreshCollections());
+
+// Initialize collection-var-editor (needs sidebar.refreshCollections)
+initCollectionVarEditor(() => sidebar.refreshCollections());
 
 // Create initial empty tab
 store.createTab();

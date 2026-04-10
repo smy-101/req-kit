@@ -7,6 +7,9 @@ export function escapeHtml(str) {
     .replace(/>/g, '&gt;');
 }
 
+// HTML 属性转义 — 与 escapeHtml 实现相同，语义不同
+export const escapeAttr = escapeHtml;
+
 // 空状态 HTML — 响应面板初始/空状态
 export function emptyStateHTML() {
   return `<div class="empty-state">

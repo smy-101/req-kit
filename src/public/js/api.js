@@ -1,3 +1,5 @@
+import { parseSSEStream } from './utils/sse-parser.js';
+
 // API client for backend communication
 export const api = {
   _currentController: null,
@@ -49,30 +51,15 @@ export const api = {
         signal,
       });
       const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        let currentEvent = '';
-        for (const line of lines) {
-          if (line.startsWith('event: ')) {
-            currentEvent = line.slice(7).trim();
-          } else if (line.startsWith('data: ')) {
-            const data = JSON.parse(line.slice(6));
-            if (currentEvent === 'headers') callbacks.onHeaders(data);
-            else if (currentEvent === 'chunk') callbacks.onChunk(data);
-            else if (currentEvent === 'done') callbacks.onDone(data);
-            else if (currentEvent === 'error') callbacks.onError(data);
-          }
-        }
-      }
+      await parseSSEStream(reader, {
+        onEvent(event, data) {
+          if (event === 'headers') callbacks.onHeaders(data);
+          else if (event === 'chunk') callbacks.onChunk(data);
+          else if (event === 'done') callbacks.onDone(data);
+          else if (event === 'error') callbacks.onError(data);
+        },
+        onError(err) { callbacks.onError({ error: err.message }); },
+      });
     } catch (err) {
       if (err.name === 'AbortError') {
         callbacks.onError({ error: '请求已取消', cancelled: true });
@@ -270,31 +257,16 @@ export const api = {
           signal,
         });
         const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-
-          let currentEvent = '';
-          for (const line of lines) {
-            if (line.startsWith('event: ')) {
-              currentEvent = line.slice(7).trim();
-            } else if (line.startsWith('data: ')) {
-              const data = JSON.parse(line.slice(6));
-              if (currentEvent === 'runner:start') callbacks.onStart?.(data);
-              else if (currentEvent === 'request:start') callbacks.onRequestStart?.(data);
-              else if (currentEvent === 'request:retry') callbacks.onRequestRetry?.(data);
-              else if (currentEvent === 'request:complete') callbacks.onRequestComplete?.(data);
-              else if (currentEvent === 'runner:done') callbacks.onDone?.(data);
-            }
-          }
-        }
+        await parseSSEStream(reader, {
+          onEvent(event, data) {
+            if (event === 'runner:start') callbacks.onStart?.(data);
+            else if (event === 'request:start') callbacks.onRequestStart?.(data);
+            else if (event === 'request:retry') callbacks.onRequestRetry?.(data);
+            else if (event === 'request:complete') callbacks.onRequestComplete?.(data);
+            else if (event === 'runner:done') callbacks.onDone?.(data);
+          },
+          onError(err) { callbacks.onError?.({ error: err.message }); },
+        });
       } catch (err) {
         if (err.name === 'AbortError') return;
         callbacks.onError?.({ error: err.message });
