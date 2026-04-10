@@ -2,67 +2,45 @@ import { api } from '../api.js';
 import { escapeHtml } from '../utils/template.js';
 import { Toast } from '../utils/toast.js';
 import { refreshCollections } from './sidebar.js';
+import { createKVEditor } from '../utils/kv-editor.js';
 
 // Collection variable editor component - adds "Variables" tab to collection editing
 async function showCollectionVarModal(collectionId, collectionName) {
   const overlay = document.getElementById('modal-overlay');
   const modal = document.getElementById('modal');
 
-  // Load current variables
   const loaded = await api.getCollectionVariables(collectionId);
-  let vars = loaded.map(v => ({ key: v.key, value: v.value || '', enabled: v.enabled }));
+  const vars = loaded.map(v => ({ key: v.key, value: v.value || '', enabled: !!v.enabled }));
 
-  function renderModal() {
-    modal.innerHTML = `
-      <h3>集合变量: ${escapeHtml(collectionName)}</h3>
-      <p class="modal-desc">这些变量对该集合下的所有请求生效，优先级高于环境变量和全局变量。</p>
-      <div id="coll-var-editor" class="kv-editor"></div>
-      <div class="modal-actions modal-actions-compact">
-        <button id="close-coll-var-modal" class="modal-btn modal-btn-secondary">取消</button>
-        <button id="save-coll-vars" class="modal-btn modal-btn-primary">保存</button>
-      </div>
-    `;
+  modal.innerHTML = `
+    <h3>集合变量: ${escapeHtml(collectionName)}</h3>
+    <p class="modal-desc">这些变量对该集合下的所有请求生效，优先级高于环境变量和全局变量。</p>
+    <div id="coll-var-editor"></div>
+    <div class="modal-actions modal-actions-compact">
+      <button id="close-coll-var-modal" class="modal-btn modal-btn-secondary">取消</button>
+      <button id="save-coll-vars" class="modal-btn modal-btn-primary">保存</button>
+    </div>
+  `;
 
-    const editor = document.getElementById('coll-var-editor');
+  const editor = createKVEditor(document.getElementById('coll-var-editor'), {
+    rows: vars,
+    addLabel: '+ 添加变量',
+  });
 
-    vars.forEach((v, idx) => {
-      const row = document.createElement('div');
-      row.className = 'kv-row';
-      row.innerHTML = `
-        <input type="checkbox" class="kv-enabled" ${v.enabled ? 'checked' : ''}>
-        <input type="text" placeholder="Key" value="${escapeHtml(v.key)}" class="kv-key">
-        <input type="text" placeholder="Value" value="${escapeHtml(v.value)}" class="kv-value">
-        <button class="kv-delete" title="Remove">&times;</button>
-      `;
-      row.querySelector('.kv-enabled').addEventListener('change', (e) => { vars[idx].enabled = e.target.checked ? 1 : 0; });
-      row.querySelector('.kv-key').addEventListener('input', (e) => { vars[idx].key = e.target.value; });
-      row.querySelector('.kv-value').addEventListener('input', (e) => { vars[idx].value = e.target.value; });
-      row.querySelector('.kv-delete').addEventListener('click', () => { vars.splice(idx, 1); renderModal(); });
-      editor.appendChild(row);
-    });
+  document.getElementById('close-coll-var-modal').addEventListener('click', () => {
+    overlay.classList.add('hidden');
+  });
 
-    const addBtn = document.createElement('button');
-    addBtn.className = 'modal-btn modal-btn-secondary kv-add-btn';
-    addBtn.textContent = '+ 添加变量';
-    addBtn.addEventListener('click', () => { vars.push({ key: '', value: '', enabled: 1 }); renderModal(); });
-    editor.appendChild(addBtn);
+  document.getElementById('save-coll-vars').addEventListener('click', async () => {
+    const cleaned = editor.getRows()
+      .filter(r => r.key.trim())
+      .map(r => ({ key: r.key.trim(), value: r.value || '', enabled: r.enabled }));
+    await api.updateCollectionVariables(collectionId, cleaned);
+    Toast.success('集合变量已保存');
+    overlay.classList.add('hidden');
+    refreshCollections();
+  });
 
-    document.getElementById('close-coll-var-modal').addEventListener('click', () => {
-      overlay.classList.add('hidden');
-    });
-
-    document.getElementById('save-coll-vars').addEventListener('click', async () => {
-      const cleaned = vars
-        .filter(v => v.key.trim())
-        .map(v => ({ key: v.key.trim(), value: v.value || '', enabled: v.enabled ? true : false }));
-      await api.updateCollectionVariables(collectionId, cleaned);
-      Toast.success('集合变量已保存');
-      overlay.classList.add('hidden');
-      refreshCollections();
-    });
-  }
-
-  renderModal();
   overlay.classList.remove('hidden');
 }
 

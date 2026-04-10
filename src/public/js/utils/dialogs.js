@@ -4,38 +4,117 @@
 const overlay = document.getElementById('modal-overlay');
 const modal = document.getElementById('modal');
 
-// Currently active keyboard listener (only one dialog at a time)
 let activeKeyHandler = null;
+let _cleanupFns = [];
 
-// ── Helpers ──────────────────────────────────
+// ── Internal helpers ──────────────────────────
 
-function show() {
-  overlay.classList.remove('hidden');
-}
-
-let hide = function () {
+function _hide() {
   overlay.classList.add('hidden');
   modal.innerHTML = '';
   if (activeKeyHandler) {
     document.removeEventListener('keydown', activeKeyHandler);
     activeKeyHandler = null;
   }
-};
+  while (_cleanupFns.length) _cleanupFns.pop()();
+}
 
-// Build a confirm-dialog shell and render it inside #modal
+function _show() {
+  overlay.classList.remove('hidden');
+}
+
 function buildDialog() {
   const dialog = document.createElement('div');
   dialog.className = 'confirm-dialog';
-
-  // Prevent overlay click handler in app.js from closing the dialog
-  // when the user clicks inside the dialog content itself
-  dialog.addEventListener('click', function (e) {
-    e.stopPropagation();
-  });
-
+  dialog.addEventListener('click', function (e) { e.stopPropagation(); });
   modal.innerHTML = '';
   modal.appendChild(dialog);
   return dialog;
+}
+
+/**
+ * Core dialog renderer — shared by prompt, confirm, confirmDanger.
+ * @param {Object} opts
+ * @param {string} opts.title
+ * @param {HTMLElement} opts.bodyEl - pre-built DOM element
+ * @param {string} opts.actionText - action button label ("OK", "Confirm", "Delete")
+ * @param {string} opts.actionClass - action button CSS class
+ * @param {boolean} opts.focusAction - true = focus action button; false = focus cancel (or input if present)
+ * @param {'input'|boolean} opts.enterResolves - 'input' = resolve to input value; true/false = resolve with that value
+ */
+function showDialog({ title, bodyEl, actionText, actionClass, focusAction, enterResolves }) {
+  return new Promise(function (resolve) {
+    var dialog = buildDialog();
+
+    var titleEl = document.createElement('div');
+    titleEl.className = 'confirm-dialog-title';
+    titleEl.textContent = title;
+    dialog.appendChild(titleEl);
+
+    dialog.appendChild(bodyEl);
+
+    var actions = document.createElement('div');
+    actions.className = 'confirm-dialog-actions' + (bodyEl.querySelector('.dialog-input') ? ' dialog-actions-gap' : '');
+
+    var cancelBtn = document.createElement('button');
+    cancelBtn.className = 'modal-btn modal-btn-secondary';
+    cancelBtn.textContent = 'Cancel';
+
+    var actionBtn = document.createElement('button');
+    actionBtn.className = 'modal-btn ' + actionClass;
+    actionBtn.textContent = actionText;
+
+    actions.appendChild(cancelBtn);
+    actions.appendChild(actionBtn);
+    dialog.appendChild(actions);
+
+    function doAction() {
+      var result = enterResolves;
+      if (enterResolves === 'input') {
+        result = bodyEl.querySelector('.dialog-input').value;
+      }
+      _hide();
+      resolve(result);
+    }
+
+    function doCancel() {
+      _hide();
+      resolve(enterResolves === 'input' ? null : false);
+    }
+
+    cancelBtn.addEventListener('click', doCancel);
+    actionBtn.addEventListener('click', doAction);
+
+    activeKeyHandler = function (e) {
+      if (e.key === 'Escape') { e.preventDefault(); doCancel(); }
+      else if (e.key === 'Enter') { e.preventDefault(); doAction(); }
+    };
+    document.addEventListener('keydown', activeKeyHandler);
+
+    // Overlay click-to-cancel (capture phase to beat app.js handler)
+    var overlayClickCatcher = function (e) {
+      if (e.target === overlay) {
+        e.stopImmediatePropagation();
+        doCancel();
+      }
+    };
+    overlay.addEventListener('click', overlayClickCatcher, true);
+    _cleanupFns.push(function () {
+      overlay.removeEventListener('click', overlayClickCatcher, true);
+    });
+
+    _show();
+
+    setTimeout(function () {
+      if (focusAction) {
+        actionBtn.focus();
+      } else {
+        var input = bodyEl.querySelector('.dialog-input');
+        if (input) { input.focus(); input.select(); }
+        else { cancelBtn.focus(); }
+      }
+    }, 50);
+  });
 }
 
 // ── Public API ───────────────────────────────
@@ -47,88 +126,19 @@ export const Dialogs = {};
  * Returns a Promise that resolves to the entered string or null if cancelled.
  */
 Dialogs.prompt = function (title, placeholder, defaultValue) {
-  return new Promise(function (resolve) {
-    var dialog = buildDialog();
+  var input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = placeholder || '';
+  input.value = defaultValue != null ? defaultValue : '';
+  input.className = 'dialog-input';
 
-    // Title
-    var titleEl = document.createElement('div');
-    titleEl.className = 'confirm-dialog-title';
-    titleEl.textContent = title;
-    dialog.appendChild(titleEl);
-
-    // Input
-    var input = document.createElement('input');
-    input.type = 'text';
-    input.placeholder = placeholder || '';
-    input.value = defaultValue != null ? defaultValue : '';
-    input.className = 'dialog-input';
-    dialog.appendChild(input);
-
-    // Actions
-    var actions = document.createElement('div');
-    actions.className = 'confirm-dialog-actions dialog-actions-gap';
-
-    var cancelBtn = document.createElement('button');
-    cancelBtn.className = 'modal-btn modal-btn-secondary';
-    cancelBtn.textContent = 'Cancel';
-
-    var okBtn = document.createElement('button');
-    okBtn.className = 'modal-btn modal-btn-primary';
-    okBtn.textContent = 'OK';
-
-    actions.appendChild(cancelBtn);
-    actions.appendChild(okBtn);
-    dialog.appendChild(actions);
-
-    function submit() {
-      var val = input.value;
-      hide();
-      resolve(val);
-    }
-
-    function cancel() {
-      hide();
-      resolve(null);
-    }
-
-    cancelBtn.addEventListener('click', cancel);
-    okBtn.addEventListener('click', submit);
-
-    // Keyboard: Enter to submit, Escape to cancel
-    activeKeyHandler = function (e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        submit();
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        cancel();
-      }
-    };
-    document.addEventListener('keydown', activeKeyHandler);
-
-    // Override the overlay click to cancel instead of just hiding
-    var overlayClickCatcher = function (e) {
-      if (e.target === overlay) {
-        e.stopImmediatePropagation();
-        cancel();
-      }
-    };
-    overlay.addEventListener('click', overlayClickCatcher, true);
-    // Clean up the catcher when dialog closes
-    var origHide = hide;
-    hide = function () {
-      overlay.removeEventListener('click', overlayClickCatcher, true);
-      origHide();
-      hide = origHide;
-    };
-
-    show();
-
-    // Auto-focus the input after the modal is visible
-    setTimeout(function () {
-      input.focus();
-      input.select();
-    }, 50);
+  return showDialog({
+    title: title,
+    bodyEl: input,
+    actionText: 'OK',
+    actionClass: 'modal-btn-primary',
+    focusAction: false,
+    enterResolves: 'input',
   });
 };
 
@@ -137,77 +147,17 @@ Dialogs.prompt = function (title, placeholder, defaultValue) {
  * Returns a Promise that resolves to true (confirmed) or false (cancelled).
  */
 Dialogs.confirm = function (title, message) {
-  return new Promise(function (resolve) {
-    var dialog = buildDialog();
+  var msgEl = document.createElement('div');
+  msgEl.className = 'confirm-dialog-message';
+  msgEl.textContent = message;
 
-    var titleEl = document.createElement('div');
-    titleEl.className = 'confirm-dialog-title';
-    titleEl.textContent = title;
-    dialog.appendChild(titleEl);
-
-    var msgEl = document.createElement('div');
-    msgEl.className = 'confirm-dialog-message';
-    msgEl.textContent = message;
-    dialog.appendChild(msgEl);
-
-    var actions = document.createElement('div');
-    actions.className = 'confirm-dialog-actions';
-
-    var cancelBtn = document.createElement('button');
-    cancelBtn.className = 'modal-btn modal-btn-secondary';
-    cancelBtn.textContent = 'Cancel';
-
-    var confirmBtn = document.createElement('button');
-    confirmBtn.className = 'modal-btn modal-btn-primary';
-    confirmBtn.textContent = 'Confirm';
-
-    actions.appendChild(cancelBtn);
-    actions.appendChild(confirmBtn);
-    dialog.appendChild(actions);
-
-    function confirmAction() {
-      hide();
-      resolve(true);
-    }
-
-    function cancelAction() {
-      hide();
-      resolve(false);
-    }
-
-    cancelBtn.addEventListener('click', cancelAction);
-    confirmBtn.addEventListener('click', confirmAction);
-
-    activeKeyHandler = function (e) {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        cancelAction();
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        confirmAction();
-      }
-    };
-    document.addEventListener('keydown', activeKeyHandler);
-
-    // Override overlay click to cancel
-    var overlayClickCatcher = function (e) {
-      if (e.target === overlay) {
-        e.stopImmediatePropagation();
-        cancelAction();
-      }
-    };
-    overlay.addEventListener('click', overlayClickCatcher, true);
-    var origHide = hide;
-    hide = function () {
-      overlay.removeEventListener('click', overlayClickCatcher, true);
-      origHide();
-      hide = origHide;
-    };
-
-    show();
-    setTimeout(function () {
-      confirmBtn.focus();
-    }, 50);
+  return showDialog({
+    title: title,
+    bodyEl: msgEl,
+    actionText: 'Confirm',
+    actionClass: 'modal-btn-primary',
+    focusAction: true,
+    enterResolves: true,
   });
 };
 
@@ -216,76 +166,16 @@ Dialogs.confirm = function (title, message) {
  * Same as confirm but with a red/danger styled button for destructive actions.
  */
 Dialogs.confirmDanger = function (title, message) {
-  return new Promise(function (resolve) {
-    var dialog = buildDialog();
+  var msgEl = document.createElement('div');
+  msgEl.className = 'confirm-dialog-message';
+  msgEl.textContent = message;
 
-    var titleEl = document.createElement('div');
-    titleEl.className = 'confirm-dialog-title';
-    titleEl.textContent = title;
-    dialog.appendChild(titleEl);
-
-    var msgEl = document.createElement('div');
-    msgEl.className = 'confirm-dialog-message';
-    msgEl.textContent = message;
-    dialog.appendChild(msgEl);
-
-    var actions = document.createElement('div');
-    actions.className = 'confirm-dialog-actions';
-
-    var cancelBtn = document.createElement('button');
-    cancelBtn.className = 'modal-btn modal-btn-secondary';
-    cancelBtn.textContent = 'Cancel';
-
-    var dangerBtn = document.createElement('button');
-    dangerBtn.className = 'modal-btn modal-btn-danger';
-    dangerBtn.textContent = 'Delete';
-
-    actions.appendChild(cancelBtn);
-    actions.appendChild(dangerBtn);
-    dialog.appendChild(actions);
-
-    function confirmAction() {
-      hide();
-      resolve(true);
-    }
-
-    function cancelAction() {
-      hide();
-      resolve(false);
-    }
-
-    cancelBtn.addEventListener('click', cancelAction);
-    dangerBtn.addEventListener('click', confirmAction);
-
-    activeKeyHandler = function (e) {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        cancelAction();
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        confirmAction();
-      }
-    };
-    document.addEventListener('keydown', activeKeyHandler);
-
-    // Override overlay click to cancel
-    var overlayClickCatcher = function (e) {
-      if (e.target === overlay) {
-        e.stopImmediatePropagation();
-        cancelAction();
-      }
-    };
-    overlay.addEventListener('click', overlayClickCatcher, true);
-    var origHide = hide;
-    hide = function () {
-      overlay.removeEventListener('click', overlayClickCatcher, true);
-      origHide();
-      hide = origHide;
-    };
-
-    show();
-    setTimeout(function () {
-      cancelBtn.focus();
-    }, 50);
+  return showDialog({
+    title: title,
+    bodyEl: msgEl,
+    actionText: 'Delete',
+    actionClass: 'modal-btn-danger',
+    focusAction: false,
+    enterResolves: true,
   });
 };

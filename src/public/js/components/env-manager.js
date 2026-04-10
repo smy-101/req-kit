@@ -1,7 +1,7 @@
 import { api } from '../api.js';
 import { store } from '../store.js';
-import { escapeHtml } from '../utils/template.js';
 import { Toast } from '../utils/toast.js';
+import { createKVEditor } from '../utils/kv-editor.js';
 
 // Environment manager component — 左右分栏布局
 const envSelect = document.getElementById('active-env');
@@ -11,6 +11,7 @@ const manageBtn = document.getElementById('btn-manage-env');
 let selectedEnvId = null;  // 当前选中的环境 ID
 let dirty = false;         // 变量是否有未保存修改
 let pendingSwitchId = null; // 切换确认后要跳转的环境 ID
+let _varEditor = null;      // 当前 KV 编辑器实例
 
 async function refreshEnvironments() {
   const envs = await api.getEnvironments();
@@ -289,127 +290,39 @@ function renderVarEditor() {
   heading.textContent = 'Variables for ' + env.name;
   varsEl.appendChild(heading);
 
-  // 用闭包持有当前变量副本
-  let vars = env.variables ? env.variables.map(v => ({ ...v })) : [];
   dirty = false;
 
-  const editor = document.createElement('div');
-  editor.className = 'kv-editor';
+  _varEditor = createKVEditor(varsEl, {
+    rows: env.variables ? env.variables.map(v => ({ ...v })) : [],
+    onChange(updatedRows) { dirty = true; },
+    showDuplicate: true,
+    addLabel: '+ Add Variable',
+  });
 
-  function renderVars() {
-    // 检测重复 key
-    const keyCount = {};
-    for (const v of vars) {
-      if (v.key) {
-        keyCount[v.key] = (keyCount[v.key] || 0) + 1;
-      }
-    }
+  // 保存变量按钮
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'modal-btn modal-btn-primary kv-save-btn';
+  saveBtn.textContent = 'Save Variables';
+  saveBtn.addEventListener('click', async () => {
+    await saveCurrentVars();
+  });
+  varsEl.appendChild(saveBtn);
+}
 
-    editor.innerHTML = '';
-
-    vars.forEach((v, idx) => {
-      const row = document.createElement('div');
-      const isDuplicate = v.key && keyCount[v.key] > 1;
-      row.className = 'kv-row' + (isDuplicate ? ' kv-duplicate' : '');
-      row.innerHTML = `
-        <input type="checkbox" class="kv-enabled" ${v.enabled ? 'checked' : ''}>
-        <input type="text" placeholder="Key" value="${escapeHtml(v.key)}" class="kv-key">
-        <input type="text" placeholder="Value" value="${escapeHtml(v.value || '')}" class="kv-value">
-        <button class="kv-delete" title="Remove">&times;</button>
-      `;
-
-      if (isDuplicate) {
-        const warn = document.createElement('span');
-        warn.className = 'kv-dup-warn';
-        warn.textContent = '!';
-        warn.title = 'Duplicate key';
-        row.appendChild(warn);
-      }
-
-      row.querySelector('.kv-enabled').addEventListener('change', (e) => {
-        vars[idx].enabled = e.target.checked;
-        dirty = true;
-      });
-      row.querySelector('.kv-key').addEventListener('input', (e) => {
-        vars[idx].key = e.target.value;
-        dirty = true;
-        updateDuplicateIndicators();
-      });
-      row.querySelector('.kv-value').addEventListener('input', (e) => {
-        vars[idx].value = e.target.value;
-        dirty = true;
-      });
-      row.querySelector('.kv-delete').addEventListener('click', () => {
-        vars.splice(idx, 1);
-        dirty = true;
-        renderVars();
-      });
-      editor.appendChild(row);
-    });
-
-    const addBtn = document.createElement('button');
-    addBtn.className = 'modal-btn modal-btn-secondary kv-add-btn';
-    addBtn.textContent = '+ Add Variable';
-    addBtn.addEventListener('click', () => {
-      vars.push({ key: '', value: '', enabled: true });
-      dirty = true;
-      renderVars();
-    });
-    editor.appendChild(addBtn);
-
-    const saveBtn = document.createElement('button');
-    saveBtn.className = 'modal-btn modal-btn-primary kv-save-btn';
-    saveBtn.textContent = 'Save Variables';
-    saveBtn.addEventListener('click', async () => {
-      await saveCurrentVars();
-    });
-    editor.appendChild(saveBtn);
+// 保存变量（不重建 Modal）
+async function saveCurrentVars() {
+  const envId = selectedEnvId;
+  if (!envId || !_varEditor) return;
+  const toSave = _varEditor.getRows().filter(v => v.key);
+  await api.updateVariables(envId, toSave);
+  await refreshEnvironments();
+  // 刷新变量数据但不重建 Modal
+  const updatedEnv = store.getState().environments.find(e => e.id === envId);
+  if (updatedEnv) {
+    _varEditor.setRows(updatedEnv.variables || []);
   }
-
-  function updateDuplicateIndicators() {
-    // 重新计算重复 key 并更新样式
-    const keyCount = {};
-    for (const v of vars) {
-      if (v.key) keyCount[v.key] = (keyCount[v.key] || 0) + 1;
-    }
-    const rows = editor.querySelectorAll('.kv-row');
-    rows.forEach((row, idx) => {
-      const v = vars[idx];
-      const isDup = v && v.key && keyCount[v.key] > 1;
-      row.classList.toggle('kv-duplicate', !!isDup);
-      // 更新或移除警告图标
-      let warn = row.querySelector('.kv-dup-warn');
-      if (isDup && !warn) {
-        warn = document.createElement('span');
-        warn.className = 'kv-dup-warn';
-        warn.textContent = '!';
-        warn.title = 'Duplicate key';
-        row.appendChild(warn);
-      } else if (!isDup && warn) {
-        warn.remove();
-      }
-    });
-  }
-
-  // 保存变量（不重建 Modal）
-  async function saveCurrentVars() {
-    const envId = selectedEnvId;
-    if (!envId) return;
-    const toSave = vars.filter(v => v.key);
-    await api.updateVariables(envId, toSave);
-    await refreshEnvironments();
-    // 刷新变量数据但不重建 Modal
-    const updatedEnv = store.getState().environments.find(e => e.id === envId);
-    if (updatedEnv) {
-      vars = updatedEnv.variables ? updatedEnv.variables.map(v => ({ ...v })) : [];
-    }
-    dirty = false;
-    renderVars();
-    Toast.info('Variables saved');
-  }
-
-  varsEl.appendChild(editor);
-  renderVars();
+  dirty = false;
+  Toast.info('Variables saved');
 }
 
 // 重命名环境 — 内联编辑
