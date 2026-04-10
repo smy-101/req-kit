@@ -40,22 +40,9 @@ export class ProxyService {
   async sendRequest(req: ProxyRequest): Promise<ProxyResponse> {
     const url = this.buildUrl(req.url, req.params);
     const startTime = Date.now();
-
-    const controller = new AbortController();
-    const timeoutMs = req.timeout ?? REQUEST_TIMEOUT;
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const { controller, timeout, fetchOptions } = this.prepareFetch(req);
 
     try {
-      const fetchOptions: RequestInit = {
-        method: req.method,
-        headers: req.headers || {},
-        body: this.hasBody(req.method) ? req.body : undefined,
-        signal: controller.signal,
-      };
-      if (req.follow_redirects === false) {
-        fetchOptions.redirect = 'manual';
-      }
-
       const response = await fetch(url, fetchOptions);
 
       clearTimeout(timeout);
@@ -97,22 +84,9 @@ export class ProxyService {
   async sendRequestStream(req: ProxyRequest, callbacks: ProxyStreamCallbacks): Promise<void> {
     const url = this.buildUrl(req.url, req.params);
     const startTime = Date.now();
-
-    const controller = new AbortController();
-    const timeoutMs = req.timeout ?? REQUEST_TIMEOUT;
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const { controller, timeout, fetchOptions } = this.prepareFetch(req);
 
     try {
-      const fetchOptions: RequestInit = {
-        method: req.method,
-        headers: req.headers || {},
-        body: this.hasBody(req.method) ? req.body : undefined,
-        signal: controller.signal,
-      };
-      if (req.follow_redirects === false) {
-        fetchOptions.redirect = 'manual';
-      }
-
       const response = await fetch(url, fetchOptions);
 
       clearTimeout(timeout);
@@ -158,6 +132,24 @@ export class ProxyService {
       }
       throw new ProxyUnreachableError(getErrorMessage(err));
     }
+  }
+
+  private prepareFetch(req: ProxyRequest): { controller: AbortController; timeout: ReturnType<typeof setTimeout>; fetchOptions: RequestInit } {
+    const controller = new AbortController();
+    const timeoutMs = req.timeout ?? REQUEST_TIMEOUT;
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    const fetchOptions: RequestInit = {
+      method: req.method,
+      headers: req.headers || {},
+      body: this.hasBody(req.method) ? req.body : undefined,
+      signal: controller.signal,
+    };
+    if (req.follow_redirects === false) {
+      fetchOptions.redirect = 'manual';
+    }
+
+    return { controller, timeout, fetchOptions };
   }
 
   private buildUrl(baseUrl: string, params?: Record<string, string>): string {

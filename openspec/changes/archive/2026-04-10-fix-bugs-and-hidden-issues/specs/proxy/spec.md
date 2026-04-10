@@ -1,8 +1,4 @@
-## Purpose
-
-Proxy capability for forwarding HTTP requests through the server, supporting all standard HTTP methods with both standard and streaming (SSE) response modes.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: 代理转发 HTTP 请求
 
@@ -110,51 +106,3 @@ ProxyRequest 接口的 body 字段类型 SHALL 为 `string | FormData | Buffer |
 #### Scenario: auth_config JSON 解析失败时不中断管道
 - **WHEN** 客户端发送代理请求，`auth_type` 为 `bearer`，`auth_config` 为字符串 `"not-valid-json"`
 - **THEN** 系统输出 `console.warn` 日志，不注入认证信息，请求继续正常发送（不带 Authorization header）
-
-### Requirement: 流式代理传输
-
-系统 SHALL 支持通过 SSE (Server-Sent Events) 流式传输代理响应。当请求体包含 `"stream": true` 时，系统 SHALL 使用 SSE 格式推送响应数据。
-
-SSE 事件序列 SHALL 为：
-1. `event: headers` — 包含状态码和响应头
-2. `event: chunk`（多次）— 包含响应体分块（Base64 编码）
-3. `event: done` — 包含总耗时和总大小
-
-当 `stream` 为 `false` 或未设置时，系统 SHALL 使用标准 JSON 响应。
-
-#### Scenario: 流式代理请求
-- **WHEN** 客户端发送 `POST /api/proxy`，body 包含 `"stream": true`
-- **THEN** 系统返回 `Content-Type: text/event-stream`，依次发送 `headers`、`chunk`、`done` 事件
-
-#### Scenario: 非流式代理请求
-- **WHEN** 客户端发送 `POST /api/proxy`，body 不包含 `stream` 或 `stream: false`
-- **THEN** 系统返回标准 JSON 响应 `{ "status": ..., "headers": ..., "body": ..., "time": ..., "size": ... }`
-
-### Requirement: 代理请求支持自定义选项
-ProxyService.sendRequest SHALL 接受可选的 timeout 和 followRedirects 参数。当提供 timeout 时，使用该值替代默认 30000ms。当 followRedirects 为 false 时，fetch 请求 SHALL 使用 `redirect: 'manual'`。
-
-#### Scenario: 自定义超时
-- **WHEN** 前端传入 timeout: 5000
-- **THEN** ProxyService 使用 5000ms 作为 AbortController 超时时间
-
-#### Scenario: 禁用重定向跟随
-- **WHEN** 前端传入 followRedirects: false
-- **THEN** ProxyService 使用 `redirect: 'manual'` 发送 fetch 请求，返回重定向响应本身
-
-#### Scenario: 未提供选项使用默认值
-- **WHEN** 前端未传入 timeout 或 followRedirects
-- **THEN** 使用默认超时 30000ms 和 redirect: 'follow'
-
-### Requirement: 代理请求大小限制
-
-系统 SHALL 限制代理响应体最大为 50MB。超出限制时系统 SHALL 截断响应体并在响应中标记 `truncated: true`。
-
-系统 SHALL 限制代理请求超时为 30 秒。超时后系统 SHALL 返回 HTTP 504。
-
-#### Scenario: 响应体超过大小限制
-- **WHEN** 代理目标返回超过 50MB 的响应体
-- **THEN** 系统截断响应体，返回 `{ ..., "truncated": true, "size": 52428800 }`
-
-#### Scenario: 代理请求超时
-- **WHEN** 代理目标 30 秒内未返回响应
-- **THEN** 系统返回 HTTP 504，响应体 `{ "error": "请求超时" }`

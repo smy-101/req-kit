@@ -80,14 +80,4 @@ export class EnvService {
       return this.getVariables(environmentId);
     });
   }
-
-  replaceTemplateValues(text: string, environmentId: number): string {
-    const vars = this.getVariables(environmentId);
-    const enabledVars = vars.filter(v => v.enabled !== false && v.enabled !== 0);
-
-    return text.replace(/\{\{([\w-]+)\}\}/g, (match, key) => {
-      const found = enabledVars.find(v => v.key === key);
-      return found ? (found.value || match) : match;
-    });
-  }
 }

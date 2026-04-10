@@ -1,13 +1,6 @@
 import { Hono } from 'hono';
-import { z } from 'zod';
 import { VariableService } from '../services/variable';
-import { parseBody } from '../lib/validation';
-
-const ReplaceVariablesSchema = z.array(z.object({
-  key: z.string().min(1),
-  value: z.string().optional(),
-  enabled: z.boolean().optional(),
-}));
+import { parseBody, ReplaceVariablesSchema } from '../lib/validation';
 
 export function createGlobalVariableRoutes(variableService: VariableService) {
   const router = new Hono();

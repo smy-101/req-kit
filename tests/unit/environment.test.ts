@@ -90,37 +90,4 @@ describe('EnvService', () => {
       expect(vars.find(v => v.key === 'api_url')?.value).toBe('https://api.prod.com');
     });
   });
-
-  describe('template replacement', () => {
-    test('replaces {{variable}} in text', () => {
-      const env = service.createEnvironment('dev');
-      service.replaceVariables(env.id!, [
-        { key: 'base_url', value: 'http://localhost:3000' },
-      ]);
-
-      const result = service.replaceTemplateValues('{{base_url}}/users', env.id!);
-      expect(result).toBe('http://localhost:3000/users');
-    });
-
-    test('keeps unmatched variables as-is', () => {
-      const env = service.createEnvironment('dev');
-      service.replaceVariables(env.id!, [
-        { key: 'base_url', value: 'http://localhost:3000' },
-      ]);
-
-      const result = service.replaceTemplateValues('{{unknown_var}}/path', env.id!);
-      expect(result).toBe('{{unknown_var}}/path');
-    });
-
-    test('only replaces enabled variables', () => {
-      const env = service.createEnvironment('dev');
-      service.replaceVariables(env.id!, [
-        { key: 'base_url', value: 'http://localhost:3000', enabled: true },
-        { key: 'disabled_var', value: 'secret', enabled: false },
-      ]);
-
-      const result = service.replaceTemplateValues('{{base_url}} {{disabled_var}}', env.id!);
-      expect(result).toBe('http://localhost:3000 {{disabled_var}}');
-    });
-  });
 });

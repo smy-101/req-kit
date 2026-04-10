@@ -5,6 +5,7 @@ import { ScriptService } from './script';
 import { ProxyService } from './proxy';
 import { CookieService } from './cookie';
 import { executeRequestPipeline, type PipelineInput, type PipelineResult, type PipelineServices } from '../routes/proxy';
+import { findInTree } from '../lib/tree-utils';
 
 export interface RunnerRequestItem {
   id: number;
@@ -121,7 +122,7 @@ export class RunnerService {
   ): Promise<void> {
     // 获取完整集合树，找到目标集合
     const tree = this.collectionService.getTree();
-    const targetCollection = this.findCollection(tree, collectionId);
+    const targetCollection = findInTree(tree, collectionId);
     if (!targetCollection) {
       callbacks.onStart(0);
       callbacks.onDone({ passed: 0, failed: 0, total: 0, totalTime: 0 });
@@ -155,16 +156,16 @@ export class RunnerService {
       // 解析请求参数
       let headers: Record<string, string> = {};
       if (req.headers) {
-        try { headers = JSON.parse(req.headers); } catch {}
+        try { headers = JSON.parse(req.headers); } catch (err) { console.warn('[runner] JSON.parse failed: headers', err); }
       }
       let params: Record<string, string> = {};
       if (req.params) {
-        try { params = JSON.parse(req.params); } catch {}
+        try { params = JSON.parse(req.params); } catch (err) { console.warn('[runner] JSON.parse failed: params', err); }
       }
 
       let authConfig: any;
       if (req.auth_config) {
-        try { authConfig = JSON.parse(req.auth_config); } catch {}
+        try { authConfig = JSON.parse(req.auth_config); } catch (err) { console.warn('[runner] JSON.parse failed: auth_config', err); }
       }
 
       callbacks.onRequestStart(i, req.name, req.method, req.url);
@@ -254,19 +255,5 @@ export class RunnerService {
     }
 
     callbacks.onDone({ passed, failed, total: requests.length, totalTime: Date.now() - totalStart });
-  }
-
-  /**
-   * 在集合树中查找指定 ID 的集合
-   */
-  private findCollection(tree: Collection[], id: number): Collection | null {
-    for (const node of tree) {
-      if (node.id === id) return node;
-      if (node.children) {
-        const found = this.findCollection(node.children, id);
-        if (found) return found;
-      }
-    }
-    return null;
   }
 }

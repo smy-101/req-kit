@@ -1,6 +1,7 @@
 import { Database } from '../db/index';
 import { CollectionService, SavedRequest } from './collection';
 import { VariableService } from './variable';
+import { findInTree } from '../lib/tree-utils';
 
 export class ImportExportService {
   private db: Database;
@@ -195,7 +196,7 @@ export class ImportExportService {
 
   exportPostmanCollection(collectionId: number): any | null {
     const tree = this.collectionService.getTree();
-    const collection = this.findCollectionInTree(tree, collectionId);
+    const collection = findInTree(tree, collectionId);
     if (!collection) return null;
 
     // 查询集合变量
@@ -218,17 +219,6 @@ export class ImportExportService {
     }
 
     return result;
-  }
-
-  private findCollectionInTree(tree: any[], id: number): any {
-    for (const node of tree) {
-      if (node.id === id) return node;
-      if (node.children) {
-        const found = this.findCollectionInTree(node.children, id);
-        if (found) return found;
-      }
-    }
-    return null;
   }
 
   private buildPostmanItems(collection: any): any[] {

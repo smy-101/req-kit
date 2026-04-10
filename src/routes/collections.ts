@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { CollectionService } from '../services/collection';
 import { VariableService } from '../services/variable';
-import { parseBody, parseParam } from '../lib/validation';
+import { parseBody, parseParam, ReplaceVariablesSchema } from '../lib/validation';
 
 const CreateCollectionSchema = z.object({
   name: z.string().min(1, 'name 不能为空'),
@@ -23,12 +23,6 @@ const AddRequestSchema = z.object({
 }).passthrough();
 
 const UpdateRequestSchema = z.object({}).passthrough();
-
-const ReplaceVariablesSchema = z.array(z.object({
-  key: z.string().min(1),
-  value: z.string().optional(),
-  enabled: z.boolean().optional(),
-}));
 
 export function createCollectionRoutes(collectionService: CollectionService, variableService?: VariableService) {
   const router = new Hono();

@@ -444,8 +444,9 @@ function recordHistory(
       response_size: result.size,
     });
     return cleaned;
-  } catch {
+  } catch (err) {
     // History recording should not block proxy responses
+    console.error('[recordHistory]', err);
     return 0;
   }
 }
@@ -528,7 +529,9 @@ function streamProxyResponse(
                   response_time: capturedTime,
                   response_size: capturedSize,
                 });
-              } catch {}
+              } catch (err) {
+                console.error('[streamProxyResponse] recordHistory failed', err);
+              }
             },
             onError(error) {
               send('error', { error });

@@ -1,5 +1,6 @@
 import { store } from '../store.js';
 import { escapeHtml, emptyStateHTML } from '../utils/template.js';
+import { formatSize } from '../utils/format.js';
 
 // Response viewer component
 const statusEl = document.getElementById('response-status');
@@ -654,12 +655,6 @@ store.on('request:start', () => {
 });
 
 store.on('tab:switch', restoreFromTab);
-
-function formatSize(bytes) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 function syntaxHighlight(json) {
   return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {

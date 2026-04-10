@@ -1,6 +1,12 @@
 import { z } from 'zod';
 import type { Context } from 'hono';
 
+export const ReplaceVariablesSchema = z.array(z.object({
+  key: z.string().min(1),
+  value: z.string().optional(),
+  enabled: z.boolean().optional(),
+}));
+
 export class ValidationError extends Error {
   issues: string[];
   constructor(issues: string[]) {

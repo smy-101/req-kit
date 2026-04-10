@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { EnvService } from '../services/environment';
-import { parseBody, parseParam } from '../lib/validation';
+import { parseBody, parseParam, ReplaceVariablesSchema } from '../lib/validation';
 
 const CreateEnvironmentSchema = z.object({
   name: z.string().min(1, 'name 不能为空').transform(s => s.trim()),
@@ -10,12 +10,6 @@ const CreateEnvironmentSchema = z.object({
 const UpdateEnvironmentSchema = z.object({
   name: z.string().min(1, 'name 不能为空').transform(s => s.trim()),
 });
-
-const ReplaceVariablesSchema = z.array(z.object({
-  key: z.string().min(1),
-  value: z.string().optional(),
-  enabled: z.boolean().optional(),
-}));
 
 export function createEnvironmentRoutes(envService: EnvService) {
   const router = new Hono();

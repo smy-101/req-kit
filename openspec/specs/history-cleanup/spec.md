@@ -28,6 +28,8 @@ Automatic and manual cleanup of request history records, including configurable 
 
 系统 SHALL 返回被删除的记录数量。
 
+`DELETE /api/history/cleanup` 路由 SHALL 注册在 `DELETE /api/history/:id` 之前，确保 "cleanup" 不会被 `:id` 参数捕获。
+
 #### Scenario: 手动清理到默认上限
 - **WHEN** 客户端发送 `DELETE /api/history/cleanup`，当前有 600 条记录，默认上限 500
 - **THEN** 系统删除最旧的 100 条记录，返回 `{ "deleted": 100 }`
@@ -39,6 +41,10 @@ Automatic and manual cleanup of request history records, including configurable 
 #### Scenario: 无需清理
 - **WHEN** 客户端发送 `DELETE /api/history/cleanup`，当前有 200 条记录，上限 500
 - **THEN** 系统不执行删除，返回 `{ "deleted": 0 }`
+
+#### Scenario: cleanup 路由不被 :id 参数捕获
+- **WHEN** 客户端发送 `DELETE /api/history/cleanup`
+- **THEN** 请求由 cleanup handler 处理，返回 `{ "deleted": N }`，而非被 `:id` handler 捕获并返回 400 错误
 
 ### Requirement: 写入后返回清理信息
 

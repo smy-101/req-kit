@@ -1,5 +1,6 @@
 import { store } from '../store.js';
-import { InputDebounce } from '../utils/template.js';
+import { InputDebounce, escapeHtml } from '../utils/template.js';
+import { formatSize } from '../utils/format.js';
 import { Toast } from '../utils/toast.js';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -265,18 +266,6 @@ function renderBinaryEditor() {
   fileBtn.addEventListener('click', () => fileInput.click());
   dropArea.appendChild(fileInput);
   binaryEditor.appendChild(dropArea);
-}
-
-function formatSize(bytes) {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-}
-
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
 }
 
 // --- Restore ---

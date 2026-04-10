@@ -49,14 +49,12 @@ export class ScriptService {
     this.timeout = timeout;
   }
 
-  execute(script: string, context?: ScriptContext): ScriptResult {
-    const logs: string[] = [];
-    const requestHeaders: Record<string, string> = {};
-    const requestParams: Record<string, string> = {};
-    let requestBody: string | undefined;
-    const scriptVars: Record<string, string> = {};
-
-    const sandbox = {
+  private createBaseSandbox(
+    logs: string[],
+    scriptVars: Record<string, string>,
+    context?: ScriptContext | PostScriptContext
+  ) {
+    return {
       environment: Object.freeze({ ...(context?.environment || {}) }),
       variables: {
         get(key: string): string | undefined {
@@ -64,17 +62,6 @@ export class ScriptService {
         },
         set(key: string, value: string) {
           scriptVars[key] = value;
-        },
-      },
-      request: {
-        setHeader(key: string, value: string) {
-          requestHeaders[key] = value;
-        },
-        setBody(data: string) {
-          requestBody = data;
-        },
-        setParam(key: string, value: string) {
-          requestParams[key] = value;
         },
       },
       console: {
@@ -100,6 +87,29 @@ export class ScriptService {
       Function: undefined,
       fetch: undefined,
       XMLHttpRequest: undefined,
+    };
+  }
+
+  execute(script: string, context?: ScriptContext): ScriptResult {
+    const logs: string[] = [];
+    const requestHeaders: Record<string, string> = {};
+    const requestParams: Record<string, string> = {};
+    let requestBody: string | undefined;
+    const scriptVars: Record<string, string> = {};
+
+    const sandbox = {
+      ...this.createBaseSandbox(logs, scriptVars, context),
+      request: {
+        setHeader(key: string, value: string) {
+          requestHeaders[key] = value;
+        },
+        setBody(data: string) {
+          requestBody = data;
+        },
+        setParam(key: string, value: string) {
+          requestParams[key] = value;
+        },
+      },
     };
 
     try {
@@ -148,15 +158,7 @@ export class ScriptService {
     });
 
     const sandbox = {
-      environment: Object.freeze({ ...(context.environment || {}) }),
-      variables: {
-        get(key: string): string | undefined {
-          return context.allVars?.get(key);
-        },
-        set(key: string, value: string) {
-          scriptVars[key] = value;
-        },
-      },
+      ...this.createBaseSandbox(logs, scriptVars, context),
       response: {
         status: context.response.status,
         headers: Object.freeze({ ...context.response.headers }),
@@ -168,28 +170,6 @@ export class ScriptService {
         size: context.response.size,
       },
       tests: testsProxy,
-      console: {
-        log: (...args: any[]) => {
-          logs.push(args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' '));
-        },
-      },
-      JSON,
-      Date,
-      Math,
-      parseInt,
-      parseFloat,
-      isNaN,
-      isFinite,
-      encodeURIComponent,
-      decodeURIComponent,
-      require: undefined,
-      import: undefined,
-      process: undefined,
-      globalThis: undefined,
-      eval: undefined,
-      Function: undefined,
-      fetch: undefined,
-      XMLHttpRequest: undefined,
     };
 
     try {

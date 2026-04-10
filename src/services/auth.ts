@@ -25,7 +25,17 @@ export function injectAuth(
     return { headers, params };
   }
 
-  const config: AuthConfig = typeof authConfig === 'string' ? JSON.parse(authConfig) : authConfig;
+  let config: AuthConfig;
+  if (typeof authConfig === 'string') {
+    try {
+      config = JSON.parse(authConfig);
+    } catch {
+      console.warn('[injectAuth] auth_config JSON.parse failed, skipping auth injection');
+      return { headers, params };
+    }
+  } else {
+    config = authConfig;
+  }
 
   switch (authType) {
     case 'bearer':

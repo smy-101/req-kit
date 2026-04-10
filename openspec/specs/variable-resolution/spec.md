@@ -14,6 +14,8 @@ Four-level variable resolution capability defining the priority chain for templa
 
 系统 SHALL 仅替换 `enabled` 为 `true` 的变量。
 
+模板变量替换 SHALL 统一由 `VariableService` 提供（`resolveVariables` / `resolveVariablesCached`），不使用 `EnvService.replaceTemplateValues`。
+
 #### Scenario: 按优先级解析同名变量
 - **WHEN** runtime 变量有 `{ "token": "runtime-val" }`，集合变量有 `{ "token": "coll-val" }`，环境变量有 `{ "token": "env-val" }`，全局变量有 `{ "token": "global-val" }`
 - **THEN** `{{token}}` 替换为 `runtime-val`（最高优先级）
