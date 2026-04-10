@@ -62,22 +62,26 @@ function resolveTemplateVariables(
   variableService: VariableService,
   resolveContext: { runtimeVars?: Record<string, string>; collectionId?: number; environmentId?: number }
 ) {
-  let url = variableService.resolveVariables(input.url, resolveContext);
+  // 预加载所有变量到 Map，避免每个字段重复查 DB
+  const allVars = variableService.resolveAllVars(resolveContext);
+  const resolve = (text: string) => variableService.resolveVariablesCached(allVars, text);
+
+  let url = resolve(input.url);
   let headers = { ...(input.headers || {}) };
   let params = { ...(input.params || {}) };
   let bodyStr: any = input.body;
 
   for (const key of Object.keys(headers)) {
-    headers[key] = variableService.resolveVariables(headers[key], resolveContext);
+    headers[key] = resolve(headers[key]);
   }
   for (const key of Object.keys(params)) {
-    params[key] = variableService.resolveVariables(params[key], resolveContext);
+    params[key] = resolve(params[key]);
   }
   if (bodyStr) {
     if (input.body_type === 'multipart' && typeof bodyStr === 'object' && (bodyStr as any).parts) {
       for (const part of (bodyStr as any).parts) {
         if (part.type === 'text' && part.value) {
-          part.value = variableService.resolveVariables(part.value, resolveContext);
+          part.value = resolve(part.value);
         }
       }
     } else if (input.body_type === 'graphql' && typeof bodyStr === 'string') {
@@ -86,13 +90,13 @@ function resolveTemplateVariables(
         const parsed = JSON.parse(bodyStr);
         if (parsed.variables) {
           const varsStr = typeof parsed.variables === 'string' ? parsed.variables : JSON.stringify(parsed.variables);
-          const resolved = variableService.resolveVariables(varsStr, resolveContext);
+          const resolved = resolve(varsStr);
           try { parsed.variables = JSON.parse(resolved); } catch { parsed.variables = resolved; }
         }
         bodyStr = JSON.stringify(parsed);
       } catch {}
     } else if (input.body_type !== 'binary' && typeof bodyStr === 'string') {
-      bodyStr = variableService.resolveVariables(bodyStr, resolveContext);
+      bodyStr = resolve(bodyStr);
     }
   }
 
@@ -142,13 +146,24 @@ function buildProxyBody(
 }
 
 /**
- * 共享管道函数：变量替换 → 前置脚本 → 认证注入 → Cookie 注入 → 代理转发 → Cookie 提取 → 后置脚本 → 历史记录
+ * 管道前置准备结果
  */
-export async function executeRequestPipeline(
+interface PreparedPipeline {
+  proxyReq: ProxyRequest;
+  historyBody: string | null;
+  scriptLogs: string[];
+  scriptVariables: Record<string, string>;
+}
+
+/**
+ * 共享前置管道：变量替换 → 构建请求体 → 前置脚本 → 认证注入 → Cookie 注入 → 构建 ProxyRequest
+ * 失败时返回 { error, ... }，成功时返回 PreparedPipeline
+ */
+function preparePipelineRequest(
   input: PipelineInput,
   services: PipelineServices
-): Promise<PipelineResult> {
-  const { proxyService, historyService, variableService, scriptService, cookieService } = services;
+): PreparedPipeline | { error: string; scriptLogs: string[]; scriptVariables: Record<string, string>; cleaned?: number } {
+  const { historyService, variableService, scriptService, cookieService } = services;
 
   const resolveContext = {
     runtimeVars: input.runtime_vars,
@@ -173,7 +188,6 @@ export async function executeRequestPipeline(
       allVars,
     });
     if (!scriptResult.success) {
-      // 记录历史（请求未发出，用最小数据）
       const failReq: ProxyRequest = { url, method: input.method || 'GET', headers, params, body: proxyBody };
       const failBody = (bodyType === 'multipart' || bodyType === 'binary')
         ? JSON.stringify(originalBodyForHistory)
@@ -225,6 +239,24 @@ export async function executeRequestPipeline(
     ? JSON.stringify(originalBodyForHistory)
     : (proxyBody as string | undefined) || null;
 
+  return { proxyReq, historyBody, scriptLogs, scriptVariables };
+}
+
+/**
+ * 缓冲管道：准备 → 代理转发 → Cookie 提取 → 后置脚本 → 历史记录
+ */
+export async function executeRequestPipeline(
+  input: PipelineInput,
+  services: PipelineServices
+): Promise<PipelineResult> {
+  const { proxyService, historyService, variableService, scriptService, cookieService } = services;
+
+  const prepared = preparePipelineRequest(input, services);
+  if ('error' in prepared) return prepared;
+
+  const { proxyReq, historyBody, scriptLogs, scriptVariables } = prepared;
+  const bodyType = input.body_type;
+
   // Step 4: Proxy send
   let result;
   try {
@@ -243,7 +275,7 @@ export async function executeRequestPipeline(
   let setCookies: any[] = [];
   const setCookieHeaders = extractSetCookieHeaders(result.headers);
   if (setCookieHeaders.length > 0) {
-    const requestHost = new URL(url).hostname;
+    const requestHost = new URL(proxyReq.url).hostname;
     setCookies = cookieService.storeCookies(setCookieHeaders, requestHost);
   }
 
@@ -253,6 +285,11 @@ export async function executeRequestPipeline(
   let postScriptVariables: Record<string, string> = {};
 
   if (input.post_response_script) {
+    const resolveContext = {
+      runtimeVars: input.runtime_vars,
+      collectionId: input.collection_id,
+      environmentId: input.environment_id,
+    };
     const allVars = variableService.resolveAllVars(resolveContext);
     const postResult = scriptService.executePostScript(input.post_response_script, {
       environment: Object.fromEntries(allVars),
@@ -270,7 +307,6 @@ export async function executeRequestPipeline(
     postScriptVariables = postResult.variables;
 
     if (!postResult.success) {
-      // Record history even on script failure
       const cleaned = recordHistory(historyService, proxyReq, result, scriptLogs, input.auth_type, input.auth_config, bodyType, input.pre_request_script, input.post_response_script, historyBody);
       return {
         status: result.status,
@@ -419,69 +455,14 @@ function streamProxyResponse(
   services: PipelineServices,
   body: Partial<PipelineInput>
 ) {
-  const { proxyService, historyService, variableService, scriptService, cookieService } = services;
+  const { proxyService, historyService, cookieService } = services;
 
-  const resolveContext = {
-    runtimeVars: body.runtime_vars,
-    collectionId: body.collection_id,
-    environmentId: body.environment_id,
-  };
-
-  // Variable template replacement
-  let { url, headers, params, bodyStr } = resolveTemplateVariables(body as PipelineInput, variableService, resolveContext);
-
-  // Build body
-  const { proxyBody, originalBodyForHistory } = buildProxyBody(body.body, body.body_type, headers, bodyStr);
-  const bodyType = body.body_type;
-
-  // Pre-request script
-  let scriptLogs: string[] = [];
-  let scriptVariables: Record<string, string> = {};
-  if (body.pre_request_script) {
-    const allVars = variableService.resolveAllVars(resolveContext);
-    const scriptResult = scriptService.execute(body.pre_request_script, {
-      environment: Object.fromEntries(allVars),
-      allVars,
-    });
-    if (!scriptResult.success) {
-      return c.json({ error: scriptResult.error, script_logs: scriptResult.logs }, 400);
-    }
-    headers = { ...headers, ...scriptResult.headers };
-    params = { ...params, ...scriptResult.params };
-    if (scriptResult.body !== undefined) bodyStr = scriptResult.body;
-    scriptLogs = scriptResult.logs;
-    scriptVariables = scriptResult.variables;
+  const prepared = preparePipelineRequest(body as PipelineInput, services);
+  if ('error' in prepared) {
+    return c.json({ error: prepared.error, script_logs: prepared.scriptLogs }, 400);
   }
 
-  // Auth injection
-  if (body.auth_type && body.auth_type !== 'none') {
-    const authResult = injectAuth(body.auth_type, body.auth_config, headers, params);
-    headers = authResult.headers;
-    params = authResult.params;
-  }
-
-  // Cookie injection
-  const hasUserCookie = Object.keys(headers).some(k => k.toLowerCase() === 'cookie');
-  if (!hasUserCookie) {
-    const cookieHeader = cookieService.buildCookieHeader(url);
-    if (cookieHeader) {
-      headers['Cookie'] = cookieHeader;
-    }
-  }
-
-  const proxyReq: ProxyRequest = {
-    url,
-    method: body.method || 'GET',
-    headers,
-    params,
-    body: proxyBody,
-    timeout: body.timeout,
-    follow_redirects: body.follow_redirects,
-  };
-
-  const historyBody = (bodyType === 'multipart' || bodyType === 'binary')
-    ? JSON.stringify(originalBodyForHistory)
-    : (proxyBody as string | undefined) || null;
+  const { proxyReq, historyBody, scriptLogs, scriptVariables } = prepared;
 
   return new Response(
     new ReadableStream({
@@ -536,7 +517,7 @@ function streamProxyResponse(
                   request_headers: JSON.stringify(proxyReq.headers),
                   request_params: proxyReq.params ? JSON.stringify(proxyReq.params) : null,
                   request_body: historyBody ?? (typeof proxyReq.body === 'string' ? proxyReq.body : proxyReq.body ? JSON.stringify(proxyReq.body) : null),
-                  body_type: bodyType || 'json',
+                  body_type: body.body_type || 'json',
                   pre_request_script: body.pre_request_script || null,
                   post_response_script: null,
                   auth_type: body.auth_type || 'none',

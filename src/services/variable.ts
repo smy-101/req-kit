@@ -81,8 +81,18 @@ export class VariableService {
   // --- 变量解析 ---
 
   resolveVariables(text: string, context: VariableResolveContext): string {
+    const allVars = this.resolveAllVars(context);
+    return this.replaceWithMap(text, allVars);
+  }
+
+  /** 先 resolveAllVars 再做模板替换，避免多次调用时重复查 DB */
+  resolveVariablesCached(allVars: Map<string, string>, text: string): string {
+    return this.replaceWithMap(text, allVars);
+  }
+
+  private replaceWithMap(text: string, allVars: Map<string, string>): string {
     return text.replace(/\{\{([\w-]+)\}\}/g, (match, key: string) => {
-      const value = this.lookupVariable(key, context);
+      const value = allVars.get(key);
       return value !== undefined ? value : match;
     });
   }
@@ -131,36 +141,4 @@ export class VariableService {
     return merged;
   }
 
-  private lookupVariable(key: string, context: VariableResolveContext): string | undefined {
-    // Runtime（最高优先级）
-    if (context.runtimeVars && key in context.runtimeVars) {
-      return context.runtimeVars[key];
-    }
-
-    // Collection
-    if (context.collectionId) {
-      const rootId = this.getRootCollectionId(context.collectionId);
-      const row = this.db.queryOne<{ value: string | null }>(
-        'SELECT value FROM collection_variables WHERE collection_id = ? AND key = ? AND enabled = 1',
-        [rootId, key]
-      );
-      if (row) return row.value || '';
-    }
-
-    // Environment
-    if (context.environmentId) {
-      const envVars = this.envService.getVariables(context.environmentId);
-      const found = envVars.find(v => v.key === key && v.enabled !== false && v.enabled !== 0);
-      if (found) return found.value || '';
-    }
-
-    // Global（最低优先级）
-    const globalRow = this.db.queryOne<{ value: string | null }>(
-      'SELECT value FROM global_variables WHERE key = ? AND enabled = 1',
-      [key]
-    );
-    if (globalRow) return globalRow.value || '';
-
-    return undefined;
-  }
 }
