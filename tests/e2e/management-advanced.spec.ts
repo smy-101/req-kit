@@ -4,9 +4,14 @@ test.describe('Cookie 高级管理', () => {
   test('删除单个 Cookie', async ({ page }) => {
     await page.goto('/');
 
+    // httpbin.org 可能较慢，增加超时避免不稳定
+    await page.locator('#request-options-btn').click();
+    await page.locator('#request-timeout-input').fill('60000');
+    await page.waitForTimeout(200);
+
     await page.locator('#url-input').fill('https://httpbin.org/cookies/set?ck_delete_1=v1&ck_delete_2=v2');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     await page.locator('#btn-manage-cookies').click();
     await expect(page.locator('#modal-overlay')).toBeVisible();
@@ -28,9 +33,14 @@ test.describe('Cookie 高级管理', () => {
   test('Cookie 管理弹窗总数显示', async ({ page }) => {
     await page.goto('/');
 
+    // httpbin.org 可能较慢，增加超时避免不稳定
+    await page.locator('#request-options-btn').click();
+    await page.locator('#request-timeout-input').fill('60000');
+    await page.waitForTimeout(200);
+
     await page.locator('#url-input').fill('https://httpbin.org/cookies/set?count_test=yes');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     await page.locator('#btn-manage-cookies').click();
     await expect(page.locator('#modal-overlay')).toBeVisible();
