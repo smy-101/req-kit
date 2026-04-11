@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('集合请求上下文菜单与 curl 导入', () => {
   test('右键复制请求在集合中创建副本', async ({ page }) => {
@@ -13,7 +14,7 @@ test.describe('集合请求上下文菜单与 curl 导入', () => {
     await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible({ timeout: 10000 });
 
     // 设置 URL 并等待 debounce 保存到 tab state
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.waitForTimeout(400);
 
     // 保存请求到集合
@@ -56,7 +57,7 @@ test.describe('集合请求上下文菜单与 curl 导入', () => {
 
     // 选择 curl 类型并粘贴命令
     await page.locator('#import-type').selectOption('curl');
-    await page.locator('#import-content').fill("curl 'https://httpbin.org/get'");
+    await page.locator('#import-content').fill(`curl '${MOCK_BASE_URL}/get'`);
 
     // 点击导入
     await page.locator('#import-action-btn').click();
@@ -75,7 +76,7 @@ test.describe('集合请求上下文菜单与 curl 导入', () => {
     await expect(page.locator('#modal-overlay')).toBeVisible();
 
     // 粘贴 POST curl
-    await page.locator('#import-content').fill("curl -X POST 'https://httpbin.org/post' -H 'Content-Type: application/json' -d '{\"key\":\"val\"}'");
+    await page.locator('#import-content').fill(`curl -X POST '${MOCK_BASE_URL}/post' -H 'Content-Type: application/json' -d '{"key":"val"}'`);
 
     // 点击导入
     await page.locator('#import-action-btn').click();

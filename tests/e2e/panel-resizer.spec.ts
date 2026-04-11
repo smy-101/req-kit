@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('面板拖拽调整', () => {
   test('拖拽面板分隔条调整请求面板大小', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -39,7 +40,7 @@ test.describe('面板拖拽调整', () => {
 
   test('面板最小宽度限制 20%', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -72,7 +73,7 @@ test.describe('面板拖拽调整', () => {
 
   test('面板最大宽度限制 75%', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -105,7 +106,7 @@ test.describe('面板拖拽调整', () => {
 
   test('拖拽后面板功能正常', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -129,7 +130,7 @@ test.describe('面板拖拽调整', () => {
     await page.waitForTimeout(100);
 
     // 调整后发送新请求，验证功能正常
-    await page.locator('#url-input').fill('https://httpbin.org/uuid');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/uuid`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 

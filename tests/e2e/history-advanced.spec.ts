@@ -1,10 +1,11 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('历史记录高级功能', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     // 发送一个请求确保有历史记录
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
   });
@@ -16,7 +17,7 @@ test.describe('历史记录高级功能', () => {
 
     // 搜索
     const searchInput = page.locator('.history-search-input');
-    await searchInput.fill('httpbin');
+    await searchInput.fill('localhost');
     await page.waitForTimeout(500); // debounce
 
     // 应该有匹配结果

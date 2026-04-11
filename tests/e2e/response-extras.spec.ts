@@ -1,11 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('响应额外功能', () => {
   test('4xx 响应状态码样式', async ({ page }) => {
     await page.goto('/');
 
     // 发送请求到 404 端点
-    await page.locator('#url-input').fill('https://httpbin.org/status/404');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/status/404`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('404');
 
@@ -17,7 +18,7 @@ test.describe('响应额外功能', () => {
     await page.goto('/');
 
     // 发送请求到 500 端点
-    await page.locator('#url-input').fill('https://httpbin.org/status/500');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/status/500`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('500');
 
@@ -36,7 +37,7 @@ test.describe('响应额外功能', () => {
     await page.locator('#request-options-btn').click();
 
     // 发送请求到重定向端点
-    await page.locator('#url-input').fill('https://httpbin.org/redirect/1');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/redirect/1`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('302');
 
@@ -55,7 +56,7 @@ test.describe('响应额外功能', () => {
     await page.goto('/');
 
     // 发送请求获取 XML 响应
-    await page.locator('#url-input').fill('https://httpbin.org/xml');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/xml`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -74,7 +75,7 @@ test.describe('响应额外功能', () => {
     await page.goto('/');
 
     // 发送请求获取图片
-    await page.locator('#url-input').fill('https://httpbin.org/image/png');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/image/png`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -102,7 +103,7 @@ test.describe('响应额外功能', () => {
     await page.waitForTimeout(300);
 
     // 发送请求
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -122,7 +123,7 @@ test.describe('响应额外功能', () => {
     await page.waitForTimeout(300);
 
     // 发送请求
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 

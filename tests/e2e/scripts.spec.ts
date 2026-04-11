@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('脚本与测试', () => {
   test('Pre-request Script 标签页显示编辑器', async ({ page }) => {
@@ -18,7 +19,7 @@ test.describe('脚本与测试', () => {
     await textarea.fill("request.setHeader('X-Custom', 'hello')");
     await page.waitForTimeout(300);
 
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -36,7 +37,7 @@ test.describe('脚本与测试', () => {
     await textarea.fill("request.setHeader('X-Custom-Script', 'from-script')");
     await page.waitForTimeout(300);
 
-    await page.locator('#url-input').fill('https://httpbin.org/post');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/post`);
     await expect(() => {
       page.locator('#send-btn').click();
       return expect(page.locator('#response-status')).toContainText('200');
@@ -64,7 +65,7 @@ test.describe('脚本与测试', () => {
     await textarea.fill('tests["Status is 200"] = response.status === 200');
     await page.waitForTimeout(300);
 
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -87,7 +88,7 @@ test.describe('脚本与测试', () => {
     await textarea.fill('tests["Should be 404"] = response.status === 404');
     await page.waitForTimeout(300);
 
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -105,10 +106,10 @@ test.describe('脚本与测试', () => {
     await page.locator('#request-panel .tab[data-tab="tests"]').click();
 
     const textarea = page.locator('#post-script-textarea');
-    await textarea.fill('variables.set("saved_url", "https://httpbin.org/uuid")');
+    await textarea.fill(`variables.set("saved_url", "${MOCK_BASE_URL}/uuid")`);
     await page.waitForTimeout(300);
 
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 

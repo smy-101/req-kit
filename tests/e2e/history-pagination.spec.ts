@@ -1,16 +1,17 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('历史记录分页与过滤', () => {
   test('方法过滤 Chips — POST', async ({ page }) => {
     await page.goto('/');
 
     // 发送 GET 和 POST 请求
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
     await page.locator('#method-select').selectOption('POST');
-    await page.locator('#url-input').fill('https://httpbin.org/post');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/post`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -41,17 +42,17 @@ test.describe('历史记录分页与过滤', () => {
     await page.goto('/');
 
     // 发送不同方法的请求
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
     await page.locator('#method-select').selectOption('PUT');
-    await page.locator('#url-input').fill('https://httpbin.org/put');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/put`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
     await page.locator('#method-select').selectOption('DELETE');
-    await page.locator('#url-input').fill('https://httpbin.org/delete');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/delete`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -89,7 +90,7 @@ test.describe('历史记录分页与过滤', () => {
     // 发送多个请求以生成历史记录
     for (let i = 0; i < 5; i++) {
       await page.locator('#method-select').selectOption('GET');
-      await page.locator('#url-input').fill(`https://httpbin.org/get?page=${i}`);
+      await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get?page=${i}`);
       await expect(() => {
         page.locator('#send-btn').click();
         return expect(page.locator('#response-status')).toContainText('200');
@@ -102,14 +103,14 @@ test.describe('历史记录分页与过滤', () => {
     await expect(page.locator('.history-item').first()).toBeVisible({ timeout: 5000 });
 
     // 验证历史项存在
-    await expect(page.locator('.history-item').first()).toContainText('httpbin.org');
+    await expect(page.locator('.history-item').first()).toContainText('localhost:4000');
   });
 
   test('历史记录状态码显示', async ({ page }) => {
     await page.goto('/');
 
     // 发送一个成功请求
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -126,7 +127,7 @@ test.describe('历史记录分页与过滤', () => {
     await page.goto('/');
 
     // 发送请求
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 

@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('发送请求与响应', () => {
   test('发送 GET 请求并显示响应', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
 
     // 等待响应状态码显示
@@ -17,7 +18,7 @@ test.describe('发送请求与响应', () => {
 
     // 切换到 POST
     await page.locator('#method-select').selectOption('POST');
-    await page.locator('#url-input').fill('https://httpbin.org/post');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/post`);
 
     // 切换到 Body 标签页
     await page.locator('#request-panel .tab[data-tab="body"]').click();
@@ -41,7 +42,7 @@ test.describe('发送请求与响应', () => {
   test('使用 Ctrl+Enter 快捷键发送请求', async ({ page }) => {
     await page.goto('/');
     const urlInput = page.locator('#url-input');
-    await urlInput.fill('https://httpbin.org/get');
+    await urlInput.fill(`${MOCK_BASE_URL}/get`);
     // 确保输入框聚焦后再按快捷键
     await urlInput.focus();
     await urlInput.press('Control+Enter');
@@ -51,7 +52,7 @@ test.describe('发送请求与响应', () => {
 
   test('切换响应标签页查看响应头', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 

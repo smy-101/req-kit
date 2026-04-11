@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('响应格式切换', () => {
   test('JSON 响应 Pretty/Raw/Preview 切换', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/json');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/json`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -29,7 +30,7 @@ test.describe('响应格式切换', () => {
 
   test('HTML 响应自动进入 Preview 模式', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/html');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/html`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -43,7 +44,7 @@ test.describe('响应格式切换', () => {
 
   test('HTML 响应切换到 Raw 显示原始 HTML', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/html');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/html`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -61,7 +62,7 @@ test.describe('响应格式切换', () => {
 
   test('XML 响应 Pretty 格式化', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/xml');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/xml`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -82,7 +83,7 @@ test.describe('响应格式切换', () => {
 
   test('图片响应 Preview 显示图片', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/image/png');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/image/png`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 

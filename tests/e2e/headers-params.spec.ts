@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('请求头编辑器', () => {
   test('切换到 Headers 标签页显示键值编辑器', async ({ page }) => {
@@ -77,7 +78,7 @@ test.describe('查询参数编辑器', () => {
     await page.waitForTimeout(300);
 
     // 发送到 httpbin，验证参数出现在响应中
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 

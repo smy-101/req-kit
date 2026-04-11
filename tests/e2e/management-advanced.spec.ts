@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('Cookie 高级管理', () => {
   test('删除单个 Cookie', async ({ page }) => {
@@ -9,7 +10,7 @@ test.describe('Cookie 高级管理', () => {
     await page.locator('#request-timeout-input').fill('60000');
     await page.waitForTimeout(200);
 
-    await page.locator('#url-input').fill('https://httpbin.org/cookies/set?ck_delete_1=v1&ck_delete_2=v2');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/cookies/set?ck_delete_1=v1&ck_delete_2=v2`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -38,7 +39,7 @@ test.describe('Cookie 高级管理', () => {
     await page.locator('#request-timeout-input').fill('60000');
     await page.waitForTimeout(200);
 
-    await page.locator('#url-input').fill('https://httpbin.org/cookies/set?count_test=yes');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/cookies/set?count_test=yes`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 

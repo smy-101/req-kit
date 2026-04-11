@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('Runner 停止执行', () => {
   test('运行中点击停止按钮', async ({ page }) => {
@@ -13,9 +14,9 @@ test.describe('Runner 停止执行', () => {
 
     // 保存多个慢请求到集合
     const urls = [
-      'https://httpbin.org/delay/3',
-      'https://httpbin.org/delay/3',
-      'https://httpbin.org/delay/3',
+      `${MOCK_BASE_URL}/delay/3`,
+      `${MOCK_BASE_URL}/delay/3`,
+      `${MOCK_BASE_URL}/delay/3`,
     ];
     for (const url of urls) {
       await page.locator('.request-tab-add').click();

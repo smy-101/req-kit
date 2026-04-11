@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('响应面板高级功能', () => {
   test('响应格式切换 Pretty/Raw/Preview', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/json');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/json`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -26,7 +27,7 @@ test.describe('响应面板高级功能', () => {
 
   test('响应搜索功能', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -37,7 +38,7 @@ test.describe('响应面板高级功能', () => {
     await expect(searchBar).toBeVisible();
 
     // 输入搜索词
-    await page.locator('#response-search-input').fill('httpbin');
+    await page.locator('#response-search-input').fill('url');
     await page.waitForTimeout(300);
 
     // 验证搜索计数
@@ -51,7 +52,7 @@ test.describe('响应面板高级功能', () => {
 
   test('Ctrl+F 打开响应搜索', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -67,7 +68,7 @@ test.describe('响应面板高级功能', () => {
 
   test('响应 Cookies 标签页', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/cookies/set?test=123');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/cookies/set?test=123`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -79,7 +80,7 @@ test.describe('响应面板高级功能', () => {
 
   test('响应 Test Results 标签页（无测试时）', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -91,7 +92,7 @@ test.describe('响应面板高级功能', () => {
 
   test('HTML 响应 Preview 模式', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/html');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/html`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -106,7 +107,7 @@ test.describe('响应面板高级功能', () => {
   test('发送 PUT 请求', async ({ page }) => {
     await page.goto('/');
     await page.locator('#method-select').selectOption('PUT');
-    await page.locator('#url-input').fill('https://httpbin.org/put');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/put`);
 
     await page.locator('#request-panel .tab[data-tab="body"]').click();
     await page.locator('#body-textarea').fill('{"method": "PUT"}');
@@ -122,7 +123,7 @@ test.describe('响应面板高级功能', () => {
   test('发送 DELETE 请求', async ({ page }) => {
     await page.goto('/');
     await page.locator('#method-select').selectOption('DELETE');
-    await page.locator('#url-input').fill('https://httpbin.org/delete');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/delete`);
 
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');

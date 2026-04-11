@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('Body 编辑器', () => {
   test('切换 Body 类型显示对应编辑器', async ({ page }) => {
@@ -89,7 +90,7 @@ test.describe('Body 编辑器', () => {
     await page.locator('#body-type-select').selectOption('graphql');
 
     await page.locator('#graphql-query').fill('{ __typename }');
-    await page.locator('#url-input').fill('https://httpbin.org/post');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/post`);
     await page.waitForTimeout(300);
 
     await page.locator('#send-btn').click();

@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('响应搜索导航', () => {
   test('搜索匹配计数显示正确', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -27,7 +28,7 @@ test.describe('响应搜索导航', () => {
 
   test('点击下一匹配按钮导航', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -55,7 +56,7 @@ test.describe('响应搜索导航', () => {
 
   test('点击上一匹配按钮导航', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -85,7 +86,7 @@ test.describe('响应搜索导航', () => {
 
   test('下一匹配按钮循环回第一个', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -114,7 +115,7 @@ test.describe('响应搜索导航', () => {
 
   test('上一匹配按钮循环到最后一个', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -141,7 +142,7 @@ test.describe('响应搜索导航', () => {
 
   test('清空搜索词清除高亮', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -168,7 +169,7 @@ test.describe('响应搜索导航', () => {
 
   test('按 Escape 关闭搜索栏', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -186,7 +187,7 @@ test.describe('响应搜索导航', () => {
 
   test('在 Raw 格式下搜索正常工作', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 

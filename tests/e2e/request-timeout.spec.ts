@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('请求超时行为', () => {
   test('请求超时后显示错误状态', async ({ page }) => {
@@ -11,7 +12,7 @@ test.describe('请求超时行为', () => {
     await page.waitForTimeout(200);
 
     // 发送到需要 5 秒的延迟端点
-    await page.locator('#url-input').fill('https://httpbin.org/delay/5');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/delay/5`);
     await page.locator('#send-btn').click();
 
     // 应显示 5xx 错误状态样式
@@ -30,7 +31,7 @@ test.describe('请求超时行为', () => {
     await page.waitForTimeout(200);
 
     // 发送到 2 秒延迟端点 — 应在 10 秒超时内完成
-    await page.locator('#url-input').fill('https://httpbin.org/delay/2');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/delay/2`);
     await page.locator('#send-btn').click();
 
     await expect(page.locator('#response-status')).toContainText('200');

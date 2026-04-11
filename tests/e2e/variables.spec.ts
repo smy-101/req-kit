@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('变量系统', () => {
   test('环境变量模板替换', async ({ page }) => {
@@ -23,7 +24,7 @@ test.describe('变量系统', () => {
 
     const firstRow = kvEditor.locator('.kv-row').first();
     await firstRow.locator('.kv-key').fill('host');
-    await firstRow.locator('.kv-value').fill('httpbin.org');
+    await firstRow.locator('.kv-value').fill('localhost:4000');
 
     // 保存变量
     await kvEditor.locator('.kv-save-btn').evaluate(el => el.click());
@@ -33,12 +34,12 @@ test.describe('变量系统', () => {
     await page.locator('#active-env').selectOption({ label: envName });
 
     // 在 URL 中使用变量
-    await page.locator('#url-input').fill('https://{{host}}/get');
+    await page.locator('#url-input').fill('http://{{host}}/get');
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
     const responseBody = page.locator('#response-format-content');
-    await expect(responseBody).toContainText('httpbin.org');
+    await expect(responseBody).toContainText('localhost:4000');
   });
 
   test('全局变量管理弹窗', async ({ page }) => {
@@ -80,13 +81,13 @@ test.describe('变量系统', () => {
 
     const firstRow = page.locator('#modal .kv-row').first();
     await firstRow.locator('.kv-key').fill(uniqueKey);
-    await firstRow.locator('.kv-value').fill('httpbin.org');
+    await firstRow.locator('.kv-value').fill('localhost:4000');
 
     await page.locator('#modal #save-global-vars').click();
     await expect(page.locator('#modal-overlay')).not.toBeVisible();
 
     // 使用变量发送请求
-    await page.locator('#url-input').fill(`https://{{${uniqueKey}}}/get`);
+    await page.locator('#url-input').fill(`http://{{${uniqueKey}}}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
   });

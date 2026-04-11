@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('环境管理', () => {
   test('打开环境管理弹窗', async ({ page }) => {
@@ -62,7 +63,7 @@ test.describe('环境管理', () => {
 
     const firstRow = kvEditor.locator('.kv-row').first();
     await firstRow.locator('.kv-key').fill('base_url');
-    await firstRow.locator('.kv-value').fill('https://httpbin.org');
+    await firstRow.locator('.kv-value').fill(MOCK_BASE_URL);
 
     // 保存变量
     await kvEditor.locator('.kv-save-btn').evaluate(el => el.click());

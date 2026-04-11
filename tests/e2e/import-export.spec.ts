@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('导入导出', () => {
   test('导入/导出弹窗打开', async ({ page }) => {
@@ -45,7 +46,7 @@ test.describe('导入导出', () => {
 
     // 选择 curl 类型并填入 curl 命令
     await page.locator('#import-type').selectOption('curl');
-    await page.locator('#import-content').fill("curl 'https://httpbin.org/get'");
+    await page.locator('#import-content').fill(`curl '${MOCK_BASE_URL}/get'`);
 
     // 点击 Import
     await page.locator('#import-action-btn').click();
@@ -75,7 +76,7 @@ test.describe('导入导出', () => {
       item: [
         {
           name: 'Test Request',
-          request: { method: 'GET', url: 'https://httpbin.org/get', header: [{ key: 'Accept', value: 'application/json' }] },
+          request: { method: 'GET', url: `${MOCK_BASE_URL}/get`, header: [{ key: 'Accept', value: 'application/json' }] },
         },
       ],
     });

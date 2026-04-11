@@ -1,11 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('关闭 Follow Redirects', () => {
   test('关闭重定向后收到 3xx 响应', async ({ page }) => {
     await page.goto('/');
 
     // 先填写 URL
-    await page.locator('#url-input').fill('https://httpbin.org/redirect/1');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/redirect/1`);
     await page.waitForTimeout(200);
 
     // 关闭 Follow Redirects
@@ -15,7 +16,7 @@ test.describe('关闭 Follow Redirects', () => {
     await page.waitForTimeout(200);
 
     // 确认 URL 仍然存在
-    await expect(page.locator('#url-input')).toHaveValue('https://httpbin.org/redirect/1');
+    await expect(page.locator('#url-input')).toHaveValue(`${MOCK_BASE_URL}/redirect/1`);
 
     // 发送请求
     await page.locator('#send-btn').click();
@@ -32,7 +33,7 @@ test.describe('关闭 Follow Redirects', () => {
     await expect(page.locator('#request-redirect-toggle')).toBeChecked();
 
     // 发送到重定向端点
-    await page.locator('#url-input').fill('https://httpbin.org/redirect/1');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/redirect/1`);
     await page.locator('#send-btn').click();
 
     // 应自动跟随到最终 200

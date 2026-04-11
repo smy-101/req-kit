@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('更新已保存请求', () => {
   test('修改已保存请求并再次保存', async ({ page }) => {
@@ -11,7 +12,7 @@ test.describe('更新已保存请求', () => {
     await page.locator('#modal .modal-btn-primary').click();
     await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible({ timeout: 10000 });
 
-    const originalUrl = 'https://httpbin.org/post';
+    const originalUrl = `${MOCK_BASE_URL}/post`;
     await page.locator('#method-select').selectOption('POST');
     await page.locator('#url-input').fill(originalUrl);
 
@@ -27,7 +28,7 @@ test.describe('更新已保存请求', () => {
     await expect(page.locator('#collection-tree .method-badge.method-POST').first()).toBeVisible({ timeout: 5000 });
 
     // 修改请求（改变 URL 和方法）
-    const updatedUrl = 'https://httpbin.org/put';
+    const updatedUrl = `${MOCK_BASE_URL}/put`;
     await page.locator('#method-select').selectOption('PUT');
     await page.locator('#url-input').fill(updatedUrl);
     await page.waitForTimeout(300);

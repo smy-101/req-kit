@@ -1,11 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('请求取消', () => {
   test('发送按钮在请求中变为取消按钮', async ({ page }) => {
     await page.goto('/');
 
     // 发送请求到较慢的端点
-    await page.locator('#url-input').fill('https://httpbin.org/delay/5');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/delay/5`);
 
     // 发送请求
     await page.locator('#send-btn').click();
@@ -28,7 +29,7 @@ test.describe('请求取消', () => {
     await page.goto('/');
 
     // 发送请求到较慢的端点
-    await page.locator('#url-input').fill('https://httpbin.org/delay/5');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/delay/5`);
     await page.locator('#send-btn').click();
 
     // 等待取消按钮出现

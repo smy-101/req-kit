@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('集合变量', () => {
   test('集合变量按钮存在', async ({ page }) => {
@@ -59,7 +60,7 @@ test.describe('集合变量', () => {
 
     const firstRow = page.locator('#modal .kv-row').first();
     await firstRow.locator('.kv-key').fill('coll_host');
-    await firstRow.locator('.kv-value').fill('httpbin.org');
+    await firstRow.locator('.kv-value').fill('localhost:4000');
 
     // 保存
     await page.locator('#modal #save-coll-vars').click();

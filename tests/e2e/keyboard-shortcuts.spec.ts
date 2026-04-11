@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('键盘快捷键', () => {
   test('Ctrl+T 创建新标签页', async ({ page }) => {
@@ -65,7 +66,7 @@ test.describe('键盘快捷键', () => {
 
   test('Ctrl+S 保存请求（无集合时提示创建）', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
 
     // Ctrl+S 触发保存 — 无集合时应弹出提示
     await page.keyboard.press('Control+s');

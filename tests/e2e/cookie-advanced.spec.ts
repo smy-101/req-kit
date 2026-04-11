@@ -1,10 +1,11 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('Cookie 管理高级功能', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     // 使用 response-headers 端点直接设置 Set-Cookie（不经过重定向）
-    await page.locator('#url-input').fill('https://httpbin.org/response-headers?Set-Cookie=test1=value1');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/response-headers?Set-Cookie=test1=value1`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
     await page.waitForTimeout(1000);

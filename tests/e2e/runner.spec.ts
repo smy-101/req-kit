@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('集合 Runner', () => {
   test('运行集合', async ({ page }) => {
@@ -12,7 +13,7 @@ test.describe('集合 Runner', () => {
     await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible({ timeout: 10000 });
 
     // 保存一个请求到集合
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#save-btn').click();
     const saveModal = page.locator('#modal');
     await expect(saveModal).toBeVisible({ timeout: 5000 });
@@ -53,7 +54,7 @@ test.describe('集合 Runner', () => {
     await page.locator('#modal .modal-btn-primary').click();
     await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible({ timeout: 10000 });
 
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#save-btn').click();
     await expect(page.locator('#modal')).toBeVisible({ timeout: 5000 });
     await page.locator('#modal #save-col-select').selectOption({ label: colName });

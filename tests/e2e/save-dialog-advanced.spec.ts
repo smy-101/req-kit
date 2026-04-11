@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('保存对话框高级功能', () => {
   test('保存时使用自定义请求名称', async ({ page }) => {
@@ -13,7 +14,7 @@ test.describe('保存对话框高级功能', () => {
 
     // 设置请求
     await page.locator('#method-select').selectOption('GET');
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
 
     // 保存请求
     await page.locator('#save-btn').click();
@@ -43,7 +44,7 @@ test.describe('保存对话框高级功能', () => {
     await page.locator('#modal .modal-btn-primary').click();
     await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible({ timeout: 10000 });
 
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
 
     // 保存请求
     await page.locator('#save-btn').click();
@@ -76,7 +77,7 @@ test.describe('保存对话框高级功能', () => {
     await page.locator('#modal .modal-btn-primary').click();
     await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colB })).toBeVisible({ timeout: 10000 });
 
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.waitForTimeout(300);
 
     // 保存请求到集合 B

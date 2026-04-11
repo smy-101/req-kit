@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('认证面板', () => {
   test('默认认证类型为 None', async ({ page }) => {
@@ -66,7 +67,7 @@ test.describe('认证面板', () => {
     await page.locator('#auth-token').fill('test-token-123');
     await page.waitForTimeout(300);
 
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('导出功能', () => {
   test('导出集合为 Postman 格式', async ({ page }) => {
@@ -12,7 +13,7 @@ test.describe('导出功能', () => {
     await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible({ timeout: 10000 });
 
     await page.locator('#method-select').selectOption('POST');
-    await page.locator('#url-input').fill('https://httpbin.org/post');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/post`);
     await page.locator('#save-btn').click();
     const saveModal = page.locator('#modal');
     await expect(saveModal).toBeVisible({ timeout: 5000 });

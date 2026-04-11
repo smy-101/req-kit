@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('保存与加载请求', () => {
   test('保存请求到集合', async ({ page }) => {
@@ -13,7 +14,7 @@ test.describe('保存与加载请求', () => {
 
     // 设置请求信息
     await page.locator('#method-select').selectOption('POST');
-    await page.locator('#url-input').fill('https://httpbin.org/post');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/post`);
 
     // 保存请求
     await page.locator('#save-btn').click();
@@ -47,7 +48,7 @@ test.describe('保存与加载请求', () => {
     await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible({ timeout: 10000 });
 
     // 设置请求并保存
-    const testUrl = 'https://httpbin.org/put';
+    const testUrl = `${MOCK_BASE_URL}/put`;
     await page.locator('#method-select').selectOption('PUT');
     await page.locator('#url-input').fill(testUrl);
     await page.locator('#save-btn').click();
@@ -84,7 +85,7 @@ test.describe('保存与加载请求', () => {
     await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible({ timeout: 10000 });
 
     await page.locator('#method-select').selectOption('DELETE');
-    await page.locator('#url-input').fill('https://httpbin.org/delete');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/delete`);
     await page.locator('#save-btn').click();
     await expect(page.locator('#modal')).toBeVisible({ timeout: 5000 });
     await page.locator('#modal #save-col-select').selectOption({ label: colName });
@@ -122,7 +123,7 @@ test.describe('保存与加载请求', () => {
     await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible({ timeout: 10000 });
 
     await page.locator('#method-select').selectOption('PATCH');
-    await page.locator('#url-input').fill('https://httpbin.org/patch');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/patch`);
     await page.locator('#save-btn').click();
     await expect(page.locator('#modal')).toBeVisible({ timeout: 5000 });
     await page.locator('#modal #save-col-select').selectOption({ label: colName });

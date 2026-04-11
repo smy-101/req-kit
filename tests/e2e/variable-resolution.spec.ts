@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('变量在 Headers 和 Body 中的替换', () => {
   test('环境变量在 Headers 中替换', async ({ page }) => {
@@ -40,7 +41,7 @@ test.describe('变量在 Headers 和 Body 中的替换', () => {
 
     // 发送 POST 请求到 httpbin /post 验证 header
     await page.locator('#method-select').selectOption('POST');
-    await page.locator('#url-input').fill('https://httpbin.org/post');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/post`);
     await page.locator('#send-btn').click();
 
     await expect(page.locator('#response-status')).toContainText('200');
@@ -83,7 +84,7 @@ test.describe('变量在 Headers 和 Body 中的替换', () => {
     await page.waitForTimeout(300);
 
     await page.locator('#method-select').selectOption('POST');
-    await page.locator('#url-input').fill('https://httpbin.org/post');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/post`);
     await page.locator('#send-btn').click();
 
     await expect(page.locator('#response-status')).toContainText('200');
@@ -118,13 +119,13 @@ test.describe('变量解析增强', () => {
     await kvEditor.locator('.kv-add-btn').click();
     const collKey = `coll_host_${Date.now()}`;
     await kvEditor.locator('.kv-row').first().locator('.kv-key').fill(collKey);
-    await kvEditor.locator('.kv-row').first().locator('.kv-value').fill('httpbin.org');
+    await kvEditor.locator('.kv-row').first().locator('.kv-value').fill('localhost:4000');
     // 集合变量保存按钮是 #save-coll-vars
     await page.locator('#modal #save-coll-vars').click();
     await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
 
     // 保存一个请求到该集合（使标签关联集合）
-    await page.locator('#url-input').fill(`https://{{${collKey}}}/get`);
+    await page.locator('#url-input').fill(`http://{{${collKey}}}/get`);
     await page.waitForTimeout(400);
     await page.locator('#save-btn').click();
     await expect(page.locator('#modal-overlay')).toBeVisible();
@@ -133,13 +134,13 @@ test.describe('变量解析增强', () => {
     await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
 
     // 重新填写 URL（保存后可能清空）
-    await page.locator('#url-input').fill(`https://{{${collKey}}}/get`);
+    await page.locator('#url-input').fill(`http://{{${collKey}}}/get`);
     await page.waitForTimeout(400);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
     const responseBody = page.locator('#response-format-content');
-    await expect(responseBody).toContainText('httpbin.org', { timeout: 5000 });
+    await expect(responseBody).toContainText('localhost:4000', { timeout: 5000 });
   });
 
   test('环境变量优先于全局变量', async ({ page }) => {
@@ -182,7 +183,7 @@ test.describe('变量解析增强', () => {
     await page.locator('#body-textarea').fill(`{"result": "{{${varKey}}}"}`);
     await page.waitForTimeout(300);
 
-    await page.locator('#url-input').fill('https://httpbin.org/post');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/post`);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
 
@@ -195,7 +196,7 @@ test.describe('变量解析增强', () => {
     await page.goto('/');
 
     // 在第一个标签页设置 URL
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.waitForTimeout(400);
 
     // 创建第二个标签
@@ -203,7 +204,7 @@ test.describe('变量解析增强', () => {
     await expect(page.locator('.request-tab')).toHaveCount(2);
 
     // 在第二个标签页设置不同 URL
-    await page.locator('#url-input').fill('https://httpbin.org/post');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/post`);
     await page.waitForTimeout(400);
 
     // 切换回第一个标签页
@@ -211,21 +212,21 @@ test.describe('变量解析增强', () => {
     await page.waitForTimeout(300);
 
     // 验证第一个标签页保留了原来的 URL
-    await expect(page.locator('#url-input')).toHaveValue('https://httpbin.org/get');
+    await expect(page.locator('#url-input')).toHaveValue(`${MOCK_BASE_URL}/get`);
 
     // 切换到第二个标签页
     await page.locator('.request-tab').nth(1).click();
     await page.waitForTimeout(300);
 
     // 验证第二个标签页保留了 POST URL
-    await expect(page.locator('#url-input')).toHaveValue('https://httpbin.org/post');
+    await expect(page.locator('#url-input')).toHaveValue(`${MOCK_BASE_URL}/post`);
   });
 
   test('从不同标签页发送请求响应显示在正确标签', async ({ page }) => {
     await page.goto('/');
 
     // 在第一个标签页发送 GET 请求
-    await page.locator('#url-input').fill('https://httpbin.org/get');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.waitForTimeout(400);
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
@@ -236,7 +237,7 @@ test.describe('变量解析增强', () => {
 
     // 在第二个标签页发送 POST 请求
     await page.locator('#method-select').selectOption('POST');
-    await page.locator('#url-input').fill('https://httpbin.org/post');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/post`);
     await page.locator('#request-panel .tab[data-tab="body"]').click();
     await page.locator('#body-textarea').fill('{"tab": "two"}');
     await page.waitForTimeout(300);
