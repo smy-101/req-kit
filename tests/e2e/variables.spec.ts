@@ -83,6 +83,7 @@ test.describe('变量系统', () => {
     await firstRow.locator('.kv-value').fill('httpbin.org');
 
     await page.locator('#modal #save-global-vars').click();
+    await expect(page.locator('#modal-overlay')).not.toBeVisible();
 
     // 使用变量发送请求
     await page.locator('#url-input').fill(`https://{{${uniqueKey}}}/get`);

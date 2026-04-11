@@ -20,7 +20,7 @@ import { RunnerService } from './services/runner';
 import { createRunnerRoutes } from './routes/runner';
 import { errorHandler } from './lib/error-handler';
 
-const db = new Database('req-kit.db');
+const db = new Database(process.env.DB_PATH || 'req-kit.db');
 db.migrate();
 
 const proxyService = new ProxyService();

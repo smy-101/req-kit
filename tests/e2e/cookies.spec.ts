@@ -10,7 +10,9 @@ test.describe('Cookie 管理', () => {
   });
 
   test('Cookie 管理弹窗显示空状态', async ({ page }) => {
+    // 先清空所有 Cookie，避免并行测试残留
     await page.goto('/');
+    await page.request.delete('/api/cookies');
     await page.locator('#btn-manage-cookies').click();
     await expect(page.locator('#modal-overlay')).toBeVisible();
 
