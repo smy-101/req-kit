@@ -13,10 +13,4 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     trace: 'on-first-retry',
   },
-  webServer: {
-    command: 'bun run dev:test',
-    port: 3999,
-    reuseExistingServer: true,
-    timeout: 30_000,
-  },
 });
