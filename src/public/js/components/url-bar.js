@@ -129,12 +129,6 @@ export function init() {
     }
   });
 
-  urlInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      sendBtn.click();
-    }
-  });
-
   function updateMethodColor() {
     const colors = { GET: 'var(--green)', POST: 'var(--yellow)', PUT: 'var(--accent)', PATCH: 'var(--orange)', DELETE: 'var(--red)' };
     methodSelect.style.color = colors[methodSelect.value] || 'var(--text-1)';

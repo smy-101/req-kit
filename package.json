@@ -4,14 +4,19 @@
     "dev": "bun run --hot src/index.ts",
     "build": "bun run build:css && bun run build:js",
     "build:css": "bun x lightningcss --minify --bundle src/public/css/index.css -o src/public/dist/bundle.css",
-    "build:js": "bun build src/public/js/app.js --outfile src/public/dist/bundle.js --target browser --minify"
+    "build:js": "bun build src/public/js/app.js --outfile src/public/dist/bundle.js --target browser --minify",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "hono": "^4.12.10",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@types/bun": "latest",
-    "lightningcss-cli": "^1.32.0"
+    "@types/node": "^25.6.0",
+    "lightningcss-cli": "^1.32.0",
+    "playwright": "^1.59.1"
   }
 }

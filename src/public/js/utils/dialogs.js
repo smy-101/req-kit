@@ -94,15 +94,17 @@ function showDialog({ title, bodyEl, actionText, actionClass, focusAction, enter
 export const Dialogs = {};
 
 Dialogs.prompt = function (title, placeholder, defaultValue) {
+  var wrapper = document.createElement('div');
   var input = document.createElement('input');
   input.type = 'text';
   input.placeholder = placeholder || '';
   input.value = defaultValue != null ? defaultValue : '';
   input.className = 'dialog-input';
+  wrapper.appendChild(input);
 
   return showDialog({
     title: title,
-    bodyEl: input,
+    bodyEl: wrapper,
     actionText: 'OK',
     actionClass: 'modal-btn-primary',
     focusAction: false,

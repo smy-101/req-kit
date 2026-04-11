@@ -53,7 +53,12 @@ export const Modal = {
     // 仅在第一次 open 时保存原始样式
     _saveStyles();
     // 设置新内容
-    modal.innerHTML = html;
+    if (typeof html === 'string') {
+      modal.innerHTML = html;
+    } else {
+      modal.innerHTML = '';
+      modal.appendChild(html);
+    }
     if (styles) {
       if (styles.maxWidth != null) modal.style.maxWidth = styles.maxWidth;
       if (styles.width != null) modal.style.width = styles.width;
@@ -77,7 +82,12 @@ export const Modal = {
 
   replace(html, styles) {
     const modal = _getModal();
-    modal.innerHTML = html;
+    if (typeof html === 'string') {
+      modal.innerHTML = html;
+    } else {
+      modal.innerHTML = '';
+      modal.appendChild(html);
+    }
     if (styles) {
       if (styles.maxWidth != null) modal.style.maxWidth = styles.maxWidth;
       if (styles.width != null) modal.style.width = styles.width;
