@@ -1,24 +1,60 @@
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { z } from 'zod';
 import { ProxyService, ProxyTimeoutError, ProxyUnreachableError } from '../services/proxy';
 import type { ProxyRequest } from '../services/proxy';
 import { HistoryService } from '../services/history';
 import { VariableService } from '../services/variable';
 import { ScriptService } from '../services/script';
-import { injectAuth } from '../services/auth';
-import { CookieService } from '../services/cookie';
+import { injectAuth, type AuthConfig } from '../services/auth';
+import { CookieService, type SetCookieInfo } from '../services/cookie';
 import { parseBody } from '../lib/validation';
 import { getErrorMessage } from '../lib/validation';
+import type { MultipartBody, BinaryBody } from '../types/request';
+
+function isMultipartBody(body: unknown): body is MultipartBody {
+  return typeof body === 'object' && body !== null && 'parts' in body && Array.isArray((body as MultipartBody).parts);
+}
+
+function isBinaryBody(body: unknown): body is BinaryBody {
+  return typeof body === 'object' && body !== null && 'data' in body && typeof (body as BinaryBody).data === 'string';
+}
+
+type BodyInput = string | MultipartBody | BinaryBody | undefined;
+
+interface ProxyApiErrorResponse {
+  error: string;
+  script_logs?: string[];
+  script_variables?: Record<string, string>;
+  post_script_logs?: string[];
+  post_script_variables?: Record<string, string>;
+  cleaned?: number;
+}
+
+interface ProxyApiSuccessResponse {
+  status?: number;
+  headers?: Record<string, string>;
+  body?: string;
+  time?: number;
+  size?: number;
+  script_logs?: string[];
+  script_variables?: Record<string, string>;
+  script_tests?: Record<string, boolean>;
+  post_script_logs?: string[];
+  post_script_variables?: Record<string, string>;
+  set_cookies?: SetCookieInfo[];
+  cleaned?: number;
+  error?: string;
+}
 
 export interface PipelineInput {
   url: string;
   method: string;
   headers?: Record<string, string>;
   params?: Record<string, string>;
-  body?: string | object | undefined;
+  body?: BodyInput;
   body_type?: string;
   auth_type?: string;
-  auth_config?: any;
+  auth_config?: AuthConfig | string;
   pre_request_script?: string;
   post_response_script?: string;
   runtime_vars?: Record<string, string>;
@@ -39,7 +75,7 @@ export interface PipelineResult {
   postScriptLogs?: string[];
   scriptVariables?: Record<string, string>;
   postScriptVariables?: Record<string, string>;
-  setCookies?: any[];
+  setCookies?: SetCookieInfo[];
   cleaned?: number;
   error?: string;
   /** 标记此错误是否可重试（网络超时、不可达等），脚本错误不设置此字段 */
@@ -69,7 +105,7 @@ function resolveTemplateVariables(
   let url = resolve(input.url);
   let headers = { ...(input.headers || {}) };
   let params = { ...(input.params || {}) };
-  let bodyStr: any = input.body;
+  let bodyStr: BodyInput = input.body;
 
   for (const key of Object.keys(headers)) {
     headers[key] = resolve(headers[key]);
@@ -78,8 +114,8 @@ function resolveTemplateVariables(
     params[key] = resolve(params[key]);
   }
   if (bodyStr) {
-    if (input.body_type === 'multipart' && typeof bodyStr === 'object' && (bodyStr as any).parts) {
-      for (const part of (bodyStr as any).parts) {
+    if (input.body_type === 'multipart' && isMultipartBody(bodyStr)) {
+      for (const part of bodyStr.parts) {
         if (part.type === 'text' && part.value) {
           part.value = resolve(part.value);
         }
@@ -107,17 +143,17 @@ function resolveTemplateVariables(
  * 构建实际请求体（FormData / Buffer / string）及历史记录用的原始 body
  */
 function buildProxyBody(
-  body: any,
+  body: BodyInput,
   bodyType: string | undefined,
   headers: Record<string, string>,
-  bodyStr: any
+  bodyStr: BodyInput
 ) {
   let proxyBody: string | FormData | Buffer | undefined;
-  let originalBodyForHistory: any = body;
+  let originalBodyForHistory: BodyInput = body;
 
-  if (bodyType === 'multipart' && typeof body === 'object' && (body as any).parts) {
+  if (bodyType === 'multipart' && isMultipartBody(body)) {
     const formData = new FormData();
-    for (const part of (body as any).parts) {
+    for (const part of body.parts) {
       if (part.type === 'file' && part.value) {
         const binary = Buffer.from(part.value, 'base64');
         const blob = new Blob([binary], { type: part.contentType || 'application/octet-stream' });
@@ -128,10 +164,10 @@ function buildProxyBody(
     }
     proxyBody = formData;
     originalBodyForHistory = body;
-  } else if (bodyType === 'binary' && typeof body === 'object' && (body as any).data) {
-    proxyBody = Buffer.from((body as any).data, 'base64');
-    if ((body as any).contentType && !headers['Content-Type']) {
-      headers['Content-Type'] = (body as any).contentType;
+  } else if (bodyType === 'binary' && isBinaryBody(body)) {
+    proxyBody = Buffer.from(body.data, 'base64');
+    if (body.contentType && !headers['Content-Type']) {
+      headers['Content-Type'] = body.contentType;
     }
     originalBodyForHistory = body;
   } else {
@@ -272,7 +308,7 @@ export async function executeRequestPipeline(
   }
 
   // Step 5: Extract Set-Cookie
-  let setCookies: any[] = [];
+  let setCookies: SetCookieInfo[] = [];
   const setCookieHeaders = extractSetCookieHeaders(result.headers);
   if (setCookieHeaders.length > 0) {
     const requestHost = new URL(proxyReq.url).hostname;
@@ -376,7 +412,7 @@ export function createProxyRoutes(
       const status = result.error === '请求超时' ? 504
         : result.error === '目标服务器不可达' ? 502
         : 400;
-      const response: any = { error: result.error };
+      const response: ProxyApiErrorResponse = { error: result.error };
       if (result.scriptLogs?.length) response.script_logs = result.scriptLogs;
       if (result.scriptVariables && Object.keys(result.scriptVariables).length > 0) response.script_variables = result.scriptVariables;
       if (result.postScriptLogs?.length) response.post_script_logs = result.postScriptLogs;
@@ -386,7 +422,7 @@ export function createProxyRoutes(
     }
 
     // Convert camelCase PipelineResult to snake_case for backward compatibility
-    const response: any = {
+    const response: ProxyApiSuccessResponse = {
       status: result.status,
       headers: result.headers,
       body: result.body,
@@ -419,7 +455,7 @@ function recordHistory(
   result: { status: number; headers: Record<string, string>; body: string; time: number; size: number },
   scriptLogs: string[],
   authType?: string,
-  authConfig?: any,
+  authConfig?: AuthConfig | string | null,
   bodyType?: string,
   preRequestScript?: string,
   postResponseScript?: string,
@@ -452,7 +488,7 @@ function recordHistory(
 }
 
 function streamProxyResponse(
-  c: any,
+  c: Context,
   services: PipelineServices,
   body: Partial<PipelineInput>
 ) {
@@ -474,7 +510,7 @@ function streamProxyResponse(
         let capturedSize = 0;
         let capturedTime = 0;
 
-        const send = (event: string, data: any) => {
+        const send = (event: string, data: Record<string, unknown>) => {
           controller.enqueue(
             encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
           );
@@ -486,7 +522,7 @@ function streamProxyResponse(
               capturedStatus = status;
               capturedHeaders = headers;
 
-              let setCookies: any[] = [];
+              let setCookies: SetCookieInfo[] = [];
               const setCookieHeaders = extractSetCookieHeaders(headers);
               if (setCookieHeaders.length > 0) {
                 try {
@@ -495,7 +531,7 @@ function streamProxyResponse(
                 } catch {}
               }
 
-              const data: any = { status, headers };
+              const data: Record<string, unknown> = { status, headers };
               if (scriptLogs.length > 0) data.script_logs = scriptLogs;
               if (Object.keys(scriptVariables).length > 0) data.script_variables = scriptVariables;
               if (setCookies.length > 0) data.set_cookies = setCookies;

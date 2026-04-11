@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { ImportExportService } from '../services/import-export';
 import { parseBody, parseParam } from '../lib/validation';
+import type { PostmanCollection } from '../types/postman';
 
 const ImportSchema = z.object({
   type: z.string().min(1),
@@ -27,7 +28,7 @@ export function createImportExportRoutes(importExportService: ImportExportServic
     }
 
     if (body.type === 'postman') {
-      let json: any;
+      let json: PostmanCollection;
       try {
         json = typeof body.content === 'string' ? JSON.parse(body.content) : body.content;
       } catch {

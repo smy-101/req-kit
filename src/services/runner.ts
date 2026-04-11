@@ -4,6 +4,7 @@ import { HistoryService } from './history';
 import { ScriptService } from './script';
 import { ProxyService } from './proxy';
 import { CookieService } from './cookie';
+import type { AuthConfig } from './auth';
 import { executeRequestPipeline, type PipelineInput, type PipelineResult, type PipelineServices } from '../routes/proxy';
 import { findInTree } from '../lib/tree-utils';
 
@@ -163,7 +164,7 @@ export class RunnerService {
         try { params = JSON.parse(req.params); } catch (err) { console.warn('[runner] JSON.parse failed: params', err); }
       }
 
-      let authConfig: any;
+      let authConfig: AuthConfig | undefined;
       if (req.auth_config) {
         try { authConfig = JSON.parse(req.auth_config); } catch (err) { console.warn('[runner] JSON.parse failed: auth_config', err); }
       }

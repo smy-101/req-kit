@@ -132,9 +132,10 @@ export class CollectionService {
 
     const allowedFields = ['name', 'method', 'url', 'headers', 'params', 'body', 'body_type', 'auth_type', 'auth_config', 'pre_request_script', 'post_response_script', 'sort_order'];
     for (const field of allowedFields) {
-      if ((updates as any)[field] !== undefined) {
+      const key = field as keyof SavedRequest;
+      if (updates[key] !== undefined) {
         fields.push(`${field} = ?`);
-        values.push((updates as any)[field]);
+        values.push(updates[key]);
       }
     }
 

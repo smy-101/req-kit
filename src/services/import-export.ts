@@ -1,7 +1,8 @@
 import { Database } from '../db/index';
-import { CollectionService, SavedRequest } from './collection';
+import { CollectionService, SavedRequest, type Collection } from './collection';
 import { VariableService } from './variable';
 import { findInTree } from '../lib/tree-utils';
+import type { PostmanCollection, PostmanItem, PostmanFormDataItem, PostmanVariable } from '../types/postman';
 
 export class ImportExportService {
   private db: Database;
@@ -103,11 +104,11 @@ export class ImportExportService {
       url: parsed.url,
       headers: Object.keys(parsed.headers).length > 0 ? JSON.stringify(parsed.headers) : undefined,
       body: parsed.body,
-      body_type: (parsed as any).body_type,
+      body_type: parsed.body_type,
     });
   }
 
-  importPostmanCollection(json: any): number | null {
+  importPostmanCollection(json: PostmanCollection): number | null {
     try {
       if (!json.info || json.info.schema !== 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json') {
         return null;
@@ -123,8 +124,8 @@ export class ImportExportService {
       // 导入集合变量
       if (json.variable && Array.isArray(json.variable)) {
         const vars = json.variable
-          .filter((v: any) => v.key)
-          .map((v: any) => ({
+          .filter((v: PostmanVariable) => v.key)
+          .map((v: PostmanVariable) => ({
             key: v.key,
             value: v.value || '',
             enabled: v.enabled !== false,
@@ -140,7 +141,7 @@ export class ImportExportService {
     }
   }
 
-  private importPostmanItems(items: any[], parentId: number) {
+  private importPostmanItems(items: PostmanItem[], parentId: number) {
     for (const item of items) {
       if (item.item && Array.isArray(item.item)) {
         // This is a folder
@@ -170,7 +171,7 @@ export class ImportExportService {
         } else if (req.body?.raw) {
           body = req.body.raw;
         } else if (req.body?.mode === 'formdata' && Array.isArray(req.body.formdata)) {
-          const parts = req.body.formdata.map((f: any) => {
+          const parts = req.body.formdata.map((f: PostmanFormDataItem) => {
             if (f.type === 'file') {
               return { key: f.key, type: 'file', value: '', filename: typeof f.src === 'string' ? f.src.split('/').pop() || f.src : 'file', contentType: 'application/octet-stream' };
             }
@@ -194,7 +195,7 @@ export class ImportExportService {
 
   // --- Export ---
 
-  exportPostmanCollection(collectionId: number): any | null {
+  exportPostmanCollection(collectionId: number): PostmanCollection | null {
     const tree = this.collectionService.getTree();
     const collection = findInTree(tree, collectionId);
     if (!collection) return null;
@@ -202,7 +203,7 @@ export class ImportExportService {
     // 查询集合变量
     const variables = this.variableService.getByCollection(collectionId);
 
-    const result: any = {
+    const result: PostmanCollection = {
       info: {
         name: collection.name,
         schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
@@ -221,8 +222,8 @@ export class ImportExportService {
     return result;
   }
 
-  private buildPostmanItems(collection: any): any[] {
-    const items: any[] = [];
+  private buildPostmanItems(collection: Collection): PostmanItem[] {
+    const items: PostmanItem[] = [];
 
     if (collection.children) {
       for (const child of collection.children) {
@@ -238,11 +239,11 @@ export class ImportExportService {
         const headers = req.headers ? JSON.parse(req.headers) : {};
         const headerArray = Object.entries(headers).map(([key, value]) => ({ key, value }));
 
-        let bodyObj: any = undefined;
+        let bodyObj: PostmanRequest['body'] = undefined;
         if (req.body_type === 'multipart' && req.body) {
           try {
             const parsed = JSON.parse(req.body);
-            const formdata = (parsed.parts || []).map((p: any) => {
+            const formdata = (parsed.parts || []).map((p: PostmanFormDataItem) => {
               if (p.type === 'file') {
                 return { key: p.key, type: 'file', src: p.filename || 'file' };
               }
@@ -286,7 +287,7 @@ export class ImportExportService {
   }
 
   exportCurl(requestId: number): string | null {
-    const requests = this.db.query<any>('SELECT * FROM saved_requests WHERE id = ?', [requestId]);
+    const requests = this.db.query<SavedRequest>('SELECT * FROM saved_requests WHERE id = ?', [requestId]);
     if (requests.length === 0) return null;
 
     const req = requests[0];

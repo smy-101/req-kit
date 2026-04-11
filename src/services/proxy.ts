@@ -5,12 +5,6 @@ export interface ProxyRequest {
   params?: Record<string, string>;
   body?: string | FormData | Buffer;
   stream?: boolean;
-  auth_type?: string;
-  auth_config?: any;
-  pre_request_script?: string;
-  environment_id?: number;
-  collection_id?: number;
-  runtime_vars?: Record<string, string>;
   timeout?: number;
   follow_redirects?: boolean;
 }

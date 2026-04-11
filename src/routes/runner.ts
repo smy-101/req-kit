@@ -20,7 +20,7 @@ export function createRunnerRoutes(runnerService: RunnerService) {
     const stream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();
-        const send = (event: string, data: any) => {
+        const send = (event: string, data: Record<string, unknown>) => {
           controller.enqueue(
             encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
           );
