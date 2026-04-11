@@ -11,10 +11,13 @@ req-kit is a self-hosted API testing tool (Postman-like). Chinese-language UI an
 ```sh
 bun install          # Install dependencies
 bun run dev          # Start dev server with hot reload (http://localhost:3000)
-bun test             # Run all tests
+bun test             # Run all unit + integration tests
 bun test tests/unit/             # Run only unit tests
 bun test tests/integration/      # Run only integration tests
 bun test tests/unit/proxy.test.ts  # Run a single test file
+bun run test:e2e     # Run Playwright E2E tests (auto-starts/stops test server via globalSetup)
+bun run test:e2e:ui  # Run E2E tests with Playwright UI mode
+bun run build        # Build CSS (lightningcss) + JS (bun bundler) to src/public/dist/
 ```
 
 No linter or formatter is configured.
@@ -49,5 +52,6 @@ SQLite via `bun:sqlite`. Tables: `environments`, `env_variables`, `collections` 
 - Route factories accept service instances via function args (e.g., `createProxyRoutes(proxyService, historyService, ...)`). No DI framework.
 - Integration tests create real `Bun.serve` instances on port 0 and test against them — no mocks.
 - Unit tests use `Database(':memory:')` with `beforeEach` migration.
+- E2E tests use Playwright with `globalSetup`/`globalTeardown` to manage a test server on port 3999. The test DB (`test.db`) is created/destroyed automatically — no manual setup needed. Config in `playwright.config.ts` (60s timeout, 2 retries, headless).
 - The proxy pipeline in `routes/proxy.ts` processes: env template replacement → pre-request script → auth injection → proxy send → history record. Order matters.
 - Frontend has no framework — components subscribe to `store` events and manipulate DOM directly.
