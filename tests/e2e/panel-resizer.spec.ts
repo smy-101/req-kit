@@ -5,7 +5,7 @@ test.describe('面板拖拽调整', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     const container = page.locator('#request-response');
     const box = await container.boundingBox();
@@ -41,7 +41,7 @@ test.describe('面板拖拽调整', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     const container = page.locator('#request-response');
     const box = await container.boundingBox();
@@ -74,7 +74,7 @@ test.describe('面板拖拽调整', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     const container = page.locator('#request-response');
     const box = await container.boundingBox();
@@ -107,7 +107,7 @@ test.describe('面板拖拽调整', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 拖拽调整面板大小
     const container = page.locator('#request-response');
@@ -131,7 +131,7 @@ test.describe('面板拖拽调整', () => {
     // 调整后发送新请求，验证功能正常
     await page.locator('#url-input').fill('https://httpbin.org/uuid');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 验证格式切换功能正常
     const formatBar = page.locator('#response-format-bar');

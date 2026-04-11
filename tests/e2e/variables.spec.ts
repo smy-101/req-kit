@@ -35,7 +35,7 @@ test.describe('变量系统', () => {
     // 在 URL 中使用变量
     await page.locator('#url-input').fill('https://{{host}}/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     const responseBody = page.locator('#response-format-content');
     await expect(responseBody).toContainText('httpbin.org');
@@ -88,7 +88,7 @@ test.describe('变量系统', () => {
     // 使用变量发送请求
     await page.locator('#url-input').fill(`https://{{${uniqueKey}}}/get`);
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
   });
 
   test('变量预览面板', async ({ page }) => {

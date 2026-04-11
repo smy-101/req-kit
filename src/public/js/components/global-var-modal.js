@@ -26,8 +26,8 @@ export function init(refreshGlobalVars) {
     dialog.querySelector('#close-global-var-modal').addEventListener('click', () => Modal.close());
     dialog.querySelector('#save-global-vars').addEventListener('click', async () => {
       const cleaned = editor.getRows().filter(r => r.key.trim()).map(r => ({ key: r.key.trim(), value: r.value || '', enabled: r.enabled }));
-      await api.updateGlobalVariables(cleaned);
-      await refreshGlobalVars();
+      const saved = await api.updateGlobalVariables(cleaned);
+      await refreshGlobalVars(saved);
       Toast.success('全局变量已保存');
       Modal.close();
     });

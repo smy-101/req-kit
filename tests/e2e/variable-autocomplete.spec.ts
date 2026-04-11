@@ -183,7 +183,7 @@ test.describe('变量自动补全', () => {
 
     // 只过滤 filter_beta
     await page.locator('#url-input').click();
-    await page.locator('#url-input').pressSequentially(`{{filter_beta`);
+    await page.locator('#url-input').pressSequentially(`{{filter_beta`, { delay: 50 });
     // 等待弹窗可见（过滤后应只显示 filter_beta）
     await expect(page.locator('#var-autocomplete-popup')).not.toHaveClass(/hidden/, { timeout: 5000 });
     // 应该只显示 filter_beta（不包含 filter_alpha）

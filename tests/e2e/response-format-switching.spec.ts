@@ -5,7 +5,7 @@ test.describe('响应格式切换', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/json');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     const formatBar = page.locator('#response-format-bar');
     await expect(formatBar).toBeVisible();
@@ -31,7 +31,7 @@ test.describe('响应格式切换', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/html');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // HTML 响应应自动选择 Preview
     await expect(page.locator('.format-tab[data-format="preview"]')).toHaveClass(/active/, { timeout: 5000 });
@@ -45,7 +45,7 @@ test.describe('响应格式切换', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/html');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 等待 Preview 模式加载
     await expect(page.locator('.format-tab[data-format="preview"]')).toHaveClass(/active/, { timeout: 5000 });
@@ -63,7 +63,7 @@ test.describe('响应格式切换', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/xml');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 默认 Pretty
     await expect(page.locator('.format-tab[data-format="pretty"]')).toHaveClass(/active/, { timeout: 5000 });
@@ -84,7 +84,7 @@ test.describe('响应格式切换', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/image/png');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 图片响应应自动选择 Preview
     await expect(page.locator('.format-tab[data-format="preview"]')).toHaveClass(/active/, { timeout: 5000 });

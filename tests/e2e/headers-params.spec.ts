@@ -79,7 +79,7 @@ test.describe('查询参数编辑器', () => {
     // 发送到 httpbin，验证参数出现在响应中
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     const responseBody = page.locator('#response-format-content');
     await expect(responseBody).toContainText('foo');

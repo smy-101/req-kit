@@ -11,7 +11,7 @@ test.describe('HTTP 方法测试', () => {
     // 发送 HEAD 请求
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // HEAD 请求应该没有响应体或响应体为空
     const responseBody = page.locator('#response-format-content');
@@ -29,7 +29,7 @@ test.describe('HTTP 方法测试', () => {
     // 发送 PATCH 请求
     await page.locator('#url-input').fill('https://httpbin.org/patch');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 验证响应包含请求信息
     const responseBody = page.locator('#response-format-content');

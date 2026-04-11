@@ -93,7 +93,7 @@ test.describe('Body 编辑器', () => {
     await page.waitForTimeout(300);
 
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 验证响应包含 GraphQL 查询内容
     const responseBody = page.locator('#response-format-content');

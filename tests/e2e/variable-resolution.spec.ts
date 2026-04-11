@@ -43,7 +43,7 @@ test.describe('变量在 Headers 和 Body 中的替换', () => {
     await page.locator('#url-input').fill('https://httpbin.org/post');
     await page.locator('#send-btn').click();
 
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
     const responseBody = page.locator('#response-format-content');
     await expect(responseBody).toContainText('hello-from-env', { timeout: 5000 });
   });
@@ -86,7 +86,7 @@ test.describe('变量在 Headers 和 Body 中的替换', () => {
     await page.locator('#url-input').fill('https://httpbin.org/post');
     await page.locator('#send-btn').click();
 
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
     const responseBody = page.locator('#response-format-content');
     await expect(responseBody).toContainText('hello-body-var');
   });
@@ -136,7 +136,7 @@ test.describe('变量解析增强', () => {
     await page.locator('#url-input').fill(`https://{{${collKey}}}/get`);
     await page.waitForTimeout(400);
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     const responseBody = page.locator('#response-format-content');
     await expect(responseBody).toContainText('httpbin.org', { timeout: 5000 });
@@ -184,7 +184,7 @@ test.describe('变量解析增强', () => {
 
     await page.locator('#url-input').fill('https://httpbin.org/post');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     const responseBody = page.locator('#response-format-content');
     await expect(responseBody).toContainText('env_value');
@@ -228,7 +228,7 @@ test.describe('变量解析增强', () => {
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.waitForTimeout(400);
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 创建第二个标签页
     await page.locator('.request-tab-add').click();
@@ -241,7 +241,7 @@ test.describe('变量解析增强', () => {
     await page.locator('#body-textarea').fill('{"tab": "two"}');
     await page.waitForTimeout(300);
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 验证第二个标签页的响应包含 POST 数据
     const tab2Body = await page.locator('#response-format-content').textContent();

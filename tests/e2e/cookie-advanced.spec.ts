@@ -6,7 +6,7 @@ test.describe('Cookie 管理高级功能', () => {
     // 使用 response-headers 端点直接设置 Set-Cookie（不经过重定向）
     await page.locator('#url-input').fill('https://httpbin.org/response-headers?Set-Cookie=test1=value1');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
     await page.waitForTimeout(1000);
   });
 

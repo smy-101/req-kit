@@ -20,7 +20,7 @@ test.describe('脚本与测试', () => {
 
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     const responseBody = page.locator('#response-format-content');
     await expect(responseBody).toContainText('X-Custom');
@@ -39,7 +39,7 @@ test.describe('脚本与测试', () => {
     await page.locator('#url-input').fill('https://httpbin.org/post');
     await expect(() => {
       page.locator('#send-btn').click();
-      return expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+      return expect(page.locator('#response-status')).toContainText('200');
     }).toPass({ timeout: 30_000 });
 
     const responseBody = page.locator('#response-format-content');
@@ -66,7 +66,7 @@ test.describe('脚本与测试', () => {
 
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 切换到 Test Results 标签页
     await page.locator('#response-panel .tab[data-response-tab="test-results"]').click();
@@ -89,7 +89,7 @@ test.describe('脚本与测试', () => {
 
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 切换到 Test Results 标签页
     await page.locator('#response-panel .tab[data-response-tab="test-results"]').click();
@@ -110,7 +110,7 @@ test.describe('脚本与测试', () => {
 
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 创建新标签页
     await page.locator('.request-tab-add').click();
@@ -121,7 +121,7 @@ test.describe('脚本与测试', () => {
 
     await page.locator('#send-btn').click();
     // 应该成功发送到 httpbin.org/uuid
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
   });
 
   test('Pre-request Script 在不同标签页间独立', async ({ page }) => {

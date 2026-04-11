@@ -68,7 +68,7 @@ test.describe('认证面板', () => {
 
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // httpbin 的 /get 会返回 Authorization header
     const responseBody = page.locator('#response-format-content');

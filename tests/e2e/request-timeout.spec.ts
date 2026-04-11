@@ -15,7 +15,7 @@ test.describe('请求超时行为', () => {
     await page.locator('#send-btn').click();
 
     // 应显示 5xx 错误状态样式
-    await expect(page.locator('#response-status')).toHaveClass(/status-5xx/, { timeout: 15000 });
+    await expect(page.locator('#response-status')).toHaveClass(/status-5xx/);
     // 时间和大小显示为异常值
     await expect(page.locator('#response-time')).toBeVisible();
   });
@@ -33,6 +33,6 @@ test.describe('请求超时行为', () => {
     await page.locator('#url-input').fill('https://httpbin.org/delay/2');
     await page.locator('#send-btn').click();
 
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
   });
 });

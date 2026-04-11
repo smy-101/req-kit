@@ -7,7 +7,7 @@ test.describe('发送请求与响应', () => {
     await page.locator('#send-btn').click();
 
     // 等待响应状态码显示
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
     await expect(page.locator('#response-time')).toBeVisible();
     await expect(page.locator('#response-size')).toBeVisible();
   });
@@ -30,7 +30,7 @@ test.describe('发送请求与响应', () => {
 
     // 发送请求
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 验证响应体中包含发送的数据
     const responseBody = page.locator('#response-body');
@@ -46,14 +46,14 @@ test.describe('发送请求与响应', () => {
     await urlInput.focus();
     await urlInput.press('Control+Enter');
 
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
   });
 
   test('切换响应标签页查看响应头', async ({ page }) => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 切换到 Headers 标签页
     await page.locator('#response-panel .tab[data-response-tab="headers"]').click();

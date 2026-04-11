@@ -22,7 +22,7 @@ test.describe('边界情况', () => {
     await page.locator('#send-btn').click();
 
     // 应显示 5xx 错误样式
-    await expect(page.locator('#response-status')).toHaveClass(/status-5xx/, { timeout: 15000 });
+    await expect(page.locator('#response-status')).toHaveClass(/status-5xx/);
     // 响应体应显示错误信息
     await expect(page.locator('.response-error')).toBeVisible({ timeout: 5000 });
   });
@@ -34,7 +34,7 @@ test.describe('边界情况', () => {
     await page.locator('#send-btn').click();
 
     // 应显示 5xx 错误样式
-    await expect(page.locator('#response-status')).toHaveClass(/status-5xx/, { timeout: 15000 });
+    await expect(page.locator('#response-status')).toHaveClass(/status-5xx/);
     // 响应体应显示错误内容
     await expect(page.locator('.response-error')).toBeVisible({ timeout: 5000 });
   });

@@ -7,7 +7,7 @@ test.describe('响应额外功能', () => {
     // 发送请求到 404 端点
     await page.locator('#url-input').fill('https://httpbin.org/status/404');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('404', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('404');
 
     // 验证 4xx 状态码样式
     await expect(page.locator('#response-status')).toHaveClass(/status-4xx/);
@@ -19,7 +19,7 @@ test.describe('响应额外功能', () => {
     // 发送请求到 500 端点
     await page.locator('#url-input').fill('https://httpbin.org/status/500');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('500', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('500');
 
     // 验证 5xx 状态码样式
     await expect(page.locator('#response-status')).toHaveClass(/status-5xx/);
@@ -38,7 +38,7 @@ test.describe('响应额外功能', () => {
     // 发送请求到重定向端点
     await page.locator('#url-input').fill('https://httpbin.org/redirect/1');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('302', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('302');
 
     // 验证 3xx 状态码样式
     await expect(page.locator('#response-status')).toHaveClass(/status-3xx/);
@@ -57,7 +57,7 @@ test.describe('响应额外功能', () => {
     // 发送请求获取 XML 响应
     await page.locator('#url-input').fill('https://httpbin.org/xml');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 切换到 Pretty 格式
     const prettyTab = page.locator('.format-tab[data-format="pretty"]');
@@ -76,7 +76,7 @@ test.describe('响应额外功能', () => {
     // 发送请求获取图片
     await page.locator('#url-input').fill('https://httpbin.org/image/png');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 切换到 Preview 模式
     const previewTab = page.locator('.format-tab[data-format="preview"]');
@@ -104,7 +104,7 @@ test.describe('响应额外功能', () => {
     // 发送请求
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 验证脚本日志显示
     await expect(page.locator('.response-logs')).toBeVisible({ timeout: 5000 });
@@ -124,7 +124,7 @@ test.describe('响应额外功能', () => {
     // 发送请求
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 验证 post-response 脚本日志显示
     await expect(page.locator('.response-logs')).toBeVisible({ timeout: 5000 });

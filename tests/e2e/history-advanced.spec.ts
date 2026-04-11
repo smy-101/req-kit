@@ -6,7 +6,7 @@ test.describe('历史记录高级功能', () => {
     // 发送一个请求确保有历史记录
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
   });
 
   test('历史记录搜索', async ({ page }) => {

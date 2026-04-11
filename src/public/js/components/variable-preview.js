@@ -135,11 +135,11 @@ export function init(showGlobalVarModal) {
     if (!hasContent) listEl.innerHTML = '<div class="var-empty-msg-compact">无匹配变量</div>';
   }
 
-  async function refreshGlobalVars() {
-    const vars = await api.getGlobalVariables();
-    store.setState({ globalVariables: vars });
+  async function refreshGlobalVars(vars) {
+    const data = vars || await api.getGlobalVariables();
+    store.setState({ globalVariables: data });
     const countEl = document.getElementById('global-var-count');
-    if (countEl) { const enabledCount = vars.filter(v => v.enabled).length; countEl.textContent = enabledCount; countEl.classList.toggle('has-vars', enabledCount > 0); }
+    if (countEl) { const enabledCount = data.filter(v => v.enabled).length; countEl.textContent = enabledCount; countEl.classList.toggle('has-vars', enabledCount > 0); }
   }
 
   refreshGlobalVars();

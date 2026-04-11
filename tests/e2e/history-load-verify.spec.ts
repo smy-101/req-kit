@@ -17,7 +17,7 @@ test.describe('历史记录加载验证', () => {
     await page.waitForTimeout(300);
 
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 打开历史面板
     await page.locator('.history-header').click();
@@ -63,7 +63,7 @@ test.describe('历史记录加载验证', () => {
     await page.locator('#url-input').fill('https://httpbin.org/uuid');
     await page.waitForTimeout(400);
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 打开历史面板
     await page.locator('.history-header').click();
@@ -99,7 +99,7 @@ test.describe('历史记录加载验证', () => {
     await page.locator('#url-input').fill(testUrl);
     await page.waitForTimeout(400);
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 确认只有一个标签
     await expect(page.locator('.request-tab')).toHaveCount(1);

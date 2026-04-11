@@ -10,7 +10,7 @@ test.describe('OPTIONS 方法请求', () => {
     await page.locator('#send-btn').click();
 
     // 验证 OPTIONS 请求成功返回 200
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
     await expect(page.locator('#response-time')).toBeVisible();
   });
 });

@@ -5,7 +5,7 @@ test.describe('响应面板高级功能', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/json');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 等待 format bar 出现
     const formatBar = page.locator('#response-format-bar');
@@ -28,7 +28,7 @@ test.describe('响应面板高级功能', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 点击搜索按钮
     await page.locator('#search-toggle-btn').click();
@@ -53,7 +53,7 @@ test.describe('响应面板高级功能', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 确保响应面板 body 标签活跃
     await page.locator('#response-panel .tab[data-response-tab="body"]').click();
@@ -69,7 +69,7 @@ test.describe('响应面板高级功能', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/cookies/set?test=123');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 切换到 Cookies 标签
     await page.locator('#response-panel .tab[data-response-tab="cookies"]').click();
@@ -81,7 +81,7 @@ test.describe('响应面板高级功能', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 切换到 Test Results 标签
     await page.locator('#response-panel .tab[data-response-tab="test-results"]').click();
@@ -93,7 +93,7 @@ test.describe('响应面板高级功能', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/html');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 切换到 Preview
     await page.locator('.format-tab[data-format="preview"]').click();
@@ -113,7 +113,7 @@ test.describe('响应面板高级功能', () => {
     await page.waitForTimeout(300);
 
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     const responseBody = page.locator('#response-format-content');
     await expect(responseBody).toContainText('PUT');
@@ -125,6 +125,6 @@ test.describe('响应面板高级功能', () => {
     await page.locator('#url-input').fill('https://httpbin.org/delete');
 
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
   });
 });

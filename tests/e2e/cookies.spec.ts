@@ -25,7 +25,7 @@ test.describe('Cookie 管理', () => {
     // 发送请求到 httpbin /cookies/set 设置 cookie
     await page.locator('#url-input').fill('https://httpbin.org/cookies/set?test_cookie=test_value');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 检查 cookie count 更新
     // 注意：浏览器可能不直接暴露 httpbin 设置的 cookies 给 JS

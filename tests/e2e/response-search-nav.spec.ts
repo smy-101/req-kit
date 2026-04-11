@@ -5,7 +5,7 @@ test.describe('响应搜索导航', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 确保在 body 标签
     await page.locator('#response-panel .tab[data-response-tab="body"]').click();
@@ -29,7 +29,7 @@ test.describe('响应搜索导航', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     await page.locator('#response-panel .tab[data-response-tab="body"]').click();
     await page.locator('#search-toggle-btn').click();
@@ -57,7 +57,7 @@ test.describe('响应搜索导航', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     await page.locator('#response-panel .tab[data-response-tab="body"]').click();
     await page.locator('#search-toggle-btn').click();
@@ -87,7 +87,7 @@ test.describe('响应搜索导航', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     await page.locator('#response-panel .tab[data-response-tab="body"]').click();
     await page.locator('#search-toggle-btn').click();
@@ -116,7 +116,7 @@ test.describe('响应搜索导航', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     await page.locator('#response-panel .tab[data-response-tab="body"]').click();
     await page.locator('#search-toggle-btn').click();
@@ -143,7 +143,7 @@ test.describe('响应搜索导航', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     await page.locator('#response-panel .tab[data-response-tab="body"]').click();
     await page.locator('#search-toggle-btn').click();
@@ -170,7 +170,7 @@ test.describe('响应搜索导航', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     await page.locator('#response-panel .tab[data-response-tab="body"]').click();
     await page.locator('#search-toggle-btn').click();
@@ -188,7 +188,7 @@ test.describe('响应搜索导航', () => {
     await page.goto('/');
     await page.locator('#url-input').fill('https://httpbin.org/get');
     await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(page.locator('#response-status')).toContainText('200');
 
     // 切换到 Raw 格式
     await page.locator('.format-tab[data-format="raw"]').click();

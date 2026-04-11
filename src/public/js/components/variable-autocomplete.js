@@ -134,9 +134,14 @@ export function init() {
 
   document.addEventListener('input', handleInput);
   document.addEventListener('keydown', handleKeydown, true);
+  let scrollHideTimer = null;
   document.addEventListener('scroll', () => {
     if (currentInput && document.activeElement === currentInput) return;
-    hidePopup();
+    clearTimeout(scrollHideTimer);
+    scrollHideTimer = setTimeout(() => {
+      if (currentInput && document.activeElement === currentInput) return;
+      hidePopup();
+    }, 100);
   }, true);
   document.addEventListener('focusout', (e) => { if (!popup.contains(e.relatedTarget)) hidePopup(); });
 }
