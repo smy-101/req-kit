@@ -1,8 +1,21 @@
 import { unlinkSync, existsSync } from 'fs';
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import http from 'http';
 
 const testDbFiles = ['test.db', 'test.db-wal', 'test.db-shm'];
+
+function killPortProcess(port: number) {
+  try {
+    const result = execSync(`fuser ${port}/tcp 2>/dev/null`, { encoding: 'utf-8' }).trim();
+    if (result) {
+      result.split(/\s+/).forEach(p => {
+        try { process.kill(parseInt(p.trim()), 'SIGTERM'); } catch {}
+      });
+    }
+  } catch {
+    // 端口未被占用
+  }
+}
 
 export default async function globalSetup() {
   // 清理残留的测试数据库
@@ -11,6 +24,9 @@ export default async function globalSetup() {
       unlinkSync(file);
     }
   }
+
+  // 杀死占用端口的进程
+  killPortProcess(3999);
 
   // 启动测试服务器
   const server = spawn('bun', ['run', 'src/index.ts'], {

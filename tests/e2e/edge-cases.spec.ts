@@ -21,10 +21,10 @@ test.describe('边界情况', () => {
     await page.locator('#url-input').fill('not-a-valid-url');
     await page.locator('#send-btn').click();
 
-    // 应显示 5xx 错误样式（后端返回错误响应，renderResponse 处理）
+    // 应显示 5xx 错误样式
     await expect(page.locator('#response-status')).toHaveClass(/status-5xx/, { timeout: 15000 });
-    // 响应体应显示错误信息（在 format-content 中）
-    await expect(page.locator('#response-format-content')).toBeVisible({ timeout: 5000 });
+    // 响应体应显示错误信息
+    await expect(page.locator('.response-error')).toBeVisible({ timeout: 5000 });
   });
 
   test('不可达主机发送请求显示错误', async ({ page }) => {
@@ -36,7 +36,7 @@ test.describe('边界情况', () => {
     // 应显示 5xx 错误样式
     await expect(page.locator('#response-status')).toHaveClass(/status-5xx/, { timeout: 15000 });
     // 响应体应显示错误内容
-    await expect(page.locator('#response-format-content')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.response-error')).toBeVisible({ timeout: 5000 });
   });
 });
 

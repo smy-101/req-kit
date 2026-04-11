@@ -37,8 +37,10 @@ test.describe('脚本与测试', () => {
     await page.waitForTimeout(300);
 
     await page.locator('#url-input').fill('https://httpbin.org/post');
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    await expect(() => {
+      page.locator('#send-btn').click();
+      return expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+    }).toPass({ timeout: 30_000 });
 
     const responseBody = page.locator('#response-format-content');
     await expect(responseBody).toContainText('X-Custom-Script');

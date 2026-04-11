@@ -90,8 +90,10 @@ test.describe('历史记录分页与过滤', () => {
     for (let i = 0; i < 5; i++) {
       await page.locator('#method-select').selectOption('GET');
       await page.locator('#url-input').fill(`https://httpbin.org/get?page=${i}`);
-      await page.locator('#send-btn').click();
-      await expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+      await expect(() => {
+        page.locator('#send-btn').click();
+        return expect(page.locator('#response-status')).toContainText('200', { timeout: 15000 });
+      }).toPass({ timeout: 30_000 });
     }
 
     // 展开历史面板

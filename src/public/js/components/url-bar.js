@@ -98,6 +98,13 @@ export function init() {
         follow_redirects: tab.options?.followRedirects,
       });
 
+      // 管道错误（超时、不可达、前置脚本异常）无 HTTP 响应
+      if (data.error && data.status === undefined) {
+        store.setState({ response: data });
+        store.emit('request:error', { message: data.error });
+        return;
+      }
+
       const updates = { response: data };
       if (data.script_tests) {
         updates.scriptTests = data.script_tests;

@@ -186,7 +186,10 @@ export async function init() {
   store.on('request:complete', (data) => renderResponse(data));
   store.on('request:error', (err) => {
     destroyVScroller(); statusEl.textContent = 'Error'; statusEl.className = 'status-5xx'; timeEl.textContent = '-'; sizeEl.textContent = '-';
-    bodyEl.innerHTML = `<pre class="response-error">${escapeHtml(err.message || 'Request failed')}</pre>`;
+    let html = `<pre class="response-error">${escapeHtml(err.message || 'Request failed')}</pre>`;
+    if (err.script_logs?.length > 0) html += '<div class="response-logs"><strong>Script Logs</strong><div>' + err.script_logs.map(l => `<div>> ${escapeHtml(l)}</div>`).join('') + '</div></div>';
+    if (err.post_script_logs?.length > 0) html += '<div class="response-logs"><strong>Post-script Logs</strong><div>' + err.post_script_logs.map(l => `<div>> ${escapeHtml(l)}</div>`).join('') + '</div></div>';
+    bodyEl.innerHTML = html;
     formatContentEl.innerHTML = ''; formatBar.style.display = 'none';
   });
   store.on('request:cancel', () => {

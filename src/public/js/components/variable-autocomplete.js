@@ -134,6 +134,9 @@ export function init() {
 
   document.addEventListener('input', handleInput);
   document.addEventListener('keydown', handleKeydown, true);
-  document.addEventListener('scroll', () => hidePopup(), true);
+  document.addEventListener('scroll', () => {
+    if (currentInput && document.activeElement === currentInput) return;
+    hidePopup();
+  }, true);
   document.addEventListener('focusout', (e) => { if (!popup.contains(e.relatedTarget)) hidePopup(); });
 }

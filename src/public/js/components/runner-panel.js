@@ -165,7 +165,7 @@ export function init() {
     onRequestRetry(data) { const item = requestItems[data.index]; if (!item) return; item.el.querySelector('.runner-result-icon').textContent = '\u{1F504}'; item.el.querySelector('.runner-result-status').textContent = `\u91CD\u8BD5 ${data.attempt}/${data.maxRetries}`; item.el.querySelector('.runner-result-status').className = 'runner-result-status retry'; },
     onRequestComplete(data) { completedRequests++; updateProgress(); if (requestItems[data.index]) updateRequestItem(requestItems[data.index], data); },
     onDone(data) { progressFill.style.width = '100%'; progressText.textContent = `完成 — ${completedRequests} / ${totalRequests} 个请求`; summaryEl.classList.remove('hidden'); summaryEl.innerHTML = `${data.stopped ? '<span class="summary-stopped">已停止</span>' : ''}<span class="summary-pass">${data.passed} 通过</span>${data.failed > 0 ? `<span class="summary-fail">${data.failed} 失败</span>` : ''}<span class="summary-total">共 ${data.total} 个</span><span class="summary-time">${data.totalTime}ms</span>`; switchToClose(); currentRun = null; },
-    onError(data) { progressText.textContent = '连接错误'; switchToClose(); currentRun = null; },
+    onError(data) { progressText.textContent = '连接错误'; summaryEl.classList.remove('hidden'); summaryEl.innerHTML = `<span class="summary-fail">连接错误</span><span class="summary-total">已完成 ${completedRequests} / ${totalRequests} 个</span>`; switchToClose(); currentRun = null; },
   }, { retryCount, retryDelayMs });
   }
 
