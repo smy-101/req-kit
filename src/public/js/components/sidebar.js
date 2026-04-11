@@ -177,6 +177,6 @@ export function init(openRunnerPanel, HistoryPanel) {
 
   refreshCollections();
 
-  const { saveAsNewRequest } = initSaveDialog(refreshCollections);
-  return { refreshCollections, saveAsNewRequest };
+  const { saveAsNewRequest, updateExistingRequest } = initSaveDialog(refreshCollections);
+  return { refreshCollections, saveAsNewRequest, updateExistingRequest };
 }

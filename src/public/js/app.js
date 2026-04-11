@@ -126,6 +126,16 @@ initImportExport(() => sidebar.refreshCollections());
 // Initialize collection-var-editor (needs sidebar.refreshCollections)
 initCollectionVarEditor(() => sidebar.refreshCollections());
 
+// Wire up save button
+document.getElementById('save-btn').addEventListener('click', () => {
+  const tab = store.getActiveTab();
+  if (tab && tab.requestId) {
+    sidebar.updateExistingRequest?.(tab);
+  } else {
+    sidebar.saveAsNewRequest();
+  }
+});
+
 // Create initial empty tab
 store.createTab();
 
