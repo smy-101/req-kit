@@ -2,3 +2,4 @@ node_modules/
 bun.lock
 req-kit.db*
 src/public/dist/
+test-results/
