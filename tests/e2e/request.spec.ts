@@ -344,3 +344,51 @@ test.describe('查询参数编辑器', () => {
     await expect(responseBody).toContainText('bar');
   });
 });
+
+test.describe('并发请求', () => {
+  test('多标签页同时发送请求', async ({ page }) => {
+    await page.goto('/');
+
+    // 第一个标签发送 GET
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
+    await page.locator('#send-btn').click();
+    await expect(page.locator('#response-status')).toContainText('200');
+
+    // 新建标签发送 POST
+    await page.locator('.request-tab-add').click();
+    await page.locator('#method-select').selectOption('POST');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/post`);
+    await switchRequestTab(page, 'body');
+    await page.locator('#body-textarea').fill('{"tab": "second"}');
+    await page.locator('#send-btn').click();
+    await expect(page.locator('#response-status')).toContainText('200');
+
+    // 切回第一个标签验证响应保留
+    await page.locator('.request-tab').nth(0).click();
+    await expect(page.locator('#response-status')).toContainText('200');
+  });
+});
+
+test.describe('禁用请求头验证', () => {
+  test('禁用的请求头不包含在实际请求中', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
+
+    // 添加一个自定义头
+    await page.locator('#tab-headers .kv-add-btn').click();
+    const lastRow = page.locator('#tab-headers .kv-row').last();
+    await lastRow.locator('.kv-key').fill('X-Disabled-Test');
+    await lastRow.locator('.kv-value').fill('should-not-appear');
+
+    // 禁用该头
+    await lastRow.locator('.kv-enabled').uncheck();
+
+    // 发送请求
+    await page.locator('#send-btn').click();
+    await expect(page.locator('#response-status')).toContainText('200');
+
+    // 响应中不应包含该头（mock /get echo headers）
+    const responseBody = page.locator('#response-format-content');
+    await expect(responseBody).not.toContainText('X-Disabled-Test');
+  });
+});

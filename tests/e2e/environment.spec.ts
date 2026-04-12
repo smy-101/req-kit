@@ -168,3 +168,29 @@ test.describe('环境未保存更改警告', () => {
     await page.locator('#close-env-modal').click();
   });
 });
+
+test.describe('环境删除级联', () => {
+  test('删除环境后变量从预览面板消失', async ({ page }) => {
+    await page.goto('/');
+    const envName = `级联删除_${Date.now()}`;
+
+    const envPage = new EnvironmentPage(page);
+    await envPage.open();
+    await envPage.createEnv(envName);
+    await envPage.selectEnv(envName);
+    await envPage.addVariable('cascade_key', 'cascade_value');
+    await envPage.saveVariables();
+    await envPage.close();
+
+    // 激活环境
+    await envPage.switchActiveEnv(envName);
+
+    // 删除环境
+    await envPage.open();
+    await envPage.deleteEnv(envName);
+    await envPage.close();
+
+    // 验证环境下拉回到 No Environment
+    await expect(page.locator('#active-env')).toHaveValue('');
+  });
+});

@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures';
 import { MOCK_BASE_URL } from './helpers/mock';
-import { sendRequestAndWait, waitForModal, waitForModalClose } from './helpers/wait';
+import { sendRequestAndWait, switchResponseTab, waitForModal, waitForModalClose } from './helpers/wait';
 
 test.describe('Cookie 管理', () => {
   test.beforeEach(async ({ page }) => {
@@ -136,5 +136,18 @@ test.describe('Cookie 高级管理', () => {
     await page.locator('#btn-manage-cookies').click();
     await waitForModal(page);
     await expect(page.locator('.cookie-modal-total')).toBeVisible({ timeout: 5000 });
+  });
+});
+
+test.describe('Cookie 标签页渲染', () => {
+  test('响应 Set-Cookie 在 Cookie 标签页正确显示', async ({ page }) => {
+    await page.goto('/');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/cookies/set?flavor=chocolate&brand=cookies-r-us`, '200');
+
+    await switchResponseTab(page, 'cookies');
+    const cookiesContent = page.locator('#response-cookies');
+    await expect(cookiesContent).toBeVisible();
+    await expect(cookiesContent).toContainText('flavor');
+    await expect(cookiesContent).toContainText('chocolate');
   });
 });
