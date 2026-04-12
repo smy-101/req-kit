@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { MOCK_BASE_URL } from './helpers/mock';
 import { sendRequestAndWait, switchResponseTab } from './helpers/wait';
 
@@ -6,7 +6,6 @@ import { sendRequestAndWait, switchResponseTab } from './helpers/wait';
 test.describe('响应搜索导航', () => {
   test.beforeEach(async ({ page }) => {
       await page.goto("/");
-    await page.waitForLoadState("networkidle");
     });
 
   test('搜索匹配计数显示正确', async ({ page }) => {

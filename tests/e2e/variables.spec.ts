@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { sendRequestAndWait, waitForModal, waitForModalClose } from './helpers/wait';
 import { MOCK_BASE_URL } from './helpers/mock';
 
@@ -6,7 +6,6 @@ import { MOCK_BASE_URL } from './helpers/mock';
 test.describe('变量系统', () => {
   test.beforeEach(async ({ page }) => {
       await page.goto("/");
-    await page.waitForLoadState("networkidle");
     });
 
   test('环境变量模板替换', async ({ page }) => {

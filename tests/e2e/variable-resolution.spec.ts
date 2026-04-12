@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { sendRequestAndWait, waitForModal, waitForModalClose, switchRequestTab } from './helpers/wait';
 import { MOCK_BASE_URL } from './helpers/mock';
 
@@ -6,7 +6,6 @@ import { MOCK_BASE_URL } from './helpers/mock';
 test.describe('变量在 Headers 和 Body 中的替换', () => {
   test.beforeEach(async ({ page }) => {
       await page.goto("/");
-    await page.waitForLoadState("networkidle");
     });
 
   test('环境变量在 Headers 中替换', async ({ page }) => {
@@ -94,7 +93,6 @@ test.describe('变量在 Headers 和 Body 中的替换', () => {
 test.describe('变量解析增强', () => {
   test.beforeEach(async ({ page }) => {
       await page.goto("/");
-    await page.waitForLoadState("networkidle");
   });
   test('集合变量在请求 URL 中替换', async ({ page }) => {
 

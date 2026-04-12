@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { MOCK_BASE_URL } from './helpers/mock';
 import { sendRequestAndWait } from './helpers/wait';
 
@@ -6,7 +6,6 @@ import { sendRequestAndWait } from './helpers/wait';
 test.describe('响应格式切换', () => {
   test.beforeEach(async ({ page }) => {
       await page.goto("/");
-    await page.waitForLoadState("networkidle");
     });
 
   test('JSON 响应 Pretty/Raw/Preview 切换', async ({ page }) => {

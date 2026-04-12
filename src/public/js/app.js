@@ -2,6 +2,7 @@
 import { store } from './store.js';
 import { api } from './api.js';
 import { initPanelResizer } from './utils/panel-resizer.js';
+import { InputDebounce } from './utils/template.js';
 import { matchShortcut } from './utils/shortcuts.js';
 
 // Simple components (no return value)
@@ -128,6 +129,7 @@ initCollectionVarEditor(() => sidebar.refreshCollections());
 
 // Wire up save button
 document.getElementById('save-btn').addEventListener('click', () => {
+  InputDebounce.flush();
   const tab = store.getActiveTab();
   if (tab && tab.requestId) {
     sidebar.updateExistingRequest?.(tab);

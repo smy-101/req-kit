@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { MOCK_BASE_URL } from './helpers/mock';
 import { waitForModal, waitForModalClose } from './helpers/wait';
 

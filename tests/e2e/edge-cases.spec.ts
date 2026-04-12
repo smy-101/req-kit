@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test.describe('边界情况', () => {
   test('空 URL 不发送请求', async ({ page }) => {

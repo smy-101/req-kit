@@ -1,75 +1,61 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { waitForModal, waitForModalClose } from './helpers/wait';
 import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('导入导出', () => {
-  test('导入/导出弹窗打开', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto('/');
+  });
+
+  test('导入/导出弹窗打开', async ({ page }) => {
     await page.locator('#btn-import').click();
 
     await waitForModal(page);
     await expect(page.locator('#modal h3')).toHaveText('Import / Export');
 
-    // 默认显示 Import 标签
     await expect(page.locator('#imex-import')).toBeVisible();
     await expect(page.locator('#imex-export')).toBeHidden();
   });
 
   test('导入/导出弹窗切换标签', async ({ page }) => {
-    await page.goto('/');
     await page.locator('#btn-import').click();
     await waitForModal(page);
 
-    // 切换到 Export 标签
     await page.locator('[data-imex-tab="export"]').click();
     await expect(page.locator('#imex-export')).toBeVisible();
     await expect(page.locator('#imex-import')).toBeHidden();
 
-    // 切换回 Import
     await page.locator('[data-imex-tab="import"]').click();
     await expect(page.locator('#imex-import')).toBeVisible();
     await expect(page.locator('#imex-export')).toBeHidden();
   });
 
   test('导入 curl 命令', async ({ page }) => {
-    await page.goto('/');
-
-    // 先创建集合
     const colName = `导入测试_${Date.now()}`;
     await page.locator('#btn-new-collection').click();
     await page.locator('#modal .dialog-input').fill(colName);
     await page.locator('#modal .modal-btn-primary').click();
     await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName }).first()).toBeVisible({ timeout: 10000 });
 
-    // 打开导入弹窗
     await page.locator('#btn-import').click();
     await waitForModal(page);
 
-    // 选择 curl 类型并填入 curl 命令
     await page.locator('#import-type').selectOption('curl');
     await page.locator('#import-content').fill(`curl '${MOCK_BASE_URL}/get'`);
 
-    // 点击 Import
     await page.locator('#import-action-btn').click();
 
-    // 等待导入成功并弹窗关闭
     await waitForModalClose(page, { timeout: 10000 });
 
-    // 验证集合中有请求 — method badge 出现
-    await expect(page.locator('#collection-tree .method-badge').first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#collection-tree .method-badge').first()).toBeVisible();
   });
 
   test('导入 Postman Collection', async ({ page }) => {
-    await page.goto('/');
-
-    // 使用唯一名称避免与其他测试冲突
     const colName = `Postman_${Date.now()}`;
 
-    // 打开导入弹窗
     await page.locator('#btn-import').click();
     await waitForModal(page);
 
-    // 选择 Postman 类型
     await page.locator('#import-type').selectOption('postman');
 
     const postmanJson = JSON.stringify({
@@ -84,23 +70,58 @@ test.describe('导入导出', () => {
 
     await page.locator('#import-content').fill(postmanJson);
 
-    // 点击 Import
     await page.locator('#import-action-btn').click();
 
-    // 等待导入成功
     await waitForModalClose(page, { timeout: 10000 });
 
-    // 验证集合和请求出现 — 使用 .first() 避免严格模式错误
-    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName }).first()).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: 'Test Request' }).first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName }).first()).toBeVisible();
+    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: 'Test Request' }).first()).toBeVisible();
   });
 
   test('关闭导入导出弹窗', async ({ page }) => {
-    await page.goto('/');
     await page.locator('#btn-import').click();
     await waitForModal(page);
 
     await page.locator('#close-imex-modal').click();
     await waitForModalClose(page);
+  });
+
+  test('导出集合为 Postman 格式', async ({ page }) => {
+    const colName = `导出测试_${Date.now()}`;
+    await page.locator('#btn-new-collection').click();
+    await page.locator('#modal .dialog-input').fill(colName);
+    await page.locator('#modal .modal-btn-primary').click();
+    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible({ timeout: 10000 });
+
+    await page.locator('#method-select').selectOption('POST');
+    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/post`);
+    await page.locator('#save-btn').click();
+    const saveModal = page.locator('#modal');
+    await expect(saveModal).toBeVisible();
+    await saveModal.locator('#save-col-select').selectOption({ label: colName });
+    await saveModal.locator('#save-confirm').click();
+    await waitForModalClose(page);
+
+    // 打开导入/导出弹窗并切换到导出标签
+    await page.locator('#btn-import').click();
+    await waitForModal(page);
+    await page.locator('[data-imex-tab="export"]').click();
+    await expect(page.locator('#imex-export')).toBeVisible();
+
+    await expect(page.locator('.export-list-item').filter({ hasText: colName })).toBeVisible();
+
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+    const exportItem = page.locator('.export-list-item').filter({ hasText: colName });
+    await exportItem.locator('.export-col-btn').click();
+
+    await expect(exportItem.locator('.export-col-btn')).toContainText('Copied!');
+  });
+
+  test('导出标签页显示空列表', async ({ page }) => {
+    await page.locator('#btn-import').click();
+    await waitForModal(page);
+    await page.locator('[data-imex-tab="export"]').click();
+
+    await expect(page.locator('.export-hint')).toBeVisible();
   });
 });

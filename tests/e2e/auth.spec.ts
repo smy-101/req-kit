@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { MOCK_BASE_URL } from './helpers/mock';
 import { sendRequestAndWait, switchRequestTab } from './helpers/wait';
 
@@ -6,7 +6,6 @@ import { sendRequestAndWait, switchRequestTab } from './helpers/wait';
 test.describe('认证面板', () => {
   test.beforeEach(async ({ page }) => {
       await page.goto("/");
-    await page.waitForLoadState("networkidle");
     });
 
   test('默认认证类型为 None', async ({ page }) => {

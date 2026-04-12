@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { MOCK_BASE_URL } from './helpers/mock';
 import { sendRequestAndWait, switchRequestTab, switchResponseTab } from './helpers/wait';
 
@@ -6,7 +6,6 @@ import { sendRequestAndWait, switchRequestTab, switchResponseTab } from './helpe
 test.describe('响应面板高级功能', () => {
   test.beforeEach(async ({ page }) => {
       await page.goto("/");
-    await page.waitForLoadState("networkidle");
     });
 
   test('响应格式切换 Pretty/Raw/Preview', async ({ page }) => {

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { MOCK_BASE_URL } from './helpers/mock';
 import { sendRequestAndWait, switchRequestTab, switchResponseTab } from './helpers/wait';
 
@@ -6,7 +6,6 @@ import { sendRequestAndWait, switchRequestTab, switchResponseTab } from './helpe
 test.describe('发送请求与响应', () => {
   test.beforeEach(async ({ page }) => {
       await page.goto("/");
-    await page.waitForLoadState("networkidle");
     });
 
   test('发送 GET 请求并显示响应', async ({ page }) => {

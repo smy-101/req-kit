@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { sendRequestAndWait, waitForModal, waitForModalClose } from './helpers/wait';
 import { MOCK_BASE_URL } from './helpers/mock';
 
@@ -6,7 +6,6 @@ import { MOCK_BASE_URL } from './helpers/mock';
 test.describe('Cookie 高级管理', () => {
   test.beforeEach(async ({ page }) => {
       await page.goto("/");
-    await page.waitForLoadState("networkidle");
     });
 
   test('删除单个 Cookie', async ({ page }) => {
@@ -57,7 +56,6 @@ test.describe('Cookie 高级管理', () => {
 test.describe('全局变量编辑和删除', () => {
   test.beforeEach(async ({ page }) => {
       await page.goto("/");
-    await page.waitForLoadState("networkidle");
   });
   test('编辑已存在的全局变量', async ({ page }) => {
 
@@ -147,7 +145,6 @@ test.describe('全局变量编辑和删除', () => {
 test.describe('环境变量管理', () => {
   test.beforeEach(async ({ page }) => {
       await page.goto("/");
-    await page.waitForLoadState("networkidle");
   });
   test('删除单个环境变量行', async ({ page }) => {
 

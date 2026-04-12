@@ -1,11 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { waitForToast } from './helpers/wait';
 
 
 test.describe('环境未保存更改警告', () => {
   test.beforeEach(async ({ page }) => {
       await page.goto("/");
-    await page.waitForLoadState("networkidle");
     });
 
   test('切换环境时有未保存变量弹出确认', async ({ page }) => {

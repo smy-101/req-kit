@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { waitForModal, waitForModalClose, waitForAutocompletePopup, waitForAutocompleteClose, switchRequestTab } from './helpers/wait';
 
 // 所有自动补全测试使用唯一前缀过滤，避免并行测试的全局变量干扰
@@ -6,7 +6,6 @@ import { waitForModal, waitForModalClose, waitForAutocompletePopup, waitForAutoc
 test.describe('变量自动补全', () => {
   test.beforeEach(async ({ page }) => {
       await page.goto("/");
-    await page.waitForLoadState("networkidle");
     });
 
   test('输入 {{ 触发变量自动补全弹窗', async ({ page }) => {

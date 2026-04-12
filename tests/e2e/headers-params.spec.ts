@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { MOCK_BASE_URL } from './helpers/mock';
 import { sendRequestAndWait, switchRequestTab } from './helpers/wait';
 
@@ -6,7 +6,6 @@ import { sendRequestAndWait, switchRequestTab } from './helpers/wait';
 test.describe('请求头编辑器', () => {
   test.beforeEach(async ({ page }) => {
       await page.goto("/");
-    await page.waitForLoadState("networkidle");
     });
 
   test('切换到 Headers 标签页显示键值编辑器', async ({ page }) => {
@@ -60,7 +59,6 @@ test.describe('请求头编辑器', () => {
 test.describe('查询参数编辑器', () => {
   test.beforeEach(async ({ page }) => {
       await page.goto("/");
-    await page.waitForLoadState("networkidle");
   });
   test('切换到 Params 标签页显示键值编辑器', async ({ page }) => {
     await switchRequestTab(page, 'params');

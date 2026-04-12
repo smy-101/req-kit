@@ -1,4 +1,4 @@
-import { type Page, expect } from '@playwright/test';
+import { type Page, expect } from '../fixtures';
 
 /**
  * 点击发送按钮并等待响应状态码出现

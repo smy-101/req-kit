@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test.describe('应用基本功能', () => {
   test('首页能正常加载', async ({ page }) => {
