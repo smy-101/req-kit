@@ -125,3 +125,47 @@ test.describe('导入导出', () => {
     await expect(page.locator('.export-hint')).toBeVisible();
   });
 });
+
+test.describe('导入边界情况', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('导入无效 JSON 显示错误', async ({ page }) => {
+    await page.locator('#btn-import').click();
+    await waitForModal(page);
+
+    await page.locator('#import-type').selectOption('postman');
+    await page.locator('#import-content').fill('{ invalid json }}}');
+
+    await page.locator('#import-action-btn').click();
+
+    await expect(page.locator('.toast')).toBeVisible({ timeout: 5000 });
+  });
+
+  test('导入空内容不执行导入', async ({ page }) => {
+    await page.locator('#btn-import').click();
+    await waitForModal(page);
+
+    await page.locator('#import-type').selectOption('postman');
+    await page.locator('#import-content').fill('');
+
+    await page.locator('#import-action-btn').click();
+
+    // 空内容被静默忽略：模态框保持打开，无 toast 出现
+    await expect(page.locator('#modal-overlay')).toBeVisible();
+    await expect(page.locator('.toast')).not.toBeVisible();
+  });
+
+  test('导入畸形 curl 命令', async ({ page }) => {
+    await page.locator('#btn-import').click();
+    await waitForModal(page);
+
+    await page.locator('#import-type').selectOption('curl');
+    await page.locator('#import-content').fill('not a valid curl command');
+
+    await page.locator('#import-action-btn').click();
+
+    await expect(page.locator('.toast')).toBeVisible({ timeout: 5000 });
+  });
+});
