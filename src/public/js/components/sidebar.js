@@ -1,6 +1,6 @@
 import { store } from '../store.js';
 import { api } from '../api.js';
-import { escapeHtml } from '../utils/template.js';
+import { escapeHtml, InputDebounce } from '../utils/template.js';
 import { showContextMenu } from '../utils/context-menu.js';
 import { parseRequestRecord } from '../utils/request-data.js';
 import { init as initSaveDialog } from './save-dialog.js';
@@ -158,6 +158,7 @@ export function init(openRunnerPanel, HistoryPanel) {
   }
 
   function loadRequest(req, collectionId) {
+    InputDebounce.flush();
     const existing = store.findTabByMethodUrl(req.method, req.url);
     if (existing) { store.switchTab(existing.id); return; }
     store.createTab(parseRequestRecord({

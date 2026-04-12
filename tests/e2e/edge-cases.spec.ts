@@ -9,7 +9,6 @@ test.describe('边界情况', () => {
     await page.locator('#send-btn').click();
 
     // 等待一小段时间确认没有请求发出
-    await page.waitForTimeout(1000);
 
     // 响应状态应保持为空（不会发送请求）
     await expect(page.locator('#response-status')).toHaveText('', { timeout: 3000 });
@@ -46,7 +45,6 @@ test.describe('主题持久化', () => {
 
     // 切换到亮色主题（默认可能是暗色）
     await page.locator('#btn-theme-toggle').click();
-    await page.waitForTimeout(300);
 
     // 验证主题属性已更改
     const theme = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
@@ -54,7 +52,6 @@ test.describe('主题持久化', () => {
 
     // 刷新页面
     await page.reload();
-    await page.waitForTimeout(500);
 
     // 验证主题保持
     const themeAfter = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
@@ -68,9 +65,7 @@ test.describe('主题持久化', () => {
 
     // 切换两次
     await page.locator('#btn-theme-toggle').click();
-    await page.waitForTimeout(300);
     await page.locator('#btn-theme-toggle').click();
-    await page.waitForTimeout(300);
 
     const themeAfter = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
     expect(themeAfter).toBe(themeBefore);

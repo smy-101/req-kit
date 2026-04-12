@@ -72,7 +72,7 @@ export function init(deps) {
 
   function performSearch(term) {
     searchTerm = term; searchMatches = []; currentMatchIdx = -1;
-    if (!term || !getLastResponseText()) { searchCountEl.textContent = ''; return; }
+    if (!term || !getLastResponseText()) { searchCountEl.textContent = ''; const vscroller = getVScroller(); if (vscroller) vscroller.invalidateCache(); else renderCurrentFormat(); return; }
     const termLower = term.toLowerCase();
     const vscroller = getVScroller();
     if (vscroller) {

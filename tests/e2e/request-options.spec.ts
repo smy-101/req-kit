@@ -1,8 +1,13 @@
 import { test, expect } from '@playwright/test';
 
+
 test.describe('请求选项', () => {
+  test.beforeEach(async ({ page }) => {
+      await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    });
+
   test('打开请求选项面板', async ({ page }) => {
-    await page.goto('/');
     const optionsBtn = page.locator('#request-options-btn');
     const optionsPanel = page.locator('#request-options-panel');
 
@@ -17,7 +22,6 @@ test.describe('请求选项', () => {
   });
 
   test('修改超时时间', async ({ page }) => {
-    await page.goto('/');
     await page.locator('#request-options-btn').click();
     const timeoutInput = page.locator('#request-timeout-input');
 
@@ -25,7 +29,6 @@ test.describe('请求选项', () => {
     await expect(timeoutInput).toHaveValue('30000');
 
     await timeoutInput.fill('5000');
-    await page.waitForTimeout(200);
 
     // 切换标签页再回来验证值保留
     await page.locator('#request-panel .tab[data-tab="body"]').click();
@@ -35,7 +38,6 @@ test.describe('请求选项', () => {
   });
 
   test('切换 Follow Redirects 开关', async ({ page }) => {
-    await page.goto('/');
     await page.locator('#request-options-btn').click();
     const redirectToggle = page.locator('#request-redirect-toggle');
 
@@ -44,7 +46,6 @@ test.describe('请求选项', () => {
 
     // checkbox 是隐藏的，需要点击父级 label 来切换
     await page.locator('.request-options-switch').click();
-    await page.waitForTimeout(200);
 
     // 切换标签页再回来验证
     await page.locator('#request-panel .tab[data-tab="body"]').click();

@@ -1,9 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { waitForModalClose } from './helpers/wait';
 import { MOCK_BASE_URL } from './helpers/mock';
 
+
 test.describe('集合高级功能', () => {
+  test.beforeEach(async ({ page }) => {
+      await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    });
+
   test('右键集合只显示删除选项', async ({ page }) => {
-    await page.goto('/');
 
     // 创建集合
     const colName = `右键菜单_${Date.now()}`;
@@ -22,14 +28,13 @@ test.describe('集合高级功能', () => {
 
     // 取消删除
     await page.locator('#modal .modal-btn-secondary').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
 
     // 验证集合仍然存在
     await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible();
   });
 
   test('创建多个集合后每个都可以独立操作', async ({ page }) => {
-    await page.goto('/');
 
     // 创建 3 个集合
     const names = [`集合A_${Date.now()}`, `集合B_${Date.now()}`, `集合C_${Date.now()}`];
@@ -37,7 +42,6 @@ test.describe('集合高级功能', () => {
       await page.locator('#btn-new-collection').click();
       await page.locator('#modal .dialog-input').fill(name);
       await page.locator('#modal .modal-btn-primary').click();
-      await page.waitForTimeout(500);
     }
 
     // 验证 3 个集合都存在
@@ -50,7 +54,6 @@ test.describe('集合高级功能', () => {
     await colB.click({ button: 'right' });
     await expect(page.locator('#modal .modal-btn-danger')).toBeVisible({ timeout: 5000 });
     await page.locator('#modal .modal-btn-danger').click();
-    await page.waitForTimeout(500);
 
     // 验证 B 已删除，A 和 C 仍存在
     await expect(page.locator('#collection-tree .tree-item').filter({ hasText: names[1] })).toHaveCount(0);
@@ -59,7 +62,6 @@ test.describe('集合高级功能', () => {
   });
 
   test('集合中的请求右键显示复制和删除选项', async ({ page }) => {
-    await page.goto('/');
 
     // 创建集合并保存请求
     const colName = `请求右键_${Date.now()}`;
@@ -73,7 +75,7 @@ test.describe('集合高级功能', () => {
     await expect(page.locator('#modal')).toBeVisible({ timeout: 5000 });
     await page.locator('#modal #save-col-select').selectOption({ label: colName });
     await page.locator('#modal #save-confirm').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
 
     // 右键点击请求项
     await page.locator('#collection-tree .method-badge').first().click({ button: 'right' });

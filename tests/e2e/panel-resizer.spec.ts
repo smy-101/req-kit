@@ -1,12 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { MOCK_BASE_URL } from './helpers/mock';
+import { sendRequestAndWait } from './helpers/wait';
 
 test.describe('面板拖拽调整', () => {
   test('拖拽面板分隔条调整请求面板大小', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
 
     const container = page.locator('#request-response');
     const box = await container.boundingBox();
@@ -24,7 +23,6 @@ test.describe('面板拖拽调整', () => {
     await page.mouse.down();
     await page.mouse.move(startX, endY, { steps: 10 });
     await page.mouse.up();
-    await page.waitForTimeout(100);
 
     // 验证 request-panel 的 flex 值在合理范围内
     const requestPanel = page.locator('#request-panel');
@@ -40,9 +38,7 @@ test.describe('面板拖拽调整', () => {
 
   test('面板最小宽度限制 20%', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
 
     const container = page.locator('#request-response');
     const box = await container.boundingBox();
@@ -61,7 +57,6 @@ test.describe('面板拖拽调整', () => {
     await page.mouse.down();
     await page.mouse.move(startX, endY, { steps: 10 });
     await page.mouse.up();
-    await page.waitForTimeout(100);
 
     const requestPanel = page.locator('#request-panel');
     const flex = await requestPanel.evaluate(el => el.style.flex);
@@ -73,9 +68,7 @@ test.describe('面板拖拽调整', () => {
 
   test('面板最大宽度限制 75%', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
 
     const container = page.locator('#request-response');
     const box = await container.boundingBox();
@@ -94,7 +87,6 @@ test.describe('面板拖拽调整', () => {
     await page.mouse.down();
     await page.mouse.move(startX, endY, { steps: 10 });
     await page.mouse.up();
-    await page.waitForTimeout(100);
 
     const requestPanel = page.locator('#request-panel');
     const flex = await requestPanel.evaluate(el => el.style.flex);
@@ -106,9 +98,7 @@ test.describe('面板拖拽调整', () => {
 
   test('拖拽后面板功能正常', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
 
     // 拖拽调整面板大小
     const container = page.locator('#request-response');
@@ -127,12 +117,9 @@ test.describe('面板拖拽调整', () => {
     await page.mouse.down();
     await page.mouse.move(startX, endY, { steps: 10 });
     await page.mouse.up();
-    await page.waitForTimeout(100);
 
     // 调整后发送新请求，验证功能正常
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/uuid`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/uuid`, '200');
 
     // 验证格式切换功能正常
     const formatBar = page.locator('#response-format-bar');

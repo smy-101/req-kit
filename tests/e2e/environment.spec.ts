@@ -1,22 +1,27 @@
 import { test, expect } from '@playwright/test';
 import { MOCK_BASE_URL } from './helpers/mock';
+import { waitForModal, waitForModalClose } from './helpers/wait';
+
 
 test.describe('环境管理', () => {
+  test.beforeEach(async ({ page }) => {
+      await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    });
+
   test('打开环境管理弹窗', async ({ page }) => {
-    await page.goto('/');
     await page.locator('#btn-manage-env').click();
 
-    await expect(page.locator('#modal-overlay')).toBeVisible();
+    await waitForModal(page);
     await expect(page.locator('#modal h3')).toHaveText('Manage Environments');
   });
 
   test('创建新环境', async ({ page }) => {
-    await page.goto('/');
 
     const envName = `测试环境_${Date.now()}`;
 
     await page.locator('#btn-manage-env').click();
-    await expect(page.locator('#modal-overlay')).toBeVisible();
+    await waitForModal(page);
 
     await page.locator('#modal #new-env-name').fill(envName);
     await page.locator('#modal #create-env-btn').evaluate(el => el.click());
@@ -24,11 +29,10 @@ test.describe('环境管理', () => {
     await expect(page.locator('#modal .env-item').filter({ hasText: envName })).toBeVisible({ timeout: 10000 });
 
     await page.locator('#modal #close-env-modal').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible();
+    await waitForModalClose(page);
   });
 
   test('环境下拉框包含新创建的环境', async ({ page }) => {
-    await page.goto('/');
 
     const envName = `下拉测试_${Date.now()}`;
 
@@ -44,7 +48,6 @@ test.describe('环境管理', () => {
   });
 
   test('为环境添加变量', async ({ page }) => {
-    await page.goto('/');
 
     const envName = `变量测试_${Date.now()}`;
     await page.locator('#btn-manage-env').click();

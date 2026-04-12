@@ -1,9 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { waitForModalClose } from './helpers/wait';
 import { MOCK_BASE_URL } from './helpers/mock';
 
+
 test.describe('集合 Runner 高级功能', () => {
+  test.beforeEach(async ({ page }) => {
+      await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    });
+
   test('Runner 结果展开/折叠', async ({ page }) => {
-    await page.goto('/');
 
     // 创建集合并保存请求
     const colName = `Runner展开_${Date.now()}`;
@@ -18,7 +24,7 @@ test.describe('集合 Runner 高级功能', () => {
     await expect(saveModal).toBeVisible({ timeout: 5000 });
     await saveModal.locator('#save-col-select').selectOption({ label: colName });
     await saveModal.locator('#save-confirm').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
 
     // 运行集合
     const treeItem = page.locator('#collection-tree .tree-item').filter({ hasText: colName }).first();
@@ -33,7 +39,6 @@ test.describe('集合 Runner 高级功能', () => {
     const resultItem = page.locator('.runner-result-item').first();
     await expect(resultItem).toBeVisible({ timeout: 5000 });
     await resultItem.locator('.runner-result-summary').click();
-    await page.waitForTimeout(300);
 
     // 验证详情区域可见
     await expect(resultItem.locator('.runner-result-detail')).toBeVisible();
@@ -41,18 +46,16 @@ test.describe('集合 Runner 高级功能', () => {
 
     // 再次点击折叠
     await resultItem.locator('.runner-result-summary').click();
-    await page.waitForTimeout(300);
 
     // 验证详情区域隐藏
     await expect(resultItem.locator('.runner-result-detail')).toHaveClass(/hidden/);
 
     // 关闭 Runner
     await page.locator('#modal .runner-close-btn').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
   });
 
   test('Runner 重试配置默认值', async ({ page }) => {
-    await page.goto('/');
 
     // 创建集合并保存请求
     const colName = `Runner重试默认_${Date.now()}`;
@@ -66,7 +69,7 @@ test.describe('集合 Runner 高级功能', () => {
     await expect(page.locator('#modal')).toBeVisible({ timeout: 5000 });
     await page.locator('#modal #save-col-select').selectOption({ label: colName });
     await page.locator('#modal #save-confirm').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
 
     // 运行集合
     const treeItem = page.locator('#collection-tree .tree-item').filter({ hasText: colName }).first();
@@ -87,11 +90,10 @@ test.describe('集合 Runner 高级功能', () => {
 
     // 关闭 Runner
     await page.locator('#modal .runner-close-btn').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
   });
 
   test('Runner 停止按钮存在', async ({ page }) => {
-    await page.goto('/');
 
     // 创建集合并保存请求
     const colName = `Runner停止_${Date.now()}`;
@@ -105,7 +107,7 @@ test.describe('集合 Runner 高级功能', () => {
     await expect(page.locator('#modal')).toBeVisible({ timeout: 5000 });
     await page.locator('#modal #save-col-select').selectOption({ label: colName });
     await page.locator('#modal #save-confirm').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
 
     // 运行集合
     const treeItem = page.locator('#collection-tree .tree-item').filter({ hasText: colName }).first();
@@ -121,6 +123,6 @@ test.describe('集合 Runner 高级功能', () => {
 
     // 关闭
     await page.locator('#modal .runner-close-btn').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
   });
 });

@@ -1,9 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { MOCK_BASE_URL } from './helpers/mock';
+import { waitForModalClose } from './helpers/wait';
+
 
 test.describe('保存对话框高级功能', () => {
+  test.beforeEach(async ({ page }) => {
+      await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    });
+
   test('保存时使用自定义请求名称', async ({ page }) => {
-    await page.goto('/');
 
     // 创建集合
     const colName = `自定义名称_${Date.now()}`;
@@ -28,14 +34,13 @@ test.describe('保存对话框高级功能', () => {
 
     await saveModal.locator('#save-col-select').selectOption({ label: colName });
     await saveModal.locator('#save-confirm').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
 
     // 验证自定义名称出现在集合中
     await expect(page.locator('#collection-tree .tree-item').filter({ hasText: customName })).toBeVisible({ timeout: 5000 });
   });
 
   test('取消保存不创建请求', async ({ page }) => {
-    await page.goto('/');
 
     // 创建集合
     const colName = `取消测试_${Date.now()}`;
@@ -53,7 +58,7 @@ test.describe('保存对话框高级功能', () => {
 
     // 点击取消
     await saveModal.locator('#save-cancel').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
 
     // 验证该集合中没有请求
     const colTreeItem = page.locator('#collection-tree .tree-item').filter({ hasText: colName }).first();
@@ -61,7 +66,6 @@ test.describe('保存对话框高级功能', () => {
   });
 
   test('保存到不同的集合', async ({ page }) => {
-    await page.goto('/');
 
     // 创建两个集合
     const colA = `集合AX_${Date.now()}`;
@@ -78,7 +82,6 @@ test.describe('保存对话框高级功能', () => {
     await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colB })).toBeVisible({ timeout: 10000 });
 
     await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
-    await page.waitForTimeout(300);
 
     // 保存请求到集合 B
     await page.locator('#save-btn').click();
@@ -89,10 +92,9 @@ test.describe('保存对话框高级功能', () => {
     const selectEl = saveModal.locator('#save-col-select');
     await selectEl.waitFor({ state: 'visible' });
     await selectEl.selectOption({ label: colB });
-    await page.waitForTimeout(200);
 
     await saveModal.locator('#save-confirm').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
 
     // 验证请求出现在集合 B 的范围内（集合 B 的 tree-item 内或紧跟其后）
     const allItems = page.locator('#collection-tree .tree-item');
@@ -101,6 +103,5 @@ test.describe('保存对话框高级功能', () => {
     await expect(page.locator('#collection-tree .method-badge').first()).toBeVisible({ timeout: 5000 });
 
     // 验证保存成功 toast 或 sidebar 更新
-    await page.waitForTimeout(500);
   });
 });

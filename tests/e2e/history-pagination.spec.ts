@@ -1,19 +1,21 @@
 import { test, expect } from '@playwright/test';
 import { MOCK_BASE_URL } from './helpers/mock';
+import { sendRequestAndWait } from './helpers/wait';
 
 test.describe('历史记录分页与过滤', () => {
-  test('方法过滤 Chips — POST', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
+  });
+
+  test('方法过滤 Chips — POST', async ({ page }) => {
+
 
     // 发送 GET 和 POST 请求
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
 
     await page.locator('#method-select').selectOption('POST');
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/post`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/post`, '200');
 
     // 展开历史面板
     const historyHeader = page.locator('.history-header');
@@ -23,7 +25,6 @@ test.describe('历史记录分页与过滤', () => {
     // 点击 POST chip 过滤
     const postChip = page.locator('.history-chip').filter({ hasText: 'POST' });
     await postChip.click();
-    await page.waitForTimeout(500);
 
     // 验证所有历史项都是 POST
     const historyItems = page.locator('.history-item');
@@ -35,26 +36,18 @@ test.describe('历史记录分页与过滤', () => {
     // 切换回 ALL
     const allChip = page.locator('.history-chip').filter({ hasText: 'ALL' });
     await allChip.click();
-    await page.waitForTimeout(500);
   });
 
   test('方法过滤 Chips — 切换多种方法', async ({ page }) => {
-    await page.goto('/');
 
     // 发送不同方法的请求
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
 
     await page.locator('#method-select').selectOption('PUT');
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/put`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/put`, '200');
 
     await page.locator('#method-select').selectOption('DELETE');
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/delete`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/delete`, '200');
 
     // 展开历史面板
     const historyHeader = page.locator('.history-header');
@@ -63,7 +56,6 @@ test.describe('历史记录分页与过滤', () => {
 
     // 测试 PUT 过滤
     await page.locator('.history-chip').filter({ hasText: 'PUT' }).click();
-    await page.waitForTimeout(500);
     const putItems = page.locator('.history-item');
     const putCount = await putItems.count();
     for (let i = 0; i < putCount; i++) {
@@ -72,7 +64,6 @@ test.describe('历史记录分页与过滤', () => {
 
     // 测试 DELETE 过滤
     await page.locator('.history-chip').filter({ hasText: 'DELETE' }).click();
-    await page.waitForTimeout(500);
     const delItems = page.locator('.history-item');
     const delCount = await delItems.count();
     for (let i = 0; i < delCount; i++) {
@@ -81,20 +72,14 @@ test.describe('历史记录分页与过滤', () => {
 
     // 切换回 ALL
     await page.locator('.history-chip').filter({ hasText: 'ALL' }).click();
-    await page.waitForTimeout(500);
   });
 
   test('历史记录加载更多', async ({ page }) => {
-    await page.goto('/');
 
     // 发送多个请求以生成历史记录
+    await page.locator('#method-select').selectOption('GET');
     for (let i = 0; i < 5; i++) {
-      await page.locator('#method-select').selectOption('GET');
-      await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get?page=${i}`);
-      await expect(() => {
-        page.locator('#send-btn').click();
-        return expect(page.locator('#response-status')).toContainText('200');
-      }).toPass({ timeout: 30_000 });
+      await sendRequestAndWait(page, `${MOCK_BASE_URL}/get?page=${i}`, '200', { timeout: 30_000 });
     }
 
     // 展开历史面板
@@ -107,12 +92,9 @@ test.describe('历史记录分页与过滤', () => {
   });
 
   test('历史记录状态码显示', async ({ page }) => {
-    await page.goto('/');
 
     // 发送一个成功请求
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
 
     // 展开历史面板
     const historyHeader = page.locator('.history-header');
@@ -124,12 +106,9 @@ test.describe('历史记录分页与过滤', () => {
   });
 
   test('历史记录显示响应时间和相对时间', async ({ page }) => {
-    await page.goto('/');
 
     // 发送请求
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
 
     // 展开历史面板
     const historyHeader = page.locator('.history-header');

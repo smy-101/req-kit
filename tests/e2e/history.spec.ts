@@ -1,13 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { MOCK_BASE_URL } from './helpers/mock';
+import { sendRequestAndWait } from './helpers/wait';
 
 test.describe('历史记录', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     // 先发送一个请求，确保有历史记录
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
   });
 
   test('展开历史记录面板', async ({ page }) => {

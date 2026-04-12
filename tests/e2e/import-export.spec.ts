@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { waitForModal, waitForModalClose } from './helpers/wait';
 import { MOCK_BASE_URL } from './helpers/mock';
 
 test.describe('导入导出', () => {
@@ -6,7 +7,7 @@ test.describe('导入导出', () => {
     await page.goto('/');
     await page.locator('#btn-import').click();
 
-    await expect(page.locator('#modal-overlay')).toBeVisible();
+    await waitForModal(page);
     await expect(page.locator('#modal h3')).toHaveText('Import / Export');
 
     // 默认显示 Import 标签
@@ -17,7 +18,7 @@ test.describe('导入导出', () => {
   test('导入/导出弹窗切换标签', async ({ page }) => {
     await page.goto('/');
     await page.locator('#btn-import').click();
-    await expect(page.locator('#modal-overlay')).toBeVisible();
+    await waitForModal(page);
 
     // 切换到 Export 标签
     await page.locator('[data-imex-tab="export"]').click();
@@ -42,7 +43,7 @@ test.describe('导入导出', () => {
 
     // 打开导入弹窗
     await page.locator('#btn-import').click();
-    await expect(page.locator('#modal-overlay')).toBeVisible();
+    await waitForModal(page);
 
     // 选择 curl 类型并填入 curl 命令
     await page.locator('#import-type').selectOption('curl');
@@ -52,7 +53,7 @@ test.describe('导入导出', () => {
     await page.locator('#import-action-btn').click();
 
     // 等待导入成功并弹窗关闭
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 10000 });
+    await waitForModalClose(page, { timeout: 10000 });
 
     // 验证集合中有请求 — method badge 出现
     await expect(page.locator('#collection-tree .method-badge').first()).toBeVisible({ timeout: 5000 });
@@ -66,7 +67,7 @@ test.describe('导入导出', () => {
 
     // 打开导入弹窗
     await page.locator('#btn-import').click();
-    await expect(page.locator('#modal-overlay')).toBeVisible();
+    await waitForModal(page);
 
     // 选择 Postman 类型
     await page.locator('#import-type').selectOption('postman');
@@ -87,7 +88,7 @@ test.describe('导入导出', () => {
     await page.locator('#import-action-btn').click();
 
     // 等待导入成功
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 10000 });
+    await waitForModalClose(page, { timeout: 10000 });
 
     // 验证集合和请求出现 — 使用 .first() 避免严格模式错误
     await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName }).first()).toBeVisible({ timeout: 5000 });
@@ -97,9 +98,9 @@ test.describe('导入导出', () => {
   test('关闭导入导出弹窗', async ({ page }) => {
     await page.goto('/');
     await page.locator('#btn-import').click();
-    await expect(page.locator('#modal-overlay')).toBeVisible();
+    await waitForModal(page);
 
     await page.locator('#close-imex-modal').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible();
+    await waitForModalClose(page);
   });
 });

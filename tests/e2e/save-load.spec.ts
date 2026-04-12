@@ -1,9 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { waitForModalClose } from './helpers/wait';
 import { MOCK_BASE_URL } from './helpers/mock';
 
+
 test.describe('保存与加载请求', () => {
+  test.beforeEach(async ({ page }) => {
+      await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    });
+
   test('保存请求到集合', async ({ page }) => {
-    await page.goto('/');
 
     // 先创建集合
     const colName = `保存测试_${Date.now()}`;
@@ -31,14 +37,13 @@ test.describe('保存与加载请求', () => {
     await saveModal.locator('#save-confirm').click();
 
     // 等待弹窗关闭
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
 
     // 验证请求出现在集合中（方法 badge 出现）
     await expect(page.locator('#collection-tree .method-badge.method-POST').first()).toBeVisible({ timeout: 5000 });
   });
 
   test('从集合加载请求', async ({ page }) => {
-    await page.goto('/');
 
     // 创建集合
     const colName = `加载测试_${Date.now()}`;
@@ -56,18 +61,16 @@ test.describe('保存与加载请求', () => {
     await expect(saveModal).toBeVisible({ timeout: 5000 });
     await saveModal.locator('#save-col-select').selectOption({ label: colName });
     await saveModal.locator('#save-confirm').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
 
     // 等待保存完成
     await expect(page.locator('#collection-tree .method-badge.method-PUT').first()).toBeVisible({ timeout: 5000 });
 
     // 修改当前标签页的 URL
     await page.locator('#url-input').fill('https://example.com');
-    await page.waitForTimeout(200);
 
     // 点击集合中的 PUT 请求加载
     await page.locator('#collection-tree .method-badge.method-PUT').first().click();
-    await page.waitForTimeout(300);
 
     // 验证 URL 被恢复
     await expect(page.locator('#url-input')).toHaveValue(testUrl);
@@ -75,7 +78,6 @@ test.describe('保存与加载请求', () => {
   });
 
   test('右键复制请求', async ({ page }) => {
-    await page.goto('/');
 
     // 创建集合并保存请求
     const colName = `复制测试_${Date.now()}`;
@@ -90,7 +92,7 @@ test.describe('保存与加载请求', () => {
     await expect(page.locator('#modal')).toBeVisible({ timeout: 5000 });
     await page.locator('#modal #save-col-select').selectOption({ label: colName });
     await page.locator('#modal #save-confirm').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
 
     const deleteBadge = page.locator('#collection-tree .method-badge.method-DELETE');
     await expect(deleteBadge.first()).toBeVisible({ timeout: 5000 });
@@ -113,7 +115,6 @@ test.describe('保存与加载请求', () => {
   });
 
   test('右键删除请求', async ({ page }) => {
-    await page.goto('/');
 
     // 创建集合并保存请求
     const colName = `删除请求测试_${Date.now()}`;
@@ -128,7 +129,7 @@ test.describe('保存与加载请求', () => {
     await expect(page.locator('#modal')).toBeVisible({ timeout: 5000 });
     await page.locator('#modal #save-col-select').selectOption({ label: colName });
     await page.locator('#modal #save-confirm').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
 
     const patchBadge = page.locator('#collection-tree .method-badge.method-PATCH');
     await expect(patchBadge).toBeVisible({ timeout: 5000 });

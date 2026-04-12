@@ -1,8 +1,13 @@
 import { test, expect } from '@playwright/test';
 
+
 test.describe('集合管理', () => {
+  test.beforeEach(async ({ page }) => {
+      await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    });
+
   test('创建新集合', async ({ page }) => {
-    await page.goto('/');
     const name = `测试集合_${Date.now()}`;
     await page.locator('#btn-new-collection').click();
 
@@ -16,7 +21,6 @@ test.describe('集合管理', () => {
   });
 
   test('创建多个集合', async ({ page }) => {
-    await page.goto('/');
     const ts = Date.now();
 
     for (const name of [`集合A_${ts}`, `集合B_${ts}`, `集合C_${ts}`]) {
@@ -28,7 +32,6 @@ test.describe('集合管理', () => {
   });
 
   test('删除集合', async ({ page }) => {
-    await page.goto('/');
 
     const uniqueName = `删除测试_${Date.now()}`;
     await page.locator('#btn-new-collection').click();

@@ -1,9 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { MOCK_BASE_URL } from './helpers/mock';
+import { waitForModalClose } from './helpers/wait';
+
 
 test.describe('集合 Runner', () => {
+  test.beforeEach(async ({ page }) => {
+      await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    });
+
   test('运行集合', async ({ page }) => {
-    await page.goto('/');
 
     // 创建集合
     const colName = `Runner测试_${Date.now()}`;
@@ -19,7 +25,7 @@ test.describe('集合 Runner', () => {
     await expect(saveModal).toBeVisible({ timeout: 5000 });
     await saveModal.locator('#save-col-select').selectOption({ label: colName });
     await saveModal.locator('#save-confirm').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
 
     // 等待保存完成和运行按钮出现（需要 hover 才能显示）
     const treeItem = page.locator('#collection-tree .tree-item').filter({ hasText: colName }).first();
@@ -45,7 +51,6 @@ test.describe('集合 Runner', () => {
   });
 
   test('Runner 关闭按钮', async ({ page }) => {
-    await page.goto('/');
 
     // 创建集合并保存请求
     const colName = `Runner关闭_${Date.now()}`;
@@ -57,9 +62,8 @@ test.describe('集合 Runner', () => {
     await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
     await page.locator('#save-btn').click();
     await expect(page.locator('#modal')).toBeVisible({ timeout: 5000 });
-    await page.locator('#modal #save-col-select').selectOption({ label: colName });
     await page.locator('#modal #save-confirm').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
 
     // 运行集合
     const treeItem = page.locator('#collection-tree .tree-item').filter({ hasText: colName }).first();
@@ -74,6 +78,6 @@ test.describe('集合 Runner', () => {
     const closeBtn = page.locator('#modal .runner-close-btn');
     await expect(closeBtn).toBeVisible({ timeout: 5000 });
     await closeBtn.click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible();
+    await waitForModalClose(page);
   });
 });

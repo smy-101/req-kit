@@ -1,10 +1,16 @@
 import { test, expect } from '@playwright/test';
 import { MOCK_BASE_URL } from './helpers/mock';
+import { sendRequestAndWait, switchRequestTab, switchResponseTab } from './helpers/wait';
+
 
 test.describe('脚本与测试', () => {
+  test.beforeEach(async ({ page }) => {
+      await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    });
+
   test('Pre-request Script 标签页显示编辑器', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('#request-panel .tab[data-tab="script"]').click();
+    await switchRequestTab(page, 'script');
 
     await expect(page.locator('#script-textarea')).toBeVisible();
     // script-desc 存在于 DOM 中
@@ -12,16 +18,12 @@ test.describe('脚本与测试', () => {
   });
 
   test('编写 Pre-request Script 设置请求头', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('#request-panel .tab[data-tab="script"]').click();
+    await switchRequestTab(page, 'script');
 
     const textarea = page.locator('#script-textarea');
     await textarea.fill("request.setHeader('X-Custom', 'hello')");
-    await page.waitForTimeout(300);
 
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
 
     const responseBody = page.locator('#response-format-content');
     await expect(responseBody).toContainText('X-Custom');
@@ -29,13 +31,11 @@ test.describe('脚本与测试', () => {
   });
 
   test('Pre-request Script 修改请求头（含 Content-Type）', async ({ page }) => {
-    await page.goto('/');
     await page.locator('#method-select').selectOption('POST');
-    await page.locator('#request-panel .tab[data-tab="script"]').click();
+    await switchRequestTab(page, 'script');
 
     const textarea = page.locator('#script-textarea');
     await textarea.fill("request.setHeader('X-Custom-Script', 'from-script')");
-    await page.waitForTimeout(300);
 
     await page.locator('#url-input').fill(`${MOCK_BASE_URL}/post`);
     await expect(() => {
@@ -49,8 +49,7 @@ test.describe('脚本与测试', () => {
   });
 
   test('Post-response Tests 标签页显示编辑器', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('#request-panel .tab[data-tab="tests"]').click();
+    await switchRequestTab(page, 'tests');
 
     await expect(page.locator('#post-script-textarea')).toBeVisible();
     // script-desc 存在于 DOM 中
@@ -58,19 +57,15 @@ test.describe('脚本与测试', () => {
   });
 
   test('编写测试断言并查看结果', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('#request-panel .tab[data-tab="tests"]').click();
+    await switchRequestTab(page, 'tests');
 
     const textarea = page.locator('#post-script-textarea');
     await textarea.fill('tests["Status is 200"] = response.status === 200');
-    await page.waitForTimeout(300);
 
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
 
     // 切换到 Test Results 标签页
-    await page.locator('#response-panel .tab[data-response-tab="test-results"]').click();
+    await switchResponseTab(page, 'test-results');
     const testResults = page.locator('#response-test-results');
     await expect(testResults).toBeVisible();
 
@@ -81,19 +76,15 @@ test.describe('脚本与测试', () => {
   });
 
   test('测试断言失败显示失败状态', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('#request-panel .tab[data-tab="tests"]').click();
+    await switchRequestTab(page, 'tests');
 
     const textarea = page.locator('#post-script-textarea');
     await textarea.fill('tests["Should be 404"] = response.status === 404');
-    await page.waitForTimeout(300);
 
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
 
     // 切换到 Test Results 标签页
-    await page.locator('#response-panel .tab[data-response-tab="test-results"]').click();
+    await switchResponseTab(page, 'test-results');
     const testResults = page.locator('#response-test-results');
 
     await expect(testResults).toContainText('Should be 404');
@@ -102,23 +93,18 @@ test.describe('脚本与测试', () => {
   });
 
   test('Tests 中设置变量并在后续请求中使用', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('#request-panel .tab[data-tab="tests"]').click();
+    await switchRequestTab(page, 'tests');
 
     const textarea = page.locator('#post-script-textarea');
     await textarea.fill(`variables.set("saved_url", "${MOCK_BASE_URL}/uuid")`);
-    await page.waitForTimeout(300);
 
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
 
     // 创建新标签页
     await page.locator('.request-tab-add').click();
 
     // 在 URL 中使用变量
     await page.locator('#url-input').fill('{{saved_url}}');
-    await page.waitForTimeout(300);
 
     await page.locator('#send-btn').click();
     // 应该成功发送到 httpbin.org/uuid
@@ -126,12 +112,10 @@ test.describe('脚本与测试', () => {
   });
 
   test('Pre-request Script 在不同标签页间独立', async ({ page }) => {
-    await page.goto('/');
 
     // 在第一个标签页设置脚本
-    await page.locator('#request-panel .tab[data-tab="script"]').click();
+    await switchRequestTab(page, 'script');
     await page.locator('#script-textarea').fill('console.log("tab1")');
-    await page.waitForTimeout(300);
 
     // 创建新标签页
     await page.locator('.request-tab-add').click();

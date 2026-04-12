@@ -1,9 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { waitForModalClose } from './helpers/wait';
 import { MOCK_BASE_URL } from './helpers/mock';
 
+
 test.describe('标签页高级功能', () => {
+  test.beforeEach(async ({ page }) => {
+      await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    });
+
   test('修改已保存请求后关闭标签页显示确认对话框', async ({ page }) => {
-    await page.goto('/');
 
     // 创建集合并保存请求
     const colName = `脏标签测试_${Date.now()}`;
@@ -19,12 +25,13 @@ test.describe('标签页高级功能', () => {
     await expect(saveModal).toBeVisible({ timeout: 5000 });
     await saveModal.locator('#save-col-select').selectOption({ label: colName });
     await saveModal.locator('#save-confirm').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
 
     // 使用 type 模拟实际键盘输入以触发 dirty 状态
     await page.locator('#url-input').click();
     await page.locator('#url-input').pressSequentially('123');
-    await page.waitForTimeout(500);
+    // 等待 debounce 更新 store 并标记 dirty
+    await expect(page.locator('.request-tab-title').first()).toContainText('●');
 
     // 关闭标签页应该触发确认对话框
     await page.locator('.request-tab-close').first().click();
@@ -40,7 +47,6 @@ test.describe('标签页高级功能', () => {
   });
 
   test('脏标签页关闭对话框 — 丢弃更改', async ({ page }) => {
-    await page.goto('/');
 
     // 创建集合并保存请求
     const colName = `脏丢弃_${Date.now()}`;
@@ -54,12 +60,13 @@ test.describe('标签页高级功能', () => {
     await expect(page.locator('#modal')).toBeVisible({ timeout: 5000 });
     await page.locator('#modal #save-col-select').selectOption({ label: colName });
     await page.locator('#modal #save-confirm').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
 
     // 修改 URL（使用 type 触发 dirty）
     await page.locator('#url-input').click();
     await page.locator('#url-input').pressSequentially('123');
-    await page.waitForTimeout(500);
+    // 等待 debounce 更新 store 并标记 dirty
+    await expect(page.locator('.request-tab-title').first()).toContainText('●');
 
     // 关闭标签页并选择丢弃
     await page.locator('.request-tab-close').first().click();
@@ -71,23 +78,19 @@ test.describe('标签页高级功能', () => {
   });
 
   test('鼠标中键关闭标签页', async ({ page }) => {
-    await page.goto('/');
 
     // 创建第二个标签页
     await page.locator('.request-tab-add').click();
-    await page.waitForTimeout(300);
     await expect(page.locator('.request-tab')).toHaveCount(2);
 
     // 鼠标中键点击关闭第一个标签页
     await page.locator('.request-tab').first().click({ button: 'middle' });
-    await page.waitForTimeout(300);
 
     // 验证只剩一个标签页
     await expect(page.locator('.request-tab')).toHaveCount(1);
   });
 
   test('脏标签页标题显示圆点前缀', async ({ page }) => {
-    await page.goto('/');
 
     // 创建集合并保存请求
     const colName = `标题前缀_${Date.now()}`;
@@ -101,7 +104,7 @@ test.describe('标签页高级功能', () => {
     await expect(page.locator('#modal')).toBeVisible({ timeout: 5000 });
     await page.locator('#modal #save-col-select').selectOption({ label: colName });
     await page.locator('#modal #save-confirm').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
 
     // 保存后标签标题不应有圆点
     await expect(page.locator('.request-tab-title').first()).not.toContainText('●');
@@ -109,7 +112,6 @@ test.describe('标签页高级功能', () => {
     // 修改 URL 使标签变脏
     await page.locator('#url-input').click();
     await page.locator('#url-input').pressSequentially('123');
-    await page.waitForTimeout(500);
 
     // 标签标题应该显示圆点前缀
     await expect(page.locator('.request-tab-title').first()).toContainText('●');

@@ -1,4 +1,6 @@
 // Event-driven state manager with multi-tab support
+import { InputDebounce } from './utils/template.js';
+
 let _tabIdCounter = 0;
 
 function _createEmptyTab() {
@@ -69,6 +71,7 @@ export const store = {
 
   // Create a new tab, optionally with initial data
   createTab(data = {}) {
+    InputDebounce.flush();
     const tab = _createEmptyTab();
     Object.assign(tab, data);
     this.state.tabs.push(tab);
@@ -82,6 +85,7 @@ export const store = {
   switchTab(id) {
     const tab = this.state.tabs.find(t => t.id === id);
     if (!tab || tab.id === this.state.activeTabId) return;
+    InputDebounce.flush();
     this.state.activeTabId = tab.id;
     this.emit('tab:switch', tab);
   },

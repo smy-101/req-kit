@@ -1,6 +1,6 @@
 import { api } from '../api.js';
 import { store } from '../store.js';
-import { escapeHtml, escapeAttr } from '../utils/template.js';
+import { escapeHtml, escapeAttr, InputDebounce } from '../utils/template.js';
 import { Toast } from '../utils/toast.js';
 import { parseRequestRecord } from '../utils/request-data.js';
 
@@ -146,6 +146,7 @@ export function init() {
       });
       tabData.response = response;
 
+      InputDebounce.flush();
       const existing = store.findTabByMethodUrl(record.method || 'GET', record.url || '');
       if (existing) { store.switchTab(existing.id); return; }
       store.createTab(tabData);

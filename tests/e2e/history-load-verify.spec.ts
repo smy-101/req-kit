@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { MOCK_BASE_URL } from './helpers/mock';
+import { sendRequestAndWait, switchRequestTab } from './helpers/wait';
 
 test.describe('历史记录加载验证', () => {
   test('点击历史记录加载 POST 请求并验证数据', async ({ page }) => {
@@ -12,10 +13,8 @@ test.describe('历史记录加载验证', () => {
     const testUrl = `${MOCK_BASE_URL}/post/${uniqueId}`;
     await page.locator('#method-select').selectOption('POST');
     await page.locator('#url-input').fill(testUrl);
-    await page.waitForTimeout(400);
-    await page.locator('#request-panel .tab[data-tab="body"]').click();
+    await switchRequestTab(page, 'body');
     await page.locator('#body-textarea').fill(testBody);
-    await page.waitForTimeout(300);
 
     await page.locator('#send-btn').click();
     await expect(page.locator('#response-status')).toContainText('200');
@@ -23,9 +22,6 @@ test.describe('历史记录加载验证', () => {
     // 打开历史面板
     await page.locator('.history-header').click();
     await expect(page.locator('.history-panel')).toBeVisible({ timeout: 5000 });
-
-    // 等待历史记录加载
-    await page.waitForTimeout(500);
     await expect(page.locator('.history-item').first()).toBeVisible({ timeout: 5000 });
 
     // 找到包含我们唯一 URL 标识的历史记录
@@ -43,7 +39,6 @@ test.describe('历史记录加载验证', () => {
     const tabCount = await tabs.count();
     if (tabCount > tabCountBefore) {
       await tabs.last().click();
-      await page.waitForTimeout(300);
     }
 
     // 验证方法是 POST（等待加载完成）
@@ -61,27 +56,21 @@ test.describe('历史记录加载验证', () => {
     await page.goto('/');
 
     // 发送 GET 请求
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/uuid`);
-    await page.waitForTimeout(400);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/uuid`, '200');
 
     // 打开历史面板
     await page.locator('.history-header').click();
     await expect(page.locator('.history-panel')).toBeVisible({ timeout: 5000 });
-    await page.waitForTimeout(500);
     await expect(page.locator('.history-item').first()).toBeVisible({ timeout: 5000 });
 
     // 点击历史记录
     await page.locator('.history-item').first().click();
-    await page.waitForTimeout(500);
 
     // 如果创建了新标签，切换到最后一个
     const tabs = page.locator('.request-tab');
     const tabCount = await tabs.count();
     if (tabCount > 1) {
       await tabs.last().click();
-      await page.waitForTimeout(300);
     }
 
     // 验证响应仍然存在（状态码 200）
@@ -97,10 +86,7 @@ test.describe('历史记录加载验证', () => {
 
     // 发送 GET 请求到特定 URL
     const testUrl = `${MOCK_BASE_URL}/get?unique=${Date.now()}`;
-    await page.locator('#url-input').fill(testUrl);
-    await page.waitForTimeout(400);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, testUrl, '200');
 
     // 确认只有一个标签
     await expect(page.locator('.request-tab')).toHaveCount(1);
@@ -108,7 +94,6 @@ test.describe('历史记录加载验证', () => {
     // 打开历史面板
     await page.locator('.history-header').click();
     await expect(page.locator('.history-panel')).toBeVisible({ timeout: 5000 });
-    await page.waitForTimeout(500);
     await expect(page.locator('.history-item').first()).toBeVisible({ timeout: 5000 });
 
     // 找到匹配 URL 的历史记录
@@ -117,7 +102,6 @@ test.describe('历史记录加载验证', () => {
 
     // 点击匹配的历史记录（同 URL + 同方法应匹配当前标签）
     await targetItem.click();
-    await page.waitForTimeout(500);
 
     // 仍然应该只有一个标签
     await expect(page.locator('.request-tab')).toHaveCount(1);

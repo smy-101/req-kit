@@ -24,15 +24,19 @@ export function emptyStateHTML() {
 // 输入防抖工具 — 统一管理所有防抖定时器，支持发送前 flush
 export const InputDebounce = {
   _timers: {},
+  _fns: {},
   schedule(id, fn, ms = 150) {
     clearTimeout(this._timers[id]);
-    this._timers[id] = setTimeout(() => { fn(); delete this._timers[id]; }, ms);
+    this._fns[id] = fn;
+    this._timers[id] = setTimeout(() => { fn(); delete this._timers[id]; delete this._fns[id]; }, ms);
   },
   flush() {
     for (const id of Object.keys(this._timers)) {
       clearTimeout(this._timers[id]);
+      if (this._fns[id]) this._fns[id]();
     }
     this._timers = {};
+    this._fns = {};
   },
 };
 

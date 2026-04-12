@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { MOCK_BASE_URL } from './helpers/mock';
+import { waitForModal, waitForModalClose } from './helpers/wait';
 
 test.describe('导出功能', () => {
   test('导出集合为 Postman 格式', async ({ page }) => {
@@ -19,11 +20,11 @@ test.describe('导出功能', () => {
     await expect(saveModal).toBeVisible({ timeout: 5000 });
     await saveModal.locator('#save-col-select').selectOption({ label: colName });
     await saveModal.locator('#save-confirm').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+    await waitForModalClose(page);
 
     // 打开导入/导出弹窗并切换到导出标签
     await page.locator('#btn-import').click();
-    await expect(page.locator('#modal-overlay')).toBeVisible({ timeout: 5000 });
+    await waitForModal(page);
     await page.locator('[data-imex-tab="export"]').click();
     await expect(page.locator('#imex-export')).toBeVisible();
 
@@ -44,7 +45,7 @@ test.describe('导出功能', () => {
 
     // 不创建任何集合，打开导出标签
     await page.locator('#btn-import').click();
-    await expect(page.locator('#modal-overlay')).toBeVisible({ timeout: 5000 });
+    await waitForModal(page);
     await page.locator('[data-imex-tab="export"]').click();
 
     // 验证显示提示文本

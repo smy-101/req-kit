@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { MOCK_BASE_URL } from './helpers/mock';
+import { waitForModal, waitForModalClose } from './helpers/wait';
 
 test.describe('键盘快捷键', () => {
   test('Ctrl+T 创建新标签页', async ({ page }) => {
@@ -57,11 +58,11 @@ test.describe('键盘快捷键', () => {
 
     // 打开环境管理弹窗
     await page.locator('#btn-manage-env').click();
-    await expect(page.locator('#modal-overlay')).toBeVisible();
+    await waitForModal(page);
 
     // Escape 关闭
     await page.keyboard.press('Escape');
-    await expect(page.locator('#modal-overlay')).not.toBeVisible();
+    await waitForModalClose(page);
   });
 
   test('Ctrl+S 保存请求（无集合时提示创建）', async ({ page }) => {
@@ -72,7 +73,7 @@ test.describe('键盘快捷键', () => {
     await page.keyboard.press('Control+s');
 
     // 应弹出提示创建集合的对话框
-    await expect(page.locator('#modal-overlay')).toBeVisible({ timeout: 5000 });
+    await waitForModal(page);
   });
 
   test('Ctrl+Shift+N 新建请求（无集合时提示创建）', async ({ page }) => {
@@ -82,6 +83,6 @@ test.describe('键盘快捷键', () => {
     await page.keyboard.press('Control+Shift+N');
 
     // 应弹出提示创建集合的对话框
-    await expect(page.locator('#modal-overlay')).toBeVisible({ timeout: 5000 });
+    await waitForModal(page);
   });
 });

@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { MOCK_BASE_URL } from './helpers/mock';
+import { sendRequestAndWait } from './helpers/wait';
 
 test.describe('HTTP 方法测试', () => {
   test('HEAD 请求', async ({ page }) => {
@@ -10,9 +11,7 @@ test.describe('HTTP 方法测试', () => {
     await expect(page.locator('#method-select')).toHaveValue('HEAD');
 
     // 发送 HEAD 请求
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
 
     // HEAD 请求应该没有响应体或响应体为空
     const responseBody = page.locator('#response-format-content');
@@ -28,9 +27,7 @@ test.describe('HTTP 方法测试', () => {
     await expect(page.locator('#method-select')).toHaveValue('PATCH');
 
     // 发送 PATCH 请求
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/patch`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/patch`, '200');
 
     // 验证响应包含请求信息
     const responseBody = page.locator('#response-format-content');

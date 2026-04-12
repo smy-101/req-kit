@@ -1,9 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { MOCK_BASE_URL } from './helpers/mock';
+import { waitForModalClose } from './helpers/wait';
+
 
 test.describe('Runner 停止执行', () => {
+  test.beforeEach(async ({ page }) => {
+      await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    });
+
   test('运行中点击停止按钮', async ({ page }) => {
-    await page.goto('/');
 
     // 创建集合
     const colName = `RunnerStop_${Date.now()}`;
@@ -20,20 +26,17 @@ test.describe('Runner 停止执行', () => {
     ];
     for (const url of urls) {
       await page.locator('.request-tab-add').click();
-      await page.waitForTimeout(200);
       await page.locator('#url-input').fill(url);
-      await page.waitForTimeout(300);
       await page.locator('#save-btn').click();
       const saveModal = page.locator('#modal');
       await expect(saveModal).toBeVisible({ timeout: 5000 });
       await saveModal.locator('#save-col-select').selectOption({ label: colName });
       await saveModal.locator('#save-confirm').click();
-      await expect(page.locator('#modal-overlay')).not.toBeVisible({ timeout: 5000 });
+      await waitForModalClose(page);
     }
 
     // 切回第一个标签页
     await page.locator('.request-tab').first().click();
-    await page.waitForTimeout(200);
 
     // 运行集合
     const treeItem = page.locator('#collection-tree .tree-item').filter({ hasText: colName }).first();

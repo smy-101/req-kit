@@ -1,14 +1,20 @@
 import { test, expect } from '@playwright/test';
+import { waitForModal } from './helpers/wait';
+
 
 test.describe('环境管理高级功能', () => {
+  test.beforeEach(async ({ page }) => {
+      await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    });
+
   test('删除环境', async ({ page }) => {
-    await page.goto('/');
 
     const envName = `删除环境_${Date.now()}`;
 
     // 创建环境
     await page.locator('#btn-manage-env').click();
-    await expect(page.locator('#modal-overlay')).toBeVisible();
+    await waitForModal(page);
     await page.locator('#modal #new-env-name').fill(envName);
     await page.locator('#modal #create-env-btn').evaluate(el => el.click());
     await expect(page.locator('#modal .env-item').filter({ hasText: envName })).toBeVisible({ timeout: 10000 });
@@ -28,7 +34,6 @@ test.describe('环境管理高级功能', () => {
   });
 
   test('切换活跃环境', async ({ page }) => {
-    await page.goto('/');
 
     const envName = `活跃环境_${Date.now()}`;
 
@@ -47,7 +52,6 @@ test.describe('环境管理高级功能', () => {
   });
 
   test('重命名环境', async ({ page }) => {
-    await page.goto('/');
 
     const envName = `重命名前_${Date.now()}`;
     const newName = `重命名后_${Date.now()}`;

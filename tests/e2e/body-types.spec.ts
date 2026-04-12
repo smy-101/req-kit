@@ -1,10 +1,16 @@
 import { test, expect } from '@playwright/test';
 import { MOCK_BASE_URL } from './helpers/mock';
+import { sendRequestAndWait, switchRequestTab } from './helpers/wait';
+
 
 test.describe('Body 编辑器', () => {
+  test.beforeEach(async ({ page }) => {
+      await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    });
+
   test('切换 Body 类型显示对应编辑器', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('#request-panel .tab[data-tab="body"]').click();
+    await switchRequestTab(page, 'body');
 
     const textarea = page.locator('#body-textarea');
     const typeSelect = page.locator('#body-type-select');
@@ -30,8 +36,7 @@ test.describe('Body 编辑器', () => {
   });
 
   test('切换到 Multipart 显示分段编辑器', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('#request-panel .tab[data-tab="body"]').click();
+    await switchRequestTab(page, 'body');
     await page.locator('#body-type-select').selectOption('multipart');
 
     const multipartEditor = page.locator('#multipart-editor');
@@ -40,8 +45,7 @@ test.describe('Body 编辑器', () => {
   });
 
   test('Multipart 添加和删除字段', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('#request-panel .tab[data-tab="body"]').click();
+    await switchRequestTab(page, 'body');
     await page.locator('#body-type-select').selectOption('multipart');
 
     const addBtn = page.locator('.multipart-add-btn');
@@ -59,8 +63,7 @@ test.describe('Body 编辑器', () => {
   });
 
   test('切换到 Binary 显示文件选择器', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('#request-panel .tab[data-tab="body"]').click();
+    await switchRequestTab(page, 'body');
     await page.locator('#body-type-select').selectOption('binary');
 
     const binaryEditor = page.locator('#binary-editor');
@@ -69,8 +72,7 @@ test.describe('Body 编辑器', () => {
   });
 
   test('切换到 GraphQL 显示查询编辑器', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('#request-panel .tab[data-tab="body"]').click();
+    await switchRequestTab(page, 'body');
     await page.locator('#body-type-select').selectOption('graphql');
 
     const graphqlEditor = page.locator('#graphql-editor');
@@ -84,17 +86,12 @@ test.describe('Body 编辑器', () => {
   });
 
   test('GraphQL 填写查询并发送', async ({ page }) => {
-    await page.goto('/');
     await page.locator('#method-select').selectOption('POST');
-    await page.locator('#request-panel .tab[data-tab="body"]').click();
+    await switchRequestTab(page, 'body');
     await page.locator('#body-type-select').selectOption('graphql');
 
     await page.locator('#graphql-query').fill('{ __typename }');
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/post`);
-    await page.waitForTimeout(300);
-
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/post`, '200');
 
     // 验证响应包含 GraphQL 查询内容
     const responseBody = page.locator('#response-format-content');
@@ -102,12 +99,10 @@ test.describe('Body 编辑器', () => {
   });
 
   test('Format JSON 按钮格式化 JSON 内容', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('#request-panel .tab[data-tab="body"]').click();
+    await switchRequestTab(page, 'body');
 
     const textarea = page.locator('#body-textarea');
     await textarea.fill('{"a":1,"b":2}');
-    await page.waitForTimeout(200);
 
     await page.locator('#body-format-btn').click();
 

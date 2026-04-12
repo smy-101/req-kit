@@ -1,9 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { MOCK_BASE_URL } from './helpers/mock';
+import { waitForModal, waitForModalClose } from './helpers/wait';
+
 
 test.describe('集合变量', () => {
+  test.beforeEach(async ({ page }) => {
+      await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    });
+
   test('集合变量按钮存在', async ({ page }) => {
-    await page.goto('/');
 
     // 创建集合
     const colName = `变量集合_${Date.now()}`;
@@ -18,7 +24,6 @@ test.describe('集合变量', () => {
   });
 
   test('打开集合变量编辑器', async ({ page }) => {
-    await page.goto('/');
 
     const colName = `变量编辑_${Date.now()}`;
     await page.locator('#btn-new-collection').click();
@@ -31,17 +36,16 @@ test.describe('集合变量', () => {
     await treeItem.locator('.coll-var-btn').click({ timeout: 5000 });
 
     // 验证弹窗打开
-    await expect(page.locator('#modal-overlay')).toBeVisible();
+    await waitForModal(page);
     await expect(page.locator('#modal h3')).toContainText(colName);
     await expect(page.locator('#modal #coll-var-editor')).toBeVisible();
 
     // 关闭弹窗
     await page.locator('#modal #close-coll-var-modal').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible();
+    await waitForModalClose(page);
   });
 
   test('添加并保存集合变量', async ({ page }) => {
-    await page.goto('/');
 
     const colName = `保存变量_${Date.now()}`;
     await page.locator('#btn-new-collection').click();
@@ -52,7 +56,7 @@ test.describe('集合变量', () => {
     // 打开变量编辑器
     const treeItem = page.locator('#collection-tree .tree-item').filter({ hasText: colName });
     await treeItem.locator('.coll-var-btn').click({ timeout: 5000 });
-    await expect(page.locator('#modal-overlay')).toBeVisible();
+    await waitForModal(page);
 
     // 添加变量
     const addBtn = page.locator('#modal .kv-add-btn');
@@ -64,7 +68,7 @@ test.describe('集合变量', () => {
 
     // 保存
     await page.locator('#modal #save-coll-vars').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible();
+    await waitForModalClose(page);
 
     // 验证变量指示器出现
     await expect(treeItem.locator('.coll-var-indicator')).toBeVisible({ timeout: 5000 });

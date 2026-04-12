@@ -1,63 +1,71 @@
 import { test, expect } from '@playwright/test';
+import { sendRequestAndWait, waitForModal, waitForModalClose } from './helpers/wait';
 import { MOCK_BASE_URL } from './helpers/mock';
 
+
 test.describe('Cookie 高级管理', () => {
+  test.beforeEach(async ({ page }) => {
+      await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    });
+
   test('删除单个 Cookie', async ({ page }) => {
-    await page.goto('/');
 
     // httpbin.org 可能较慢，增加超时避免不稳定
     await page.locator('#request-options-btn').click();
     await page.locator('#request-timeout-input').fill('60000');
-    await page.waitForTimeout(200);
 
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/cookies/set?ck_delete_1=v1&ck_delete_2=v2`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/cookies/set?ck_delete_1=v1&ck_delete_2=v2`, '200');
 
     await page.locator('#btn-manage-cookies').click();
-    await expect(page.locator('#modal-overlay')).toBeVisible();
-    await page.waitForTimeout(2000);
+    await waitForModal(page);
 
-    const deleteBtns = page.locator('.cookie-item-delete');
-    const count = await deleteBtns.count();
+    // 等待 cookie 列表加载
+    await expect(page.locator('.cookie-item').or(page.locator('.cookie-empty-msg')).first()).toBeVisible({ timeout: 5000 });
 
-    if (count > 0) {
-      await deleteBtns.first().click();
-      await page.waitForTimeout(500);
-      const countAfter = await page.locator('.cookie-item-delete').count();
-      expect(countAfter).toBe(count - 1);
+    const firstCookie = page.locator('.cookie-item').first();
+    const cookieName = await firstCookie.locator('.cookie-item-name').textContent();
+
+    if (cookieName) {
+      // 记录删除前的数量
+      const countBefore = await page.locator('.cookie-item').count();
+      await page.locator('.cookie-item-delete').first().click();
+      // 等待该 cookie 消失（允许其他并行测试添加的 cookie 存在）
+      await expect(page.locator('.cookie-item').filter({ hasText: cookieName })).not.toBeVisible({ timeout: 5000 });
+      // 总数应该减少（可能被其他测试添加抵消，所以只检查被删的那个不见了）
+      const countAfter = await page.locator('.cookie-item').count();
+      expect(countAfter).toBeLessThan(countBefore + 1);
     } else {
-      await expect(page.locator('.cookie-empty-msg').or(page.locator('.cookie-item'))).toBeVisible();
+      await expect(page.locator('.cookie-empty-msg')).toBeVisible();
     }
   });
 
   test('Cookie 管理弹窗总数显示', async ({ page }) => {
-    await page.goto('/');
 
     // httpbin.org 可能较慢，增加超时避免不稳定
     await page.locator('#request-options-btn').click();
     await page.locator('#request-timeout-input').fill('60000');
-    await page.waitForTimeout(200);
 
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/cookies/set?count_test=yes`);
-    await page.locator('#send-btn').click();
-    await expect(page.locator('#response-status')).toContainText('200');
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/cookies/set?count_test=yes`, '200');
 
     await page.locator('#btn-manage-cookies').click();
-    await expect(page.locator('#modal-overlay')).toBeVisible();
+    await waitForModal(page);
     await expect(page.locator('.cookie-modal-total')).toBeVisible({ timeout: 5000 });
   });
 });
 
 test.describe('全局变量编辑和删除', () => {
+  test.beforeEach(async ({ page }) => {
+      await page.goto("/");
+    await page.waitForLoadState("networkidle");
+  });
   test('编辑已存在的全局变量', async ({ page }) => {
-    await page.goto('/');
 
     const key = `edit_var_${Date.now()}`;
 
     // 先添加一个全局变量
     await page.locator('#btn-manage-global-vars').click();
-    await expect(page.locator('#modal-overlay')).toBeVisible();
+    await waitForModal(page);
 
     await page.locator('#modal .kv-add-btn').click();
     const firstRow = page.locator('#modal .kv-row').first();
@@ -65,11 +73,11 @@ test.describe('全局变量编辑和删除', () => {
     await firstRow.locator('.kv-value').fill('original_value');
 
     await page.locator('#modal #save-global-vars').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible();
+    await waitForModalClose(page);
 
     // 再次打开编辑
     await page.locator('#btn-manage-global-vars').click();
-    await expect(page.locator('#modal-overlay')).toBeVisible();
+    await waitForModal(page);
 
     // 找到包含该 key 的行 — 通过检查 kv-key input 的实际值
     const rows = page.locator('#modal .kv-row');
@@ -86,7 +94,7 @@ test.describe('全局变量编辑和删除', () => {
     await targetRow!.locator('.kv-value').fill('updated_value');
 
     await page.locator('#modal #save-global-vars').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible();
+    await waitForModalClose(page);
 
     // 打开变量预览面板验证
     await page.locator('#btn-var-preview').click();
@@ -96,14 +104,13 @@ test.describe('全局变量编辑和删除', () => {
   });
 
   test('删除全局变量行后保存', async ({ page }) => {
-    await page.goto('/');
 
     const key1 = `del_var1_${Date.now()}`;
     const key2 = `del_var2_${Date.now()}`;
 
     // 添加两个全局变量
     await page.locator('#btn-manage-global-vars').click();
-    await expect(page.locator('#modal-overlay')).toBeVisible();
+    await waitForModal(page);
 
     await page.locator('#modal .kv-add-btn').click();
     await page.locator('#modal .kv-row').nth(0).locator('.kv-key').fill(key1);
@@ -114,20 +121,19 @@ test.describe('全局变量编辑和删除', () => {
     await page.locator('#modal .kv-row').nth(1).locator('.kv-value').fill('val2');
 
     await page.locator('#modal #save-global-vars').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible();
+    await waitForModalClose(page);
 
     // 再次打开并删除第一个变量
     await page.locator('#btn-manage-global-vars').click();
-    await expect(page.locator('#modal-overlay')).toBeVisible();
+    await waitForModal(page);
 
     // 第一个 kv-row 应该是 key1，直接删除它
     const firstRow = page.locator('#modal .kv-row').first();
     await firstRow.locator('.kv-delete').click();
-    await page.waitForTimeout(200);
 
     // 保存
     await page.locator('#modal #save-global-vars').click();
-    await expect(page.locator('#modal-overlay')).not.toBeVisible();
+    await waitForModalClose(page);
 
     // 验证全局变量数量减少了
     await page.locator('#btn-var-preview').click();
@@ -139,12 +145,15 @@ test.describe('全局变量编辑和删除', () => {
 });
 
 test.describe('环境变量管理', () => {
+  test.beforeEach(async ({ page }) => {
+      await page.goto("/");
+    await page.waitForLoadState("networkidle");
+  });
   test('删除单个环境变量行', async ({ page }) => {
-    await page.goto('/');
 
     const envName = `EnvDel_${Date.now()}`;
     await page.locator('#btn-manage-env').click();
-    await expect(page.locator('#modal-overlay')).toBeVisible();
+    await waitForModal(page);
 
     await page.locator('#modal #new-env-name').fill(envName);
     await page.locator('#modal #create-env-btn').evaluate(el => el.click());
@@ -168,7 +177,6 @@ test.describe('环境变量管理', () => {
 
     // 删除第二个行（remove_var）
     await kvEditor.locator('.kv-row').nth(1).locator('.kv-delete').click();
-    await page.waitForTimeout(200);
 
     // 保存
     await kvEditor.locator('.kv-save-btn').evaluate(el => el.click());
@@ -177,7 +185,7 @@ test.describe('环境变量管理', () => {
     // 验证：选择该环境，重新打开编辑器，确认只剩一个变量
     await page.locator('#active-env').selectOption({ label: envName });
     await page.locator('#btn-manage-env').click();
-    await expect(page.locator('#modal-overlay')).toBeVisible();
+    await waitForModal(page);
     await page.locator('#modal .env-item .env-name').filter({ hasText: envName }).click();
 
     const editor = page.locator('#modal #env-vars-editor');
