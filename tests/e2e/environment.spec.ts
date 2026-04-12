@@ -1,6 +1,7 @@
 import { test, expect } from './fixtures';
 import { MOCK_BASE_URL } from './helpers/mock';
-import { waitForModal, waitForModalClose } from './helpers/wait';
+import { waitForModal, waitForModalClose, waitForToast } from './helpers/wait';
+import { EnvironmentPage } from './pages/environment-page';
 
 test.describe('环境管理', () => {
   test.beforeEach(async ({ page }) => {
@@ -16,27 +17,21 @@ test.describe('环境管理', () => {
 
   test('创建新环境', async ({ page }) => {
     const envName = `测试环境_${Date.now()}`;
+    const envPage = new EnvironmentPage(page);
 
-    await page.locator('#btn-manage-env').click();
-    await waitForModal(page);
+    await envPage.open();
+    await envPage.createEnv(envName);
 
-    await page.locator('#modal #new-env-name').fill(envName);
-    await page.locator('#modal #create-env-btn').evaluate(el => el.click());
-
-    await expect(page.locator('#modal .env-item').filter({ hasText: envName })).toBeVisible({ timeout: 10000 });
-
-    await page.locator('#modal #close-env-modal').click();
-    await waitForModalClose(page);
+    await envPage.close();
   });
 
   test('环境下拉框包含新创建的环境', async ({ page }) => {
     const envName = `下拉测试_${Date.now()}`;
+    const envPage = new EnvironmentPage(page);
 
-    await page.locator('#btn-manage-env').click();
-    await page.locator('#modal #new-env-name').fill(envName);
-    await page.locator('#modal #create-env-btn').evaluate(el => el.click());
-    await expect(page.locator('#modal .env-item').filter({ hasText: envName })).toBeVisible({ timeout: 10000 });
-    await page.locator('#modal #close-env-modal').click();
+    await envPage.open();
+    await envPage.createEnv(envName);
+    await envPage.close();
 
     const options = page.locator('#active-env option');
     const texts = await options.allTextContents();
@@ -45,82 +40,131 @@ test.describe('环境管理', () => {
 
   test('为环境添加变量', async ({ page }) => {
     const envName = `变量测试_${Date.now()}`;
-    await page.locator('#btn-manage-env').click();
-    await page.locator('#modal #new-env-name').fill(envName);
-    await page.locator('#modal #create-env-btn').evaluate(el => el.click());
+    const envPage = new EnvironmentPage(page);
 
-    // 选中该环境
-    await page.locator('#modal .env-item .env-name').filter({ hasText: envName }).click();
+    await envPage.open();
+    await envPage.createEnv(envName);
+    await envPage.selectEnv(envName);
 
-    // 等待变量编辑器加载
-    const kvEditor = page.locator('#modal #env-vars-editor');
-    await expect(kvEditor.locator('.kv-add-btn')).toBeVisible();
+    await envPage.addVariable('base_url', MOCK_BASE_URL);
+    await envPage.saveVariables();
 
-    // 添加变量
-    await kvEditor.locator('.kv-add-btn').click();
-
-    const firstRow = kvEditor.locator('.kv-row').first();
-    await firstRow.locator('.kv-key').fill('base_url');
-    await firstRow.locator('.kv-value').fill(MOCK_BASE_URL);
-
-    // 保存变量
-    await kvEditor.locator('.kv-save-btn').evaluate(el => el.click());
-
-    await page.locator('#modal #close-env-modal').click();
+    await envPage.close();
   });
 
   test('删除环境', async ({ page }) => {
     const envName = `删除环境_${Date.now()}`;
+    const envPage = new EnvironmentPage(page);
 
-    await page.locator('#btn-manage-env').click();
-    await waitForModal(page);
-    await page.locator('#modal #new-env-name').fill(envName);
-    await page.locator('#modal #create-env-btn').evaluate(el => el.click());
-    await expect(page.locator('#modal .env-item').filter({ hasText: envName })).toBeVisible({ timeout: 10000 });
+    await envPage.open();
+    await envPage.createEnv(envName);
+    await envPage.deleteEnv(envName);
 
-    const envItem = page.locator('#modal .env-item').filter({ hasText: envName });
-    await envItem.locator('.env-item-actions .btn-danger-text').click();
-
-    await expect(envItem.locator('.env-delete-msg')).toBeVisible();
-    await envItem.locator('.modal-btn-danger').click();
-
-    await expect(page.locator('#modal .env-item').filter({ hasText: envName })).not.toBeVisible();
-
-    await page.locator('#modal #close-env-modal').click();
+    await envPage.close();
   });
 
   test('切换活跃环境', async ({ page }) => {
     const envName = `活跃环境_${Date.now()}`;
+    const envPage = new EnvironmentPage(page);
 
-    await page.locator('#btn-manage-env').click();
-    await page.locator('#modal #new-env-name').fill(envName);
-    await page.locator('#modal #create-env-btn').evaluate(el => el.click());
-    await expect(page.locator('#modal .env-item').filter({ hasText: envName })).toBeVisible({ timeout: 10000 });
-    await page.locator('#modal #close-env-modal').click();
+    await envPage.open();
+    await envPage.createEnv(envName);
+    await envPage.close();
 
-    await page.locator('#active-env').selectOption({ label: envName });
-    await page.locator('#active-env').selectOption({ label: 'No Environment' });
+    await envPage.switchActiveEnv(envName);
+    await envPage.switchActiveEnv('No Environment');
   });
 
   test('重命名环境', async ({ page }) => {
     const envName = `重命名前_${Date.now()}`;
     const newName = `重命名后_${Date.now()}`;
+    const envPage = new EnvironmentPage(page);
 
-    await page.locator('#btn-manage-env').click();
-    await page.locator('#modal #new-env-name').fill(envName);
-    await page.locator('#modal #create-env-btn').evaluate(el => el.click());
-    await expect(page.locator('#modal .env-item').filter({ hasText: envName })).toBeVisible({ timeout: 10000 });
+    await envPage.open();
+    await envPage.createEnv(envName);
+    await envPage.renameEnv(envName, newName);
 
-    const envItem = page.locator('#modal .env-item').filter({ hasText: envName });
-    await envItem.locator('.env-action-btn').first().click();
+    await envPage.close();
+  });
+});
 
-    const renameInput = page.locator('#modal .env-rename-input');
-    await expect(renameInput).toBeVisible();
-    await renameInput.fill(newName);
-    await renameInput.press('Enter');
+test.describe('环境未保存更改警告', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
 
-    await expect(page.locator('#modal .env-item').filter({ hasText: newName })).toBeVisible();
+  test('切换环境时有未保存变量弹出确认', async ({ page }) => {
+    const envPage = new EnvironmentPage(page);
 
-    await page.locator('#modal #close-env-modal').click();
+    // 打开环境管理弹窗
+    await envPage.open();
+
+    // 创建第一个环境
+    const env1 = `环境A_${Date.now()}`;
+    await envPage.createEnv(env1);
+
+    // 选择第一个环境 — 点击 env-item 触发 switchToEnv
+    await page.locator('.env-item').filter({ hasText: env1 }).evaluate(el => (el as HTMLElement).click());
+
+    // 验证变量编辑器已渲染
+    await expect(page.locator('#env-vars-editor .kv-editor')).toBeVisible({ timeout: 5000 });
+
+    // 在变量编辑器中添加一个变量（不保存）
+    await page.locator('#env-vars-editor .kv-key').first().fill('key1');
+    await page.locator('#env-vars-editor .kv-value').first().fill('value1');
+
+    // 创建第二个环境
+    const env2 = `环境B_${Date.now()}`;
+    await envPage.createEnv(env2);
+
+    // 尝试切换到第二个环境 — 应该弹出未保存确认
+    await page.locator('.env-item').filter({ hasText: env2 }).evaluate(el => (el as HTMLElement).click());
+
+    // 验证确认对话框出现
+    await expect(page.locator('.confirm-dialog')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.confirm-dialog-title')).toContainText('Unsaved Changes');
+
+    // 使用更精确的选择器点击 Cancel
+    await page.locator('.confirm-dialog .modal-btn-secondary').click();
+    await expect(page.locator('.confirm-dialog')).not.toBeVisible();
+
+    // 关闭弹窗
+    await page.locator('#close-env-modal').click();
+  });
+
+  test('环境变量保存后切换不弹出确认', async ({ page }) => {
+    const envPage = new EnvironmentPage(page);
+
+    // 打开环境管理弹窗
+    await envPage.open();
+
+    // 创建两个环境
+    const env1 = `保存A_${Date.now()}`;
+    const env2 = `保存B_${Date.now()}`;
+
+    await envPage.createEnv(env1);
+
+    // 选择第一个环境
+    await page.locator('.env-item').filter({ hasText: env1 }).evaluate(el => (el as HTMLElement).click());
+    await expect(page.locator('#env-vars-editor .kv-editor')).toBeVisible({ timeout: 5000 });
+
+    // 添加变量并保存
+    await page.locator('#env-vars-editor .kv-key').first().fill('saved_key');
+    await page.locator('#env-vars-editor .kv-value').first().fill('saved_value');
+    await page.locator('#env-vars-editor .kv-save-btn').click();
+    // 等待保存完成（Toast 出现确认异步操作已完成）
+    await waitForToast(page, 'Variables saved');
+
+    // 创建第二个环境
+    await envPage.createEnv(env2);
+
+    // 切换到第二个环境 — 不应该弹出确认
+    await page.locator('.env-item').filter({ hasText: env2 }).evaluate(el => (el as HTMLElement).click());
+
+    // 验证没有确认对话框
+    await expect(page.locator('.confirm-dialog')).not.toBeVisible();
+
+    // 关闭弹窗
+    await page.locator('#close-env-modal').click();
   });
 });

@@ -34,13 +34,13 @@ export class EnvironmentPage {
 
   async createEnv(name: string) {
     await this.newNameInput.fill(name);
-    await this.createBtn.click({ force: true });
+    await this.createBtn.evaluate(el => (el as HTMLButtonElement).click());
     await this.page.locator('#modal .env-item').filter({ hasText: name }).waitFor({ state: 'visible', timeout: 10_000 });
     return this;
   }
 
   async selectEnv(name: string) {
-    await this.page.locator('#modal .env-item .env-name').filter({ hasText: name }).click({ force: true });
+    await this.page.locator('#modal .env-item').filter({ hasText: name }).evaluate(el => (el as HTMLElement).click());
     return this;
   }
 

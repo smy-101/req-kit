@@ -92,3 +92,49 @@ test.describe('Cookie 管理高级功能', () => {
     await page.locator('#close-cookie-modal').click();
   });
 });
+
+test.describe('Cookie 高级管理', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('删除单个 Cookie', async ({ page }) => {
+    // 先清除所有已有 cookie，确保干净状态
+    await page.request.delete('/api/cookies');
+
+    // 增加超时避免不稳定
+    await page.locator('#request-options-btn').click();
+    await page.locator('#request-timeout-input').fill('60000');
+
+    // 设置 cookie（使用唯一名称避免冲突）
+    const ck = `ck_del_${Date.now()}`;
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/cookies/set?${ck}=v1`, '200');
+
+    await page.locator('#btn-manage-cookies').click();
+    await waitForModal(page);
+
+    // 等待 cookie 列表加载
+    await expect(page.locator('.cookie-item').first()).toBeVisible({ timeout: 5000 });
+
+    // 确认目标 cookie 存在
+    await expect(page.locator('.cookie-item').filter({ hasText: ck })).toBeVisible({ timeout: 5000 });
+
+    // 删除 cookie
+    await page.locator('.cookie-item-delete').first().click();
+
+    // 等待该 cookie 消失
+    await expect(page.locator('.cookie-item').filter({ hasText: ck })).not.toBeVisible({ timeout: 5000 });
+  });
+
+  test('Cookie 管理弹窗总数显示', async ({ page }) => {
+    // 增加超时避免不稳定
+    await page.locator('#request-options-btn').click();
+    await page.locator('#request-timeout-input').fill('60000');
+
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/cookies/set?count_test=yes`, '200');
+
+    await page.locator('#btn-manage-cookies').click();
+    await waitForModal(page);
+    await expect(page.locator('.cookie-modal-total')).toBeVisible({ timeout: 5000 });
+  });
+});
