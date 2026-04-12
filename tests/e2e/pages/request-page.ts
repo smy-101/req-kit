@@ -57,12 +57,20 @@ export class RequestPage {
   }
 
   async openOptions() {
+    if (await this.optionsPanel.isVisible()) return this;
     await this.optionsBtn.click();
-    await this.optionsPanel.waitFor({ state: 'visible' });
+    // If still hidden (button was in active state from prior open), click again
+    try {
+      await this.optionsPanel.waitFor({ state: 'visible', timeout: 1000 });
+    } catch {
+      await this.optionsBtn.click();
+      await this.optionsPanel.waitFor({ state: 'visible' });
+    }
     return this;
   }
 
   async closeOptions() {
+    if (!(await this.optionsPanel.isVisible())) return this;
     await this.optionsBtn.click();
     await this.optionsPanel.waitFor({ state: 'hidden' });
     return this;
