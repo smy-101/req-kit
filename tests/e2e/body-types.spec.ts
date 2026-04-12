@@ -111,3 +111,63 @@ test.describe('Body 编辑器', () => {
     expect(value).toContain('  ');
   });
 });
+
+test.describe('Body 类型发送验证', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('Form URL Encoded body 发送', async ({ page }) => {
+    await page.locator('#method-select').selectOption('POST');
+    await switchRequestTab(page, 'body');
+    await page.locator('#body-type-select').selectOption('form');
+
+    // Form 类型使用 textarea 输入 URL 编码格式的数据
+    const textarea = page.locator('#body-textarea');
+    await textarea.fill('username=testuser');
+
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/post`, '200');
+
+    // 验证响应包含 form 数据
+    const responseBody = page.locator('#response-format-content');
+    await expect(responseBody).toContainText('username');
+    await expect(responseBody).toContainText('testuser');
+  });
+
+  test('Multipart body 发送', async ({ page }) => {
+    await page.locator('#method-select').selectOption('POST');
+    await switchRequestTab(page, 'body');
+    await page.locator('#body-type-select').selectOption('multipart');
+
+    // 填写 multipart 字段
+    const firstRow = page.locator('.multipart-row').first();
+    await firstRow.locator('.multipart-key').fill('field1');
+    await firstRow.locator('.multipart-text-value').fill('value1');
+
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/post`, '200');
+
+    // 验证响应包含 multipart 字段
+    const responseBody = page.locator('#response-format-content');
+    await expect(responseBody).toContainText('field1');
+  });
+
+  test('GraphQL variables 和 operationName 发送', async ({ page }) => {
+    await page.locator('#method-select').selectOption('POST');
+    await switchRequestTab(page, 'body');
+    await page.locator('#body-type-select').selectOption('graphql');
+
+    // 填写 GraphQL 查询
+    await page.locator('#graphql-query').fill('query GetUser($id: ID!) { user(id: $id) { name } }');
+    // 填写 variables
+    await page.locator('#graphql-variables').fill('{"id": "1"}');
+    // 填写 operationName
+    await page.locator('#graphql-operation-name').fill('GetUser');
+
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/post`, '200');
+
+    // 验证响应包含 GraphQL 内容
+    const responseBody = page.locator('#response-format-content');
+    await expect(responseBody).toContainText('GetUser');
+    await expect(responseBody).toContainText('variables');
+  });
+});
