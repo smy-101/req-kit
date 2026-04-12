@@ -1,24 +1,31 @@
 import { test, expect } from './fixtures';
-import { waitForModalClose } from './helpers/wait';
 import { MOCK_BASE_URL } from './helpers/mock';
+import { waitForModalClose } from './helpers/wait';
+import { TabBar } from './pages/tab-bar';
+import { CollectionPage } from './pages/collection-page';
+import { RequestPage } from './pages/request-page';
 
 test.describe('标签页管理', () => {
+  let tabBar: TabBar;
+
   test('默认存在一个标签页', async ({ page }) => {
     await page.goto('/');
+    tabBar = new TabBar(page);
     await expect(page.locator('.request-tab')).toHaveCount(1);
     await expect(page.locator('.request-tab.active')).toBeVisible();
   });
 
   test('点击 + 按钮创建新标签页', async ({ page }) => {
     await page.goto('/');
-    const addBtn = page.locator('.request-tab-add');
-    await addBtn.click();
+    tabBar = new TabBar(page);
+    await tabBar.addTab();
     await expect(page.locator('.request-tab')).toHaveCount(2);
   });
 
   test('切换标签页', async ({ page }) => {
     await page.goto('/');
-    await page.locator('.request-tab-add').click();
+    tabBar = new TabBar(page);
+    await tabBar.addTab();
     const tabs = page.locator('.request-tab');
 
     await expect(tabs.nth(1)).toHaveClass(/active/);
@@ -30,29 +37,33 @@ test.describe('标签页管理', () => {
 
   test('关闭标签页', async ({ page }) => {
     await page.goto('/');
-    await page.locator('.request-tab-add').click();
+    tabBar = new TabBar(page);
+    await tabBar.addTab();
     await expect(page.locator('.request-tab')).toHaveCount(2);
 
-    const closeBtn = page.locator('.request-tab').nth(1).locator('.request-tab-close');
-    await closeBtn.click();
+    await tabBar.closeTab(1);
     await expect(page.locator('.request-tab')).toHaveCount(1);
   });
 });
 
 test.describe('标签页高级功能', () => {
+  let coll: CollectionPage;
+  let rp: RequestPage;
+  let tabBar: TabBar;
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    coll = new CollectionPage(page);
+    rp = new RequestPage(page);
+    tabBar = new TabBar(page);
   });
 
   test('修改已保存请求后关闭标签页显示确认对话框', async ({ page }) => {
     const colName = `脏标签测试_${Date.now()}`;
-    await page.locator('#btn-new-collection').click();
-    await page.locator('#modal .dialog-input').fill(colName);
-    await page.locator('#modal .modal-btn-primary').click();
-    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible({ timeout: 10000 });
+    await coll.createCollection(colName);
 
-    await page.locator('#method-select').selectOption('POST');
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/post`);
+    await rp.selectMethod('POST');
+    await rp.setMockUrl('/post');
     await page.locator('#save-btn').click();
     const saveModal = page.locator('#modal');
     await expect(saveModal).toBeVisible();
@@ -61,8 +72,8 @@ test.describe('标签页高级功能', () => {
     await waitForModalClose(page);
 
     // 使用 type 模拟实际键盘输入以触发 dirty 状态
-    await page.locator('#url-input').click();
-    await page.locator('#url-input').pressSequentially('123');
+    await rp.urlInput.click();
+    await rp.urlInput.pressSequentially('123');
     await expect(page.locator('.request-tab-title').first()).toContainText('●');
 
     await page.locator('.request-tab-close').first().click();
@@ -77,20 +88,17 @@ test.describe('标签页高级功能', () => {
 
   test('脏标签页关闭对话框 — 丢弃更改', async ({ page }) => {
     const colName = `脏丢弃_${Date.now()}`;
-    await page.locator('#btn-new-collection').click();
-    await page.locator('#modal .dialog-input').fill(colName);
-    await page.locator('#modal .modal-btn-primary').click();
-    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible({ timeout: 10000 });
+    await coll.createCollection(colName);
 
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
+    await rp.setMockUrl('/get');
     await page.locator('#save-btn').click();
     await expect(page.locator('#modal')).toBeVisible();
     await page.locator('#modal #save-col-select').selectOption({ label: colName });
     await page.locator('#modal #save-confirm').click();
     await waitForModalClose(page);
 
-    await page.locator('#url-input').click();
-    await page.locator('#url-input').pressSequentially('123');
+    await rp.urlInput.click();
+    await rp.urlInput.pressSequentially('123');
     await expect(page.locator('.request-tab-title').first()).toContainText('●');
 
     await page.locator('.request-tab-close').first().click();
@@ -101,7 +109,7 @@ test.describe('标签页高级功能', () => {
   });
 
   test('鼠标中键关闭标签页', async ({ page }) => {
-    await page.locator('.request-tab-add').click();
+    await tabBar.addTab();
     await expect(page.locator('.request-tab')).toHaveCount(2);
 
     await page.locator('.request-tab').first().click({ button: 'middle' });
@@ -110,12 +118,9 @@ test.describe('标签页高级功能', () => {
 
   test('脏标签页标题显示圆点前缀', async ({ page }) => {
     const colName = `标题前缀_${Date.now()}`;
-    await page.locator('#btn-new-collection').click();
-    await page.locator('#modal .dialog-input').fill(colName);
-    await page.locator('#modal .modal-btn-primary').click();
-    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible({ timeout: 10000 });
+    await coll.createCollection(colName);
 
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
+    await rp.setMockUrl('/get');
     await page.locator('#save-btn').click();
     await expect(page.locator('#modal')).toBeVisible();
     await page.locator('#modal #save-col-select').selectOption({ label: colName });
@@ -124,8 +129,8 @@ test.describe('标签页高级功能', () => {
 
     await expect(page.locator('.request-tab-title').first()).not.toContainText('●');
 
-    await page.locator('#url-input').click();
-    await page.locator('#url-input').pressSequentially('123');
+    await rp.urlInput.click();
+    await rp.urlInput.pressSequentially('123');
 
     await expect(page.locator('.request-tab-title').first()).toContainText('●');
   });

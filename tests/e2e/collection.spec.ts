@@ -1,15 +1,20 @@
 import { test, expect } from './fixtures';
 import { MOCK_BASE_URL } from './helpers/mock';
 import { waitForModal, waitForModalClose } from './helpers/wait';
+import { CollectionPage } from './pages/collection-page';
+import { RequestPage } from './pages/request-page';
 
 test.describe('集合管理', () => {
+  let coll: CollectionPage;
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    coll = new CollectionPage(page);
   });
 
   test('创建新集合', async ({ page }) => {
     const name = `测试集合_${Date.now()}`;
-    await page.locator('#btn-new-collection').click();
+    await coll.newCollectionBtn.click();
 
     const input = page.locator('#modal .dialog-input');
     await expect(input).toBeVisible();
@@ -17,29 +22,26 @@ test.describe('集合管理', () => {
 
     await page.locator('#modal .modal-btn-primary').click();
 
-    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: name })).toBeVisible({ timeout: 10000 });
+    await expect(coll.tree.locator('.tree-item').filter({ hasText: name })).toBeVisible({ timeout: 10000 });
   });
 
   test('创建多个集合', async ({ page }) => {
     const ts = Date.now();
 
     for (const name of [`集合A_${ts}`, `集合B_${ts}`, `集合C_${ts}`]) {
-      await page.locator('#btn-new-collection').click();
+      await coll.newCollectionBtn.click();
       await page.locator('#modal .dialog-input').fill(name);
       await page.locator('#modal .modal-btn-primary').click();
-      await expect(page.locator('#collection-tree .tree-item').filter({ hasText: name })).toBeVisible({ timeout: 10000 });
+      await expect(coll.tree.locator('.tree-item').filter({ hasText: name })).toBeVisible({ timeout: 10000 });
     }
   });
 
   test('删除集合', async ({ page }) => {
     const uniqueName = `删除测试_${Date.now()}`;
-    await page.locator('#btn-new-collection').click();
-    await page.locator('#modal .dialog-input').fill(uniqueName);
-    await page.locator('#modal .modal-btn-primary').click();
-    const treeItem = page.locator('#collection-tree .tree-item').filter({ hasText: uniqueName });
-    await expect(treeItem).toBeVisible({ timeout: 10000 });
+    await coll.createCollection(uniqueName);
 
     // 右键点击集合
+    const treeItem = coll.tree.locator('.tree-item').filter({ hasText: uniqueName });
     await treeItem.first().click({ button: 'right' });
 
     // 确认删除
@@ -52,12 +54,9 @@ test.describe('集合管理', () => {
 
   test('右键集合只显示删除选项', async ({ page }) => {
     const colName = `右键菜单_${Date.now()}`;
-    await page.locator('#btn-new-collection').click();
-    await page.locator('#modal .dialog-input').fill(colName);
-    await page.locator('#modal .modal-btn-primary').click();
-    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible({ timeout: 10000 });
+    await coll.createCollection(colName);
 
-    const treeItem = page.locator('#collection-tree .tree-item').filter({ hasText: colName }).first();
+    const treeItem = coll.tree.locator('.tree-item').filter({ hasText: colName }).first();
     await treeItem.click({ button: 'right' });
 
     // 验证弹出确认删除对话框
@@ -69,40 +68,36 @@ test.describe('集合管理', () => {
     await waitForModalClose(page);
 
     // 验证集合仍然存在
-    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible();
+    await expect(coll.tree.locator('.tree-item').filter({ hasText: colName })).toBeVisible();
   });
 
   test('创建多个集合后每个都可以独立操作', async ({ page }) => {
     const names = [`集合A_${Date.now()}`, `集合B_${Date.now()}`, `集合C_${Date.now()}`];
     for (const name of names) {
-      await page.locator('#btn-new-collection').click();
-      await page.locator('#modal .dialog-input').fill(name);
-      await page.locator('#modal .modal-btn-primary').click();
+      await coll.createCollection(name);
     }
 
     for (const name of names) {
-      await expect(page.locator('#collection-tree .tree-item').filter({ hasText: name })).toBeVisible({ timeout: 5000 });
+      await expect(coll.tree.locator('.tree-item').filter({ hasText: name })).toBeVisible({ timeout: 5000 });
     }
 
     // 删除第二个集合
-    const colB = page.locator('#collection-tree .tree-item').filter({ hasText: names[1] }).first();
+    const colB = coll.tree.locator('.tree-item').filter({ hasText: names[1] }).first();
     await colB.click({ button: 'right' });
     await expect(page.locator('#modal .modal-btn-danger')).toBeVisible();
     await page.locator('#modal .modal-btn-danger').click();
 
-    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: names[1] })).toHaveCount(0);
-    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: names[0] })).toBeVisible();
-    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: names[2] })).toBeVisible();
+    await expect(coll.tree.locator('.tree-item').filter({ hasText: names[1] })).toHaveCount(0);
+    await expect(coll.tree.locator('.tree-item').filter({ hasText: names[0] })).toBeVisible();
+    await expect(coll.tree.locator('.tree-item').filter({ hasText: names[2] })).toBeVisible();
   });
 
   test('集合中的请求右键显示复制和删除选项', async ({ page }) => {
+    const rp = new RequestPage(page);
     const colName = `请求右键_${Date.now()}`;
-    await page.locator('#btn-new-collection').click();
-    await page.locator('#modal .dialog-input').fill(colName);
-    await page.locator('#modal .modal-btn-primary').click();
-    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible({ timeout: 10000 });
+    await coll.createCollection(colName);
 
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
+    await rp.setMockUrl('/get');
     await page.locator('#save-btn').click();
     await expect(page.locator('#modal')).toBeVisible();
     await page.locator('#modal #save-col-select').selectOption({ label: colName });
@@ -110,7 +105,7 @@ test.describe('集合管理', () => {
     await waitForModalClose(page);
 
     // 右键点击请求项
-    await page.locator('#collection-tree .method-badge').first().click({ button: 'right' });
+    await coll.tree.locator('.method-badge').first().click({ button: 'right' });
 
     const ctxMenu = page.locator('.context-menu');
     await expect(ctxMenu).toBeVisible();
@@ -121,19 +116,19 @@ test.describe('集合管理', () => {
 });
 
 test.describe('集合请求上下文菜单与 curl 导入', () => {
+  let coll: CollectionPage;
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    coll = new CollectionPage(page);
   });
 
   test('右键复制请求在集合中创建副本', async ({ page }) => {
+    const rp = new RequestPage(page);
     const colName = `复制测试_${Date.now()}`;
-    await page.locator('#btn-new-collection').click();
-    await waitForModal(page);
-    await page.locator('#modal .dialog-input').fill(colName);
-    await page.locator('#modal .modal-btn-primary').click();
-    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible({ timeout: 10000 });
+    await coll.createCollection(colName);
 
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/get`);
+    await rp.setMockUrl('/get');
 
     // 保存请求到集合
     await page.locator('#save-btn').click();
@@ -142,7 +137,7 @@ test.describe('集合请求上下文菜单与 curl 导入', () => {
     await page.locator('#modal #save-confirm').click();
     await waitForModalClose(page);
 
-    const colWrapper = page.locator('#collection-tree [data-collection-id]').filter({ hasText: colName }).first();
+    const colWrapper = coll.tree.locator('[data-collection-id]').filter({ hasText: colName }).first();
     await expect(colWrapper.locator('.method-badge').first()).toBeVisible({ timeout: 10000 });
 
     // 右键请求触发上下文菜单
@@ -167,7 +162,7 @@ test.describe('集合请求上下文菜单与 curl 导入', () => {
     await page.locator('#import-action-btn').click();
     await waitForModalClose(page);
 
-    await expect(page.locator('#collection-tree .method-badge.method-GET').first()).toBeVisible({ timeout: 10000 });
+    await expect(coll.tree.locator('.method-badge.method-GET').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('导入 POST curl 命令验证方法', async ({ page }) => {
@@ -179,37 +174,32 @@ test.describe('集合请求上下文菜单与 curl 导入', () => {
     await page.locator('#import-action-btn').click();
     await waitForModalClose(page);
 
-    await expect(page.locator('#collection-tree .method-badge.method-POST').first()).toBeVisible({ timeout: 10000 });
+    await expect(coll.tree.locator('.method-badge.method-POST').first()).toBeVisible({ timeout: 10000 });
   });
 });
 
 test.describe('集合变量', () => {
+  let coll: CollectionPage;
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    coll = new CollectionPage(page);
   });
 
   test('集合变量按钮存在', async ({ page }) => {
     const colName = `变量集合_${Date.now()}`;
-    await page.locator('#btn-new-collection').click();
-    await page.locator('#modal .dialog-input').fill(colName);
-    await page.locator('#modal .modal-btn-primary').click();
-    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible({ timeout: 10000 });
+    await coll.createCollection(colName);
 
-    const treeItem = page.locator('#collection-tree .tree-item').filter({ hasText: colName });
+    const treeItem = coll.tree.locator('.tree-item').filter({ hasText: colName });
     await expect(treeItem.locator('.coll-var-btn')).toBeVisible();
   });
 
   test('打开集合变量编辑器', async ({ page }) => {
     const colName = `变量编辑_${Date.now()}`;
-    await page.locator('#btn-new-collection').click();
-    await page.locator('#modal .dialog-input').fill(colName);
-    await page.locator('#modal .modal-btn-primary').click();
-    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible({ timeout: 10000 });
+    await coll.createCollection(colName);
 
-    const treeItem = page.locator('#collection-tree .tree-item').filter({ hasText: colName });
-    await treeItem.locator('.coll-var-btn').click();
+    await coll.openCollectionVars(colName);
 
-    await waitForModal(page);
     await expect(page.locator('#modal h3')).toContainText(colName);
     await expect(page.locator('#modal #coll-var-editor')).toBeVisible();
 
@@ -219,14 +209,9 @@ test.describe('集合变量', () => {
 
   test('添加并保存集合变量', async ({ page }) => {
     const colName = `保存变量_${Date.now()}`;
-    await page.locator('#btn-new-collection').click();
-    await page.locator('#modal .dialog-input').fill(colName);
-    await page.locator('#modal .modal-btn-primary').click();
-    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible({ timeout: 10000 });
+    await coll.createCollection(colName);
 
-    const treeItem = page.locator('#collection-tree .tree-item').filter({ hasText: colName });
-    await treeItem.locator('.coll-var-btn').click();
-    await waitForModal(page);
+    await coll.openCollectionVars(colName);
 
     const addBtn = page.locator('#modal .kv-add-btn');
     await addBtn.click();
@@ -238,6 +223,7 @@ test.describe('集合变量', () => {
     await page.locator('#modal #save-coll-vars').click();
     await waitForModalClose(page);
 
+    const treeItem = coll.tree.locator('.tree-item').filter({ hasText: colName });
     await expect(treeItem.locator('.coll-var-indicator')).toBeVisible();
   });
 });
