@@ -104,7 +104,7 @@ test.describe('环境未保存更改警告', () => {
     await envPage.createEnv(env1);
 
     // 选择第一个环境 — 点击 env-item 触发 switchToEnv
-    await page.locator('.env-item').filter({ hasText: env1 }).evaluate(el => (el as HTMLElement).click());
+    await envPage.selectEnv(env1);
 
     // 验证变量编辑器已渲染
     await expect(page.locator('#env-vars-editor .kv-editor')).toBeVisible({ timeout: 5000 });
@@ -118,7 +118,7 @@ test.describe('环境未保存更改警告', () => {
     await envPage.createEnv(env2);
 
     // 尝试切换到第二个环境 — 应该弹出未保存确认
-    await page.locator('.env-item').filter({ hasText: env2 }).evaluate(el => (el as HTMLElement).click());
+    await page.locator('#modal .env-item').filter({ hasText: env2 }).dispatchEvent('click');
 
     // 验证确认对话框出现
     await expect(page.locator('.confirm-dialog')).toBeVisible({ timeout: 5000 });
@@ -145,7 +145,7 @@ test.describe('环境未保存更改警告', () => {
     await envPage.createEnv(env1);
 
     // 选择第一个环境
-    await page.locator('.env-item').filter({ hasText: env1 }).evaluate(el => (el as HTMLElement).click());
+    await envPage.selectEnv(env1);
     await expect(page.locator('#env-vars-editor .kv-editor')).toBeVisible({ timeout: 5000 });
 
     // 添加变量并保存
@@ -159,7 +159,7 @@ test.describe('环境未保存更改警告', () => {
     await envPage.createEnv(env2);
 
     // 切换到第二个环境 — 不应该弹出确认
-    await page.locator('.env-item').filter({ hasText: env2 }).evaluate(el => (el as HTMLElement).click());
+    await page.locator('#modal .env-item').filter({ hasText: env2 }).dispatchEvent('click');
 
     // 验证没有确认对话框
     await expect(page.locator('.confirm-dialog')).not.toBeVisible();

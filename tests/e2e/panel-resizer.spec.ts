@@ -1,18 +1,20 @@
 import { test, expect } from './fixtures';
 import { MOCK_BASE_URL } from './helpers/mock';
 import { sendRequestAndWait } from './helpers/wait';
+import { AppPage } from './pages/app-page';
 
 test.describe('面板拖拽调整', () => {
   test('拖拽面板分隔条调整请求面板大小', async ({ page }) => {
-    await page.goto('/');
+    const app = new AppPage(page);
+
+    await app.navigate();
     await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
 
     const container = page.locator('#request-response');
     const box = await container.boundingBox();
     if (!box) throw new Error('Container bounding box not found');
 
-    const resizer = page.locator('#panel-resizer');
-    const resizerBox = await resizer.boundingBox();
+    const resizerBox = await app.panelResizer.boundingBox();
     if (!resizerBox) throw new Error('Resizer bounding box not found');
 
     const startX = resizerBox.x + resizerBox.width / 2;
@@ -25,8 +27,7 @@ test.describe('面板拖拽调整', () => {
     await page.mouse.up();
 
     // 验证 request-panel 的 flex 值在合理范围内
-    const requestPanel = page.locator('#request-panel');
-    const flex = await requestPanel.evaluate(el => el.style.flex);
+    const flex = await app.requestPanel.evaluate(el => el.style.flex);
     expect(flex).toContain('0 0');
     // 验证百分比值合理 (应该接近 65%)
     const match = flex.match(/(\d+(?:\.\d+)?)%/);
@@ -37,15 +38,16 @@ test.describe('面板拖拽调整', () => {
   });
 
   test('面板最小宽度限制 20%', async ({ page }) => {
-    await page.goto('/');
+    const app = new AppPage(page);
+
+    await app.navigate();
     await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
 
     const container = page.locator('#request-response');
     const box = await container.boundingBox();
     if (!box) throw new Error('Container bounding box not found');
 
-    const resizer = page.locator('#panel-resizer');
-    const resizerBox = await resizer.boundingBox();
+    const resizerBox = await app.panelResizer.boundingBox();
     if (!resizerBox) throw new Error('Resizer bounding box not found');
 
     const startX = resizerBox.x + resizerBox.width / 2;
@@ -58,8 +60,7 @@ test.describe('面板拖拽调整', () => {
     await page.mouse.move(startX, endY, { steps: 10 });
     await page.mouse.up();
 
-    const requestPanel = page.locator('#request-panel');
-    const flex = await requestPanel.evaluate(el => el.style.flex);
+    const flex = await app.requestPanel.evaluate(el => el.style.flex);
     const match = flex.match(/(\d+(?:\.\d+)?)%/);
     expect(match).not.toBeNull();
     const pct = parseFloat(match![1]);
@@ -67,15 +68,16 @@ test.describe('面板拖拽调整', () => {
   });
 
   test('面板最大宽度限制 75%', async ({ page }) => {
-    await page.goto('/');
+    const app = new AppPage(page);
+
+    await app.navigate();
     await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
 
     const container = page.locator('#request-response');
     const box = await container.boundingBox();
     if (!box) throw new Error('Container bounding box not found');
 
-    const resizer = page.locator('#panel-resizer');
-    const resizerBox = await resizer.boundingBox();
+    const resizerBox = await app.panelResizer.boundingBox();
     if (!resizerBox) throw new Error('Resizer bounding box not found');
 
     const startX = resizerBox.x + resizerBox.width / 2;
@@ -88,8 +90,7 @@ test.describe('面板拖拽调整', () => {
     await page.mouse.move(startX, endY, { steps: 10 });
     await page.mouse.up();
 
-    const requestPanel = page.locator('#request-panel');
-    const flex = await requestPanel.evaluate(el => el.style.flex);
+    const flex = await app.requestPanel.evaluate(el => el.style.flex);
     const match = flex.match(/(\d+(?:\.\d+)?)%/);
     expect(match).not.toBeNull();
     const pct = parseFloat(match![1]);
@@ -97,7 +98,9 @@ test.describe('面板拖拽调整', () => {
   });
 
   test('拖拽后面板功能正常', async ({ page }) => {
-    await page.goto('/');
+    const app = new AppPage(page);
+
+    await app.navigate();
     await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
 
     // 拖拽调整面板大小
@@ -105,8 +108,7 @@ test.describe('面板拖拽调整', () => {
     const box = await container.boundingBox();
     if (!box) throw new Error('Container bounding box not found');
 
-    const resizer = page.locator('#panel-resizer');
-    const resizerBox = await resizer.boundingBox();
+    const resizerBox = await app.panelResizer.boundingBox();
     if (!resizerBox) throw new Error('Resizer bounding box not found');
 
     const startX = resizerBox.x + resizerBox.width / 2;
