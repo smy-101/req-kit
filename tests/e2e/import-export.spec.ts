@@ -1,9 +1,16 @@
 import { test, expect } from './fixtures';
 import { waitForModal, waitForModalClose } from './helpers/wait';
 import { MOCK_BASE_URL } from './helpers/mock';
+import { CollectionPage } from './pages/collection-page';
+import { RequestPage } from './pages/request-page';
 
 test.describe('导入导出', () => {
+  let coll: CollectionPage;
+  let rp: RequestPage;
+
   test.beforeEach(async ({ page }) => {
+    coll = new CollectionPage(page);
+    rp = new RequestPage(page);
     await page.goto('/');
   });
 
@@ -32,10 +39,7 @@ test.describe('导入导出', () => {
 
   test('导入 curl 命令', async ({ page }) => {
     const colName = `导入测试_${Date.now()}`;
-    await page.locator('#btn-new-collection').click();
-    await page.locator('#modal .dialog-input').fill(colName);
-    await page.locator('#modal .modal-btn-primary').click();
-    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName }).first()).toBeVisible({ timeout: 10000 });
+    await coll.createCollection(colName);
 
     await page.locator('#btn-import').click();
     await waitForModal(page);
@@ -74,8 +78,8 @@ test.describe('导入导出', () => {
 
     await waitForModalClose(page, { timeout: 10000 });
 
-    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName }).first()).toBeVisible();
-    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: 'Test Request' }).first()).toBeVisible();
+    await expect(coll.tree.locator('.tree-item').filter({ hasText: colName }).first()).toBeVisible();
+    await expect(coll.tree.locator('.tree-item').filter({ hasText: 'Test Request' }).first()).toBeVisible();
   });
 
   test('关闭导入导出弹窗', async ({ page }) => {
@@ -88,13 +92,10 @@ test.describe('导入导出', () => {
 
   test('导出集合为 Postman 格式', async ({ page }) => {
     const colName = `导出测试_${Date.now()}`;
-    await page.locator('#btn-new-collection').click();
-    await page.locator('#modal .dialog-input').fill(colName);
-    await page.locator('#modal .modal-btn-primary').click();
-    await expect(page.locator('#collection-tree .tree-item').filter({ hasText: colName })).toBeVisible({ timeout: 10000 });
+    await coll.createCollection(colName);
 
-    await page.locator('#method-select').selectOption('POST');
-    await page.locator('#url-input').fill(`${MOCK_BASE_URL}/post`);
+    await rp.selectMethod('POST');
+    await rp.setMockUrl('/post');
     await page.locator('#save-btn').click();
     const saveModal = page.locator('#modal');
     await expect(saveModal).toBeVisible();
@@ -127,7 +128,10 @@ test.describe('导入导出', () => {
 });
 
 test.describe('导入边界情况', () => {
+  let coll: CollectionPage;
+
   test.beforeEach(async ({ page }) => {
+    coll = new CollectionPage(page);
     await page.goto('/');
   });
 
