@@ -1,5 +1,7 @@
 import { test, expect } from './fixtures';
-import { waitForModal, waitForModalClose, waitForAutocompletePopup, waitForAutocompleteClose, switchRequestTab } from './helpers/wait';
+import { waitForAutocompletePopup, waitForAutocompleteClose, switchRequestTab } from './helpers/wait';
+import { VariablePage } from './pages/variable-page';
+import { EnvironmentPage } from './pages/environment-page';
 
 // 所有自动补全测试使用唯一前缀过滤，避免并行测试的全局变量干扰
 
@@ -9,15 +11,12 @@ test.describe('变量自动补全', () => {
     });
 
   test('输入 {{ 触发变量自动补全弹窗', async ({ page }) => {
+    const varPage = new VariablePage(page);
 
     const uniqueKey = `auto_trigger_${Date.now()}`;
-    await page.locator('#btn-manage-global-vars').click();
-    await waitForModal(page);
-    await page.locator('#modal .kv-add-btn').click();
-    await page.locator('#modal .kv-row').first().locator('.kv-key').fill(uniqueKey);
-    await page.locator('#modal .kv-row').first().locator('.kv-value').fill('test_value');
-    await page.locator('#modal #save-global-vars').click();
-    await waitForModalClose(page);
+    await varPage.openGlobalVars();
+    await varPage.addGlobalVar(uniqueKey, 'test_value');
+    await varPage.saveGlobalVars();
 
     // 使用前缀过滤只显示我们的变量
     await page.locator('#url-input').click();
@@ -26,15 +25,12 @@ test.describe('变量自动补全', () => {
   });
 
   test('自动补全弹窗显示变量名和作用域', async ({ page }) => {
+    const varPage = new VariablePage(page);
 
     const uniqueKey = `scope_display_${Date.now()}`;
-    await page.locator('#btn-manage-global-vars').click();
-    await waitForModal(page);
-    await page.locator('#modal .kv-add-btn').click();
-    await page.locator('#modal .kv-row').first().locator('.kv-key').fill(uniqueKey);
-    await page.locator('#modal .kv-row').first().locator('.kv-value').fill('val');
-    await page.locator('#modal #save-global-vars').click();
-    await waitForModalClose(page);
+    await varPage.openGlobalVars();
+    await varPage.addGlobalVar(uniqueKey, 'val');
+    await varPage.saveGlobalVars();
 
     await page.locator('#url-input').click();
     await page.locator('#url-input').pressSequentially(`{{scope_display_`);
@@ -47,25 +43,19 @@ test.describe('变量自动补全', () => {
   });
 
   test('环境变量出现在自动补全中', async ({ page }) => {
+    const envPage = new EnvironmentPage(page);
 
     const envName = `AutoEnv_${Date.now()}`;
-    await page.locator('#btn-manage-env').click();
-    await waitForModal(page);
-    await page.locator('#modal #new-env-name').fill(envName);
-    await page.locator('#modal #create-env-btn').evaluate(el => el.click());
-    await expect(page.locator('#modal .env-item').filter({ hasText: envName })).toBeVisible({ timeout: 10000 });
-    await page.locator('#modal .env-item .env-name').filter({ hasText: envName }).click();
+    await envPage.open();
+    await envPage.createEnv(envName);
+    await envPage.selectEnv(envName);
 
-    const kvEditor = page.locator('#modal #env-vars-editor');
-    await expect(kvEditor.locator('.kv-add-btn')).toBeVisible({ timeout: 5000 });
-    await kvEditor.locator('.kv-add-btn').click();
     const envKey = `env_auto_show_${Date.now()}`;
-    await kvEditor.locator('.kv-row').first().locator('.kv-key').fill(envKey);
-    await kvEditor.locator('.kv-row').first().locator('.kv-value').fill('env_val');
-    await kvEditor.locator('.kv-save-btn').evaluate(el => el.click());
-    await page.locator('#modal #close-env-modal').click();
+    await envPage.addVariable(envKey, 'env_val');
+    await envPage.saveVariables();
+    await envPage.close();
 
-    await page.locator('#active-env').selectOption({ label: envName });
+    await envPage.switchActiveEnv(envName);
 
     await page.locator('#url-input').click();
     await page.locator('#url-input').pressSequentially(`{{env_auto_show_`);
@@ -78,19 +68,14 @@ test.describe('变量自动补全', () => {
   });
 
   test('键盘上下箭头导航选择项', async ({ page }) => {
+    const varPage = new VariablePage(page);
 
     const key1 = `nav_z_${Date.now()}`;
     const key2 = `nav_a_${Date.now()}`;
-    await page.locator('#btn-manage-global-vars').click();
-    await waitForModal(page);
-    await page.locator('#modal .kv-add-btn').click();
-    await page.locator('#modal .kv-row').nth(0).locator('.kv-key').fill(key1);
-    await page.locator('#modal .kv-row').nth(0).locator('.kv-value').fill('v1');
-    await page.locator('#modal .kv-add-btn').click();
-    await page.locator('#modal .kv-row').nth(1).locator('.kv-key').fill(key2);
-    await page.locator('#modal .kv-row').nth(1).locator('.kv-value').fill('v2');
-    await page.locator('#modal #save-global-vars').click();
-    await waitForModalClose(page);
+    await varPage.openGlobalVars();
+    await varPage.addGlobalVar(key1, 'v1');
+    await varPage.addGlobalVar(key2, 'v2');
+    await varPage.saveGlobalVars();
 
     // 使用前缀过滤只显示我们创建的两个变量
     await page.locator('#url-input').click();
@@ -114,15 +99,12 @@ test.describe('变量自动补全', () => {
   });
 
   test('Enter 键确认选择插入变量', async ({ page }) => {
+    const varPage = new VariablePage(page);
 
     const uniqueKey = `enter_select_${Date.now()}`;
-    await page.locator('#btn-manage-global-vars').click();
-    await waitForModal(page);
-    await page.locator('#modal .kv-add-btn').click();
-    await page.locator('#modal .kv-row').first().locator('.kv-key').fill(uniqueKey);
-    await page.locator('#modal .kv-row').first().locator('.kv-value').fill('val');
-    await page.locator('#modal #save-global-vars').click();
-    await waitForModalClose(page);
+    await varPage.openGlobalVars();
+    await varPage.addGlobalVar(uniqueKey, 'val');
+    await varPage.saveGlobalVars();
 
     // 使用前缀过滤
     await page.locator('#url-input').click();
@@ -139,15 +121,12 @@ test.describe('变量自动补全', () => {
   });
 
   test('Escape 键关闭自动补全弹窗', async ({ page }) => {
+    const varPage = new VariablePage(page);
 
     const uniqueKey = `esc_close_${Date.now()}`;
-    await page.locator('#btn-manage-global-vars').click();
-    await waitForModal(page);
-    await page.locator('#modal .kv-add-btn').click();
-    await page.locator('#modal .kv-row').first().locator('.kv-key').fill(uniqueKey);
-    await page.locator('#modal .kv-row').first().locator('.kv-value').fill('val');
-    await page.locator('#modal #save-global-vars').click();
-    await waitForModalClose(page);
+    await varPage.openGlobalVars();
+    await varPage.addGlobalVar(uniqueKey, 'val');
+    await varPage.saveGlobalVars();
 
     await page.locator('#url-input').click();
     await page.locator('#url-input').pressSequentially(`{{esc_close_`);
@@ -159,19 +138,14 @@ test.describe('变量自动补全', () => {
   });
 
   test('输入部分字符过滤变量列表', async ({ page }) => {
+    const varPage = new VariablePage(page);
 
     const key1 = `filter_alpha_${Date.now()}`;
     const key2 = `filter_beta_${Date.now()}`;
-    await page.locator('#btn-manage-global-vars').click();
-    await waitForModal(page);
-    await page.locator('#modal .kv-add-btn').click();
-    await page.locator('#modal .kv-row').nth(0).locator('.kv-key').fill(key1);
-    await page.locator('#modal .kv-row').nth(0).locator('.kv-value').fill('v1');
-    await page.locator('#modal .kv-add-btn').click();
-    await page.locator('#modal .kv-row').nth(1).locator('.kv-key').fill(key2);
-    await page.locator('#modal .kv-row').nth(1).locator('.kv-value').fill('v2');
-    await page.locator('#modal #save-global-vars').click();
-    await waitForModalClose(page);
+    await varPage.openGlobalVars();
+    await varPage.addGlobalVar(key1, 'v1');
+    await varPage.addGlobalVar(key2, 'v2');
+    await varPage.saveGlobalVars();
 
     // 只过滤 filter_beta
     await page.locator('#url-input').click();
@@ -184,15 +158,12 @@ test.describe('变量自动补全', () => {
   });
 
   test('在 Headers 输入框中使用自动补全', async ({ page }) => {
+    const varPage = new VariablePage(page);
 
     const uniqueKey = `hdr_auto_${Date.now()}`;
-    await page.locator('#btn-manage-global-vars').click();
-    await waitForModal(page);
-    await page.locator('#modal .kv-add-btn').click();
-    await page.locator('#modal .kv-row').first().locator('.kv-key').fill(uniqueKey);
-    await page.locator('#modal .kv-row').first().locator('.kv-value').fill('hdr_val');
-    await page.locator('#modal #save-global-vars').click();
-    await waitForModalClose(page);
+    await varPage.openGlobalVars();
+    await varPage.addGlobalVar(uniqueKey, 'hdr_val');
+    await varPage.saveGlobalVars();
 
     await switchRequestTab(page, 'headers');
     const headersContainer = page.locator('#tab-headers');
@@ -209,15 +180,12 @@ test.describe('变量自动补全', () => {
   });
 
   test('在 Body textarea 中使用自动补全', async ({ page }) => {
+    const varPage = new VariablePage(page);
 
     const uniqueKey = `body_auto_${Date.now()}`;
-    await page.locator('#btn-manage-global-vars').click();
-    await waitForModal(page);
-    await page.locator('#modal .kv-add-btn').click();
-    await page.locator('#modal .kv-row').first().locator('.kv-key').fill(uniqueKey);
-    await page.locator('#modal .kv-row').first().locator('.kv-value').fill('body_val');
-    await page.locator('#modal #save-global-vars').click();
-    await waitForModalClose(page);
+    await varPage.openGlobalVars();
+    await varPage.addGlobalVar(uniqueKey, 'body_val');
+    await varPage.saveGlobalVars();
 
     await switchRequestTab(page, 'body');
     await expect(page.locator('#body-textarea')).toBeVisible();

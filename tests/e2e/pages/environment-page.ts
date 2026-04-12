@@ -34,13 +34,21 @@ export class EnvironmentPage {
 
   async createEnv(name: string) {
     await this.newNameInput.fill(name);
-    await this.createBtn.evaluate(el => (el as HTMLButtonElement).click());
+    // Use dispatchEvent to trigger a native click on the button element.
+    // Playwright's .click() fails because the button is intercepted by the
+    // env-panel-right overlay in the modal, and .click({ force: true }) does not
+    // reliably dispatch a real click event.
+    await this.createBtn.dispatchEvent('click');
     await this.page.locator('#modal .env-item').filter({ hasText: name }).waitFor({ state: 'visible', timeout: 10_000 });
     return this;
   }
 
   async selectEnv(name: string) {
-    await this.page.locator('#modal .env-item').filter({ hasText: name }).evaluate(el => (el as HTMLElement).click());
+    const envItem = this.page.locator('#modal .env-item').filter({ hasText: name });
+    await envItem.waitFor({ state: 'visible' });
+    // Use dispatchEvent because the env item can be intercepted by the
+    // env-panel-right overlay in the split-panel modal layout.
+    await envItem.dispatchEvent('click');
     return this;
   }
 
