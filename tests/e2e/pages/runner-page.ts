@@ -11,6 +11,8 @@ export class RunnerPage {
   readonly retryDelay: Locator;
   readonly summary: Locator;
   readonly progressText: Locator;
+  readonly resultItems: Locator;
+  readonly progressFill: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -22,6 +24,8 @@ export class RunnerPage {
     this.retryDelay = page.locator('#runner-retry-delay');
     this.summary = page.locator('#runner-summary');
     this.progressText = page.locator('#runner-progress-text');
+    this.resultItems = page.locator('.runner-result-item');
+    this.progressFill = page.locator('#runner-progress-fill');
   }
 
   async waitForPanel() {
@@ -55,6 +59,24 @@ export class RunnerPage {
 
   async setRetryDelay(delay: string) {
     await this.retryDelay.fill(delay);
+    return this;
+  }
+
+  async waitForComplete(timeout = 30000) {
+    await this.summary.waitFor({ state: 'visible', timeout });
+    return this;
+  }
+
+  async getSummaryText(): Promise<string> {
+    return (await this.summary.textContent()) ?? '';
+  }
+
+  async getResultItemCount(): Promise<number> {
+    return this.resultItems.count();
+  }
+
+  async expandResultDetail(index: number) {
+    await this.resultItems.nth(index).locator('.runner-result-summary').click();
     return this;
   }
 }

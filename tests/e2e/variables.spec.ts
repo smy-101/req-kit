@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures';
 import { MOCK_BASE_URL } from './helpers/mock';
-import { sendRequestAndWait, waitForModal, waitForModalClose } from './helpers/wait';
+import { sendRequestAndWait, waitForModal, waitForModalClose, uniqueId } from './helpers/wait';
 import { EnvironmentPage } from './pages/environment-page';
 import { VariablePage } from './pages/variable-page';
 import { ResponsePage } from './pages/response-page';
@@ -17,7 +17,7 @@ test.describe('变量系统', () => {
   test('环境变量模板替换', async ({ page }) => {
 
     // 创建环境并添加变量
-    const envName = `模板测试_${Date.now()}`;
+    const envName = uniqueId('模板测试_');
     const envPage = new EnvironmentPage(page);
 
     await envPage.open();
@@ -45,7 +45,7 @@ test.describe('变量系统', () => {
     await varPage.openGlobalVars();
 
     // 添加全局变量（使用唯一 key 避免并发冲突）
-    const uniqueKey = `gk_${Date.now()}`;
+    const uniqueKey = `gk_${crypto.randomUUID()}`;
     await varPage.addGlobalVar(uniqueKey, 'global_value');
 
     // 保存
@@ -67,7 +67,7 @@ test.describe('变量系统', () => {
   test('全局变量在 URL 中可用', async ({ page }) => {
 
     // 设置全局变量（使用唯一 key）
-    const uniqueKey = `api_host_${Date.now()}`;
+    const uniqueKey = `api_host_${crypto.randomUUID()}`;
     await varPage.openGlobalVars();
 
     await varPage.addGlobalVar(uniqueKey, 'localhost:4000');
@@ -81,7 +81,7 @@ test.describe('变量系统', () => {
   test('变量预览面板', async ({ page }) => {
 
     // 设置全局变量
-    const uniqueKey = `preview_var_${Date.now()}`;
+    const uniqueKey = `preview_var_${crypto.randomUUID()}`;
     await page.locator('#btn-manage-global-vars').click();
     await waitForModal(page);
 
@@ -112,7 +112,7 @@ test.describe('变量系统', () => {
   test('变量预览搜索功能', async ({ page }) => {
 
     // 设置全局变量
-    const uniqueKey = `search_${Date.now()}`;
+    const uniqueKey = `search_${crypto.randomUUID()}`;
     await varPage.openGlobalVars();
 
     await varPage.addGlobalVar(uniqueKey, 'val1');
@@ -142,7 +142,7 @@ test.describe('全局变量编辑和删除', () => {
   });
 
   test('编辑已存在的全局变量', async ({ page }) => {
-    const key = `edit_var_${Date.now()}`;
+    const key = `edit_var_${crypto.randomUUID()}`;
 
     // 先添加一个全局变量
     await varPage.openGlobalVars();
@@ -176,8 +176,8 @@ test.describe('全局变量编辑和删除', () => {
   });
 
   test('删除全局变量行后保存', async ({ page }) => {
-    const key1 = `del_var1_${Date.now()}`;
-    const key2 = `del_var2_${Date.now()}`;
+    const key1 = `del_var1_${crypto.randomUUID()}`;
+    const key2 = `del_var2_${crypto.randomUUID()}`;
 
     // 添加两个全局变量
     await varPage.openGlobalVars();
@@ -211,7 +211,7 @@ test.describe('环境变量管理', () => {
   });
 
   test('删除单个环境变量行', async ({ page }) => {
-    const envName = `EnvDel_${Date.now()}`;
+    const envName = uniqueId('EnvDel_');
     const envPage = new EnvironmentPage(page);
 
     await envPage.open();
@@ -239,5 +239,83 @@ test.describe('环境变量管理', () => {
     await envPage.selectEnv(envName);
 
     await expect(envPage.kvEditor.locator('.kv-row')).toHaveCount(1);
+  });
+});
+
+test.describe('变量预览面板增强', () => {
+  let varPage: VariablePage;
+  let envPage: EnvironmentPage;
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    varPage = new VariablePage(page);
+    envPage = new EnvironmentPage(page);
+  });
+
+  test('相同 key 在 Global 和 Environment 时显示覆盖标记', async ({ page }) => {
+    const varKey = `override_${crypto.randomUUID()}`;
+
+    // 设置全局变量
+    await varPage.openGlobalVars();
+    await varPage.addGlobalVar(varKey, 'global_val');
+    await varPage.saveGlobalVars();
+
+    // 在环境中设置同名 key
+    const envName = uniqueId('OverrideEnv_');
+    await envPage.open();
+    await envPage.createEnv(envName);
+    await envPage.selectEnv(envName);
+    await envPage.addVariable(varKey, 'env_val');
+    await envPage.saveVariables();
+    await envPage.close();
+    await envPage.switchActiveEnv(envName);
+
+    // 打开预览
+    await varPage.openVarPreview();
+
+    // 预览面板应显示该 key（Environment 优先级高于 Global，所以值应为 env_val）
+    await expect(varPage.varPreviewPanel).toContainText('env_val');
+
+    // 关闭预览
+    await varPage.closeVarPreview();
+  });
+
+  test('点击面板外部关闭面板', async ({ page }) => {
+    // 设置一个全局变量确保面板有内容
+    await varPage.openGlobalVars();
+    await varPage.addGlobalVar('click_close_var', 'val');
+    await varPage.saveGlobalVars();
+
+    // 打开预览面板
+    await varPage.openVarPreview();
+    await expect(varPage.varPreviewPanel).toBeVisible();
+
+    // 点击面板外部（请求面板区域）
+    await page.locator('#request-panel').click();
+
+    // 面板应关闭
+    await expect(varPage.varPreviewPanel).toHaveClass(/hidden/);
+  });
+
+  test('变量搜索过滤', async ({ page }) => {
+    // 设置多个全局变量
+    await varPage.openGlobalVars();
+    await varPage.addGlobalVar('searchable_alpha', 'val1');
+    await varPage.addGlobalVar('searchable_beta', 'val2');
+    await varPage.addGlobalVar('other_key', 'val3');
+    await varPage.saveGlobalVars();
+
+    // 打开预览
+    await varPage.openVarPreview();
+
+    // 搜索 "searchable_"
+    await varPage.searchVariables('searchable_');
+
+    // 应显示匹配的行
+    await expect(varPage.varPreviewPanel).toContainText('searchable_alpha');
+    await expect(varPage.varPreviewPanel).toContainText('searchable_beta');
+
+    // 不匹配的行不应可见
+    await expect(varPage.varPreviewPanel.locator('.var-preview-row').filter({ hasText: 'other_key' })).not.toBeVisible();
   });
 });

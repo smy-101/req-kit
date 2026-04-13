@@ -32,4 +32,14 @@ export class TabBar {
   async getActiveTabTitle(): Promise<string> {
     return this.page.locator('.request-tab.active .request-tab-title').textContent() ?? '';
   }
+
+  async isTabDirty(index: number): Promise<boolean> {
+    const title = this.page.locator('.request-tab').nth(index).locator('.request-tab-title');
+    const text = await title.textContent();
+    return (text ?? '').includes('\u25cf');
+  }
+
+  async getTabTitle(index: number): Promise<string> {
+    return this.page.locator('.request-tab').nth(index).locator('.request-tab-title').textContent() ?? '';
+  }
 }

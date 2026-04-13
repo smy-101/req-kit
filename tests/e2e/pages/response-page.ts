@@ -1,8 +1,11 @@
 import type { Page, Locator } from '../fixtures';
+import { expect } from '../fixtures';
 
 export class ResponsePage {
   readonly page: Page;
   readonly statusEl: Locator;
+  readonly timeEl: Locator;
+  readonly sizeEl: Locator;
   readonly formatBar: Locator;
   readonly formatContent: Locator;
   readonly searchBar: Locator;
@@ -16,10 +19,13 @@ export class ResponsePage {
   readonly headers: Locator;
   readonly cookies: Locator;
   readonly testResults: Locator;
+  readonly warningEl: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.statusEl = page.locator('#response-status');
+    this.timeEl = page.locator('#response-time');
+    this.sizeEl = page.locator('#response-size');
     this.formatBar = page.locator('#response-format-bar');
     this.formatContent = page.locator('#response-format-content');
     this.searchBar = page.locator('#response-search-bar');
@@ -33,6 +39,24 @@ export class ResponsePage {
     this.headers = page.locator('#response-headers');
     this.cookies = page.locator('#response-cookies');
     this.testResults = page.locator('#response-test-results');
+    this.warningEl = page.locator('.response-warning');
+  }
+
+  async getStatus(): Promise<string> {
+    return (await this.statusEl.textContent()) ?? '';
+  }
+
+  async getTime(): Promise<string> {
+    return (await this.timeEl.textContent()) ?? '';
+  }
+
+  async getSize(): Promise<string> {
+    return (await this.sizeEl.textContent()) ?? '';
+  }
+
+  async waitForStatus(expectedStatus: string | RegExp, options?: { timeout?: number }) {
+    await expect(this.statusEl).toContainText(expectedStatus, options);
+    return this;
   }
 
   async switchTab(tabName: string) {

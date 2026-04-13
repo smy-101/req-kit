@@ -65,4 +65,16 @@ export class VariablePage {
     await this.page.locator('#modal .kv-row').nth(index).locator('.kv-delete').click();
     return this;
   }
+
+  async closeVarPreview() {
+    await this.varPreviewBtn.click();
+    await this.varPreviewPanel.waitFor({ state: 'hidden' });
+    return this;
+  }
+
+  async searchVariables(term: string) {
+    const searchInput = this.page.locator('#var-search');
+    await searchInput.fill(term);
+    return this;
+  }
 }

@@ -56,4 +56,43 @@ export class CollectionPage {
     await waitForModal(this.page);
     return this;
   }
+
+  async createNestedCollection(parentName: string, childName: string) {
+    // 获取父集合 ID 通过 API 查询
+    const collections = await this.page.evaluate(async () => {
+      const res = await fetch('/api/collections');
+      return res.json();
+    });
+    const parent = collections.find((c: any) => c.name === parentName);
+    const parentId = parent?.id;
+
+    if (!parentId) throw new Error(`Parent collection "${parentName}" not found`);
+
+    // 通过 API 创建子集合
+    const result = await this.page.evaluate(async ({ parentId, childName }) => {
+      const res = await fetch('/api/collections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: childName, parent_id: parentId }),
+      });
+      return res.json();
+    }, { parentId, childName });
+
+    if (!result?.id) throw new Error(`Failed to create nested collection: ${JSON.stringify(result)}`);
+
+    // 等待树刷新（子集合名称出现）
+    await this.tree.locator('.tree-item').filter({ hasText: childName }).waitFor({ state: 'visible', timeout: 5000 });
+    return this;
+  }
+
+  async getRequestNames(): Promise<string[]> {
+    const badges = this.tree.locator('.method-badge');
+    const count = await badges.count();
+    const names: string[] = [];
+    for (let i = 0; i < count; i++) {
+      const text = await badges.nth(i).locator('..').locator('.name').textContent();
+      if (text) names.push(text);
+    }
+    return names;
+  }
 }

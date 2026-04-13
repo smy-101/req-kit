@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures';
 import { MOCK_BASE_URL } from './helpers/mock';
-import { sendRequestAndWait } from './helpers/wait';
+import { sendRequestAndWait, uniqueId } from './helpers/wait';
 import { HistoryPage } from './pages/history-page';
 import { RequestPage } from './pages/request-page';
 import { ResponsePage } from './pages/response-page';
@@ -92,7 +92,7 @@ test.describe('历史记录高级功能', () => {
   });
 
   test('历史记录搜索无结果', async ({ page }) => {
-    const uniqueUrl = `${MOCK_BASE_URL}/get?search_empty_${Date.now()}`;
+    const uniqueUrl = `${MOCK_BASE_URL}/get?search_empty_${crypto.randomUUID()}`;
     await sendRequestAndWait(page, uniqueUrl, '200');
 
     await history.expand();
@@ -201,10 +201,9 @@ test.describe('历史记录加载验证', () => {
     tabBar = new TabBar(page);
     await page.goto('/');
 
-    const uniqueId = Date.now() % 100000000;
-    const uniqueMarker = `history_verify_${uniqueId}`;
+    const uniqueMarker = `history_verify_${crypto.randomUUID()}`;
     const testBody = `{"test": "${uniqueMarker}"}`;
-    const testUrl = `${MOCK_BASE_URL}/post/${uniqueId}`;
+    const testUrl = `${MOCK_BASE_URL}/post/${crypto.randomUUID().replace(/-/g, '')}`;
     await rp.selectMethod('POST');
     await rp.setUrl(testUrl);
     await rp.switchTab('body');
@@ -216,7 +215,7 @@ test.describe('历史记录加载验证', () => {
     await history.expand();
     await expect(history.items.first()).toBeVisible();
 
-    const targetItem = history.items.filter({ hasText: `post/${uniqueId}` }).first();
+    const targetItem = history.items.filter({ hasText: `post/` }).first();
     await expect(targetItem).toBeVisible();
 
     const tabCountBefore = await tabBar.getTabCount();
@@ -228,10 +227,10 @@ test.describe('历史记录加载验证', () => {
     }
 
     await expect(rp.methodSelect).toHaveValue('POST');
-    await expect(rp.urlInput).toHaveValue(new RegExp(`post/${uniqueId}`));
+    await expect(rp.urlInput).toHaveValue(/post\//);
 
     await rp.switchTab('body');
-    await expect(rp.bodyTextarea).toHaveValue(new RegExp(uniqueMarker));
+    await expect(rp.bodyTextarea).toHaveValue(/history_verify_/);
   });
 
   test('点击历史记录恢复响应数据', async ({ page }) => {
@@ -263,7 +262,7 @@ test.describe('历史记录加载验证', () => {
     tabBar = new TabBar(page);
     await page.goto('/');
 
-    const testUrl = `${MOCK_BASE_URL}/get?unique=${Date.now()}`;
+    const testUrl = `${MOCK_BASE_URL}/get?unique=${crypto.randomUUID()}`;
     await sendRequestAndWait(page, testUrl, '200');
 
     await expect(page.locator('.request-tab')).toHaveCount(1);

@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures';
 import { MOCK_BASE_URL } from './helpers/mock';
-import { waitForModalClose, runCollection } from './helpers/wait';
+import { waitForModalClose, runCollection, uniqueId } from './helpers/wait';
 import { CollectionPage } from './pages/collection-page';
 import { RequestPage } from './pages/request-page';
 import { RunnerPage } from './pages/runner-page';
@@ -27,7 +27,7 @@ test.describe('集合 Runner', () => {
   });
 
   test('运行集合', async ({ page }) => {
-    const colName = `Runner测试_${Date.now()}`;
+    const colName = uniqueId('Runner测试_');
     await coll.createCollection(colName);
 
     await rp.setMockUrl('/get');
@@ -50,7 +50,7 @@ test.describe('集合 Runner', () => {
   });
 
   test('Runner 关闭按钮', async ({ page }) => {
-    const colName = `Runner关闭_${Date.now()}`;
+    const colName = uniqueId('Runner关闭_');
     await coll.createCollection(colName);
 
     await rp.setMockUrl('/get');
@@ -68,7 +68,7 @@ test.describe('集合 Runner', () => {
   });
 
   test('Runner 结果展开/折叠', async ({ page }) => {
-    const colName = `Runner展开_${Date.now()}`;
+    const colName = uniqueId('Runner展开_');
     await coll.createCollection(colName);
 
     await rp.setMockUrl('/get');
@@ -80,9 +80,9 @@ test.describe('集合 Runner', () => {
     await runner.run();
     await expect(runner.summary).toBeVisible({ timeout: 30000 });
 
-    const resultItem = page.locator('.runner-result-item').first();
+    const resultItem = runner.resultItems.first();
     await expect(resultItem).toBeVisible();
-    await resultItem.locator('.runner-result-summary').click();
+    await runner.expandResultDetail(0);
 
     await expect(resultItem.locator('.runner-result-detail')).toBeVisible();
     await expect(resultItem).toHaveClass(/expanded/);
@@ -95,7 +95,7 @@ test.describe('集合 Runner', () => {
   });
 
   test('Runner 重试配置默认值', async ({ page }) => {
-    const colName = `Runner重试默认_${Date.now()}`;
+    const colName = uniqueId('Runner重试默认_');
     await coll.createCollection(colName);
 
     await rp.setMockUrl('/get');
@@ -117,7 +117,7 @@ test.describe('集合 Runner', () => {
   });
 
   test('Runner 停止按钮在运行中出现', async ({ page }) => {
-    const colName = `Runner停止_${Date.now()}`;
+    const colName = uniqueId('Runner停止_');
     await coll.createCollection(colName);
 
     await rp.setMockUrl('/delay/5');
@@ -137,7 +137,7 @@ test.describe('集合 Runner', () => {
   });
 
   test('运行中点击停止按钮', async ({ page }) => {
-    const colName = `RunnerStop_${Date.now()}`;
+    const colName = uniqueId('RunnerStop_');
     await coll.createCollection(colName);
 
     // 保存多个慢请求到集合（使用 /delay/5 确保请求在停止前仍在运行）
@@ -166,28 +166,9 @@ test.describe('集合 Runner', () => {
     await runner.stop();
     await expect(runner.stopBtn).toBeDisabled();
   });
-});
-
-test.describe('Runner 多请求与停止验证', () => {
-  let coll: CollectionPage;
-  let rp: RequestPage;
-  let runner: RunnerPage;
-  let tabBar: TabBar;
-  let saveDialog: SaveDialogPage;
-
-  test.describe.configure({ timeout: 60_000 });
-
-  test.beforeEach(async ({ page }) => {
-    coll = new CollectionPage(page);
-    rp = new RequestPage(page);
-    runner = new RunnerPage(page);
-    tabBar = new TabBar(page);
-    saveDialog = new SaveDialogPage(page);
-    await page.goto('/');
-  });
 
   test('Runner 多请求集合运行', async ({ page }) => {
-    const colName = `RunnerMulti_${Date.now()}`;
+    const colName = uniqueId('RunnerMulti_');
 
     // 创建集合
     await coll.createCollection(colName);
@@ -217,7 +198,7 @@ test.describe('Runner 多请求与停止验证', () => {
     await runner.run();
 
     // 验证结果数量达到 2
-    await expect(page.locator('.runner-result-item')).toHaveCount(2, { timeout: 30000 });
+    await expect(runner.resultItems).toHaveCount(2, { timeout: 30000 });
 
     // 等待运行完成并验证总结
     await expect(runner.summary).toBeVisible({ timeout: 30000 });
@@ -228,7 +209,7 @@ test.describe('Runner 多请求与停止验证', () => {
   });
 
   test('Runner 停止后已完成请求保留结果', async ({ page }) => {
-    const colName = `RunnerStopRes_${Date.now()}`;
+    const colName = uniqueId('RunnerStopRes_');
 
     // 创建集合
     await coll.createCollection(colName);
@@ -255,11 +236,11 @@ test.describe('Runner 多请求与停止验证', () => {
     await runner.stop();
 
     // 验证已完成的请求结果被保留（停止前已完成的请求项仍可见）
-    await expect(page.locator('.runner-result-item').first()).toBeVisible();
+    await expect(runner.resultItems.first()).toBeVisible();
   });
 
   test('Runner 重试 — 全部失败（网络错误）', async ({ page }) => {
-    const colName = `Runner重试失败_${Date.now()}`;
+    const colName = uniqueId('Runner重试失败_');
     await coll.createCollection(colName);
 
     // 使用不可达 URL 触发网络错误（retryable）
@@ -288,7 +269,7 @@ test.describe('Runner 多请求与停止验证', () => {
   });
 
   test('Runner 重试 — 间歇性失败后成功', async ({ page }) => {
-    const colName = `Runner重试成功_${Date.now()}`;
+    const colName = uniqueId('Runner重试成功_');
     await coll.createCollection(colName);
 
     // flaky 端点：前 2 次返回 500，第 3 次返回 200
@@ -314,7 +295,7 @@ test.describe('Runner 多请求与停止验证', () => {
   });
 
   test('Runner 重试 — 4xx 不触发重试', async ({ page }) => {
-    const colName = `Runner4xx不重试_${Date.now()}`;
+    const colName = uniqueId('Runner4xx不重试_');
     await coll.createCollection(colName);
 
     await rp.setUrl(`${MOCK_BASE_URL}/status/404`);
@@ -338,7 +319,7 @@ test.describe('Runner 多请求与停止验证', () => {
   });
 
   test('Runner 运行中配置不可修改', async ({ page }) => {
-    const colName = `Runner配置禁用_${Date.now()}`;
+    const colName = uniqueId('Runner配置禁用_');
     await coll.createCollection(colName);
 
     await rp.setUrl(`${MOCK_BASE_URL}/delay/3`);
@@ -367,34 +348,14 @@ test.describe('Runner 多请求与停止验证', () => {
     await runner.close();
     await waitForModalClose(page);
   });
-});
-
-test.describe('Runner 断言与结果展示', () => {
-  let coll: CollectionPage;
-  let rp: RequestPage;
-  let runner: RunnerPage;
-  let tabBar: TabBar;
-  let saveDialog: SaveDialogPage;
-
-  test.describe.configure({ timeout: 60_000 });
-
-  test.beforeEach(async ({ page }) => {
-    coll = new CollectionPage(page);
-    rp = new RequestPage(page);
-    runner = new RunnerPage(page);
-    tabBar = new TabBar(page);
-    saveDialog = new SaveDialogPage(page);
-    await page.goto('/');
-  });
 
   test('Runner 含断言的请求显示测试结果', async ({ page }) => {
-    const colName = `Runner断言_${Date.now()}`;
+    const colName = uniqueId('Runner断言_');
     await coll.createCollection(colName);
 
     // 配置请求并添加 post-response test
     await rp.setMockUrl('/get');
-    await rp.switchTab('tests');
-    await page.locator('#post-script-textarea').fill('tests["Status is 200"] = response.status === 200;');
+    await rp.fillPostScript('tests["Status is 200"] = response.status === 200;');
 
     await saveDialog.save(colName);
 
@@ -408,8 +369,8 @@ test.describe('Runner 断言与结果展示', () => {
     await expect(runner.summary).toBeVisible({ timeout: 30000 });
 
     // 展开结果查看断言
-    const resultItem = page.locator('.runner-result-item').first();
-    await resultItem.locator('.runner-result-summary').click();
+    const resultItem = runner.resultItems.first();
+    await runner.expandResultDetail(0);
     await expect(resultItem.locator('.runner-assertion')).toBeVisible();
     await expect(resultItem.locator('.runner-assertion.pass')).toContainText('Status is 200');
 
@@ -418,13 +379,12 @@ test.describe('Runner 断言与结果展示', () => {
   });
 
   test('Runner 断言失败的请求显示失败状态', async ({ page }) => {
-    const colName = `Runner断言失败_${Date.now()}`;
+    const colName = uniqueId('Runner断言失败_');
     await coll.createCollection(colName);
 
     // 配置请求并添加会失败的 post-response test
     await rp.setMockUrl('/get');
-    await rp.switchTab('tests');
-    await page.locator('#post-script-textarea').fill('tests["Should be 404"] = response.status === 404;');
+    await rp.fillPostScript('tests["Should be 404"] = response.status === 404;');
 
     await saveDialog.save(colName);
 
@@ -441,8 +401,8 @@ test.describe('Runner 断言与结果展示', () => {
     await expect(runner.summary).toContainText('失败');
 
     // 展开结果查看断言
-    const resultItem = page.locator('.runner-result-item').first();
-    await resultItem.locator('.runner-result-summary').click();
+    const resultItem = runner.resultItems.first();
+    await runner.expandResultDetail(0);
     await expect(resultItem.locator('.runner-assertion.fail')).toBeVisible();
     await expect(resultItem.locator('.runner-assertion.fail')).toContainText('Should be 404');
 

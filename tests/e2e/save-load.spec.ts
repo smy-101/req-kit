@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures';
 import { MOCK_BASE_URL } from './helpers/mock';
-import { waitForModalClose } from './helpers/wait';
+import { waitForModalClose, uniqueId } from './helpers/wait';
 import { CollectionPage } from './pages/collection-page';
 import { RequestPage } from './pages/request-page';
 import { SaveDialogPage } from './pages/save-dialog-page';
@@ -19,7 +19,7 @@ test.describe('保存与加载请求', () => {
   });
 
   test('保存请求到集合', async ({ page }) => {
-    const colName = `保存测试_${Date.now()}`;
+    const colName = uniqueId('保存测试_');
     await coll.createCollection(colName);
 
     await rp.selectMethod('POST');
@@ -38,7 +38,7 @@ test.describe('保存与加载请求', () => {
   });
 
   test('从集合加载请求', async ({ page }) => {
-    const colName = `加载测试_${Date.now()}`;
+    const colName = uniqueId('加载测试_');
     await coll.createCollection(colName);
 
     const testUrl = `${MOCK_BASE_URL}/put`;
@@ -56,7 +56,7 @@ test.describe('保存与加载请求', () => {
   });
 
   test('右键复制请求', async ({ page }) => {
-    const colName = `复制测试_${Date.now()}`;
+    const colName = uniqueId('复制测试_');
     await coll.createCollection(colName);
 
     await rp.selectMethod('DELETE');
@@ -77,7 +77,7 @@ test.describe('保存与加载请求', () => {
   });
 
   test('右键删除请求', async ({ page }) => {
-    const colName = `删除请求测试_${Date.now()}`;
+    const colName = uniqueId('删除请求测试_');
     await coll.createCollection(colName);
 
     await rp.selectMethod('PATCH');
@@ -99,20 +99,20 @@ test.describe('保存与加载请求', () => {
   });
 
   test('保存时使用自定义请求名称', async ({ page }) => {
-    const colName = `自定义名称_${Date.now()}`;
+    const colName = uniqueId('自定义名称_');
     await coll.createCollection(colName);
 
     await rp.selectMethod('GET');
     await rp.setMockUrl('/get');
 
-    const customName = `我的自定义请求_${Date.now()}`;
+    const customName = uniqueId('我的自定义请求_');
     await saveDialog.save(colName, customName);
 
     await expect(coll.tree.locator('.tree-item').filter({ hasText: customName })).toBeVisible();
   });
 
   test('取消保存不创建请求', async ({ page }) => {
-    const colName = `取消测试_${Date.now()}`;
+    const colName = uniqueId('取消测试_');
     await coll.createCollection(colName);
 
     await rp.setMockUrl('/get');
@@ -124,8 +124,8 @@ test.describe('保存与加载请求', () => {
   });
 
   test('保存到不同的集合', async ({ page }) => {
-    const colA = `集合AX_${Date.now()}`;
-    const colB = `集合BX_${Date.now()}`;
+    const colA = uniqueId('集合AX_');
+    const colB = uniqueId('集合BX_');
 
     await coll.createCollection(colA);
     await coll.createCollection(colB);
@@ -139,7 +139,7 @@ test.describe('保存与加载请求', () => {
 
   test('修改已保存请求并再次保存', async ({ page }) => {
     const tabBar = new TabBar(page);
-    const colName = `更新测试_${Date.now()}`;
+    const colName = uniqueId('更新测试_');
     await coll.createCollection(colName);
 
     const originalUrl = `${MOCK_BASE_URL}/post`;
@@ -169,7 +169,7 @@ test.describe('保存与加载请求', () => {
   });
 
   test('加载集合请求时已有匹配标签页则切换而非新建', async ({ page }) => {
-    const colName = `去重测试_${Date.now()}`;
+    const colName = uniqueId('去重测试_');
     await coll.createCollection(colName);
 
     const testUrl = `${MOCK_BASE_URL}/get`;

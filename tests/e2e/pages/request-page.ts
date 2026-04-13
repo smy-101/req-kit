@@ -25,6 +25,8 @@ export class RequestPage {
   readonly multipartAddBtn: Locator;
   readonly multipartRows: Locator;
   readonly binaryEditor: Locator;
+  readonly scriptTextarea: Locator;
+  readonly postScriptTextarea: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -49,6 +51,8 @@ export class RequestPage {
     this.multipartAddBtn = page.locator('.multipart-add-btn');
     this.multipartRows = page.locator('.multipart-row');
     this.binaryEditor = page.locator('#binary-editor');
+    this.scriptTextarea = page.locator('#script-textarea');
+    this.postScriptTextarea = page.locator('#post-script-textarea');
   }
 
   async navigate() {
@@ -162,6 +166,30 @@ export class RequestPage {
   async setMultipartFile(rowIndex: number, payload: { name: string; mimeType: string; buffer: Buffer }) {
     const row = this.multipartRows.nth(rowIndex);
     await row.locator('input[type="file"]').setInputFiles(payload);
+    return this;
+  }
+
+  async fillPreScript(code: string) {
+    await this.switchTab('script');
+    await this.scriptTextarea.fill(code);
+    return this;
+  }
+
+  async fillPostScript(code: string) {
+    await this.switchTab('tests');
+    await this.postScriptTextarea.fill(code);
+    return this;
+  }
+
+  async sendAndWait(url: string, expectedStatus?: string | RegExp, options?: { timeout?: number }) {
+    await this.urlInput.fill(url);
+    await this.clickSend();
+    const opts = options?.timeout ? { timeout: options.timeout } : undefined;
+    if (expectedStatus !== undefined) {
+      await expect(this.page.locator('#response-status')).toContainText(expectedStatus, opts);
+    } else {
+      await expect(this.page.locator('#response-status')).toBeVisible(opts);
+    }
     return this;
   }
 }

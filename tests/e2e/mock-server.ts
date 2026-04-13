@@ -317,6 +317,19 @@ if (streamMatch && method === 'GET') {
   });
 }
 
+// /large-json — 600+ 行 JSON 响应，触发虚拟滚动
+const largeJsonMatch = path.match(/^\/large-json$/);
+if (largeJsonMatch && method === 'GET') {
+  const data = { items: Array.from({ length: 300 }, (_, i) => ({
+    id: i + 1,
+    name: `Item ${i + 1}`,
+    description: `Description for item ${i + 1} with some extra text`,
+    tags: [`tag-${i % 10}`, `category-${i % 5}`],
+    active: i % 3 !== 0,
+  }))};
+  return json(data);
+}
+
 return json({ error: 'Not Found' }, 404);
   },
 });

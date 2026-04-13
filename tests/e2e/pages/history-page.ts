@@ -9,6 +9,7 @@ export class HistoryPage {
   readonly items: Locator;
   readonly emptyMsg: Locator;
   readonly methodChips: Locator;
+  readonly loadMoreBtn: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -19,6 +20,7 @@ export class HistoryPage {
     this.items = page.locator('.history-item');
     this.emptyMsg = page.locator('.history-empty');
     this.methodChips = page.locator('.history-chip');
+    this.loadMoreBtn = page.locator('.history-more-btn');
   }
 
   async expand() {
@@ -70,5 +72,19 @@ export class HistoryPage {
 
   getItemAgo(index: number) {
     return this.items.nth(index).locator('.history-ago');
+  }
+
+  async loadMore() {
+    await this.loadMoreBtn.click();
+    return this;
+  }
+
+  async getItemCount(): Promise<number> {
+    return this.items.count();
+  }
+
+  async waitForItems(timeout = 5000) {
+    await this.items.first().waitFor({ state: 'visible', timeout });
+    return this;
   }
 }

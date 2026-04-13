@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-import { sendRequestAndWait, waitForModal, waitForModalClose, switchRequestTab } from './helpers/wait';
+import { sendRequestAndWait, waitForModal, waitForModalClose, switchRequestTab, uniqueId } from './helpers/wait';
 import { MOCK_BASE_URL } from './helpers/mock';
 import { EnvironmentPage } from './pages/environment-page';
 import { VariablePage } from './pages/variable-page';
@@ -17,7 +17,7 @@ test.describe('变量在 Headers 和 Body 中的替换', () => {
     const rp = new RequestPage(page);
 
     // 创建环境并添加变量
-    const envName = `HeaderVar_${Date.now()}`;
+    const envName = uniqueId('HeaderVar_');
     await envPage.open();
     await envPage.createEnv(envName);
     await envPage.selectEnv(envName);
@@ -44,7 +44,7 @@ test.describe('变量在 Headers 和 Body 中的替换', () => {
     const rp = new RequestPage(page);
 
     // 创建环境并添加变量
-    const envName = `BodyVar_${Date.now()}`;
+    const envName = uniqueId('BodyVar_');
     await envPage.open();
     await envPage.createEnv(envName);
     await envPage.selectEnv(envName);
@@ -75,7 +75,7 @@ test.describe('变量解析增强', () => {
     const coll = new CollectionPage(page);
 
     // 创建集合
-    const colName = `ColVar_${Date.now()}`;
+    const colName = uniqueId('ColVar_');
     await coll.createCollection(colName);
 
     // 设置集合变量
@@ -85,7 +85,7 @@ test.describe('变量解析增强', () => {
     const kvEditor = page.locator('#modal #coll-var-editor');
     await kvEditor.locator('.kv-add-btn').waitFor({ state: 'visible' });
     await kvEditor.locator('.kv-add-btn').click();
-    const collKey = `coll_host_${Date.now()}`;
+    const collKey = `coll_host_${crypto.randomUUID()}`;
     await kvEditor.locator('.kv-row').first().locator('.kv-key').fill(collKey);
     await kvEditor.locator('.kv-row').first().locator('.kv-value').fill('localhost:4000');
     // 集合变量保存按钮是 #save-coll-vars
@@ -112,7 +112,7 @@ test.describe('变量解析增强', () => {
     const envPage = new EnvironmentPage(page);
     const rp = new RequestPage(page);
 
-    const varKey = `priority_${Date.now()}`;
+    const varKey = `priority_${crypto.randomUUID()}`;
 
     // 设置全局变量
     await varPage.openGlobalVars();
@@ -120,7 +120,7 @@ test.describe('变量解析增强', () => {
     await varPage.saveGlobalVars();
 
     // 创建环境并设置同名变量
-    const envName = `PriorityEnv_${Date.now()}`;
+    const envName = uniqueId('PriorityEnv_');
     await envPage.open();
     await envPage.createEnv(envName);
     await envPage.selectEnv(envName);
