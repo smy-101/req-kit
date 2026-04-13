@@ -1,4 +1,5 @@
 import type { Page, Locator } from '../fixtures';
+import { expect } from '../fixtures';
 import { MOCK_BASE_URL } from '../helpers/mock';
 
 export class RequestPage {
@@ -23,6 +24,7 @@ export class RequestPage {
   readonly multipartEditor: Locator;
   readonly multipartAddBtn: Locator;
   readonly multipartRows: Locator;
+  readonly binaryEditor: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -46,6 +48,7 @@ export class RequestPage {
     this.multipartEditor = page.locator('#multipart-editor');
     this.multipartAddBtn = page.locator('.multipart-add-btn');
     this.multipartRows = page.locator('.multipart-row');
+    this.binaryEditor = page.locator('#binary-editor');
   }
 
   async navigate() {
@@ -139,6 +142,26 @@ export class RequestPage {
 
   async formatBody() {
     await this.formatBodyBtn.click();
+    return this;
+  }
+
+  async setBinaryFile(payload: { name: string; mimeType: string; buffer: Buffer }) {
+    await this.page.setInputFiles('#binary-editor input[type="file"]', payload);
+    return this;
+  }
+
+  async setMultipartRowType(rowIndex: number, type: 'text' | 'file') {
+    const row = this.multipartRows.nth(rowIndex);
+    await row.locator('.multipart-type').selectOption(type);
+    if (type === 'file') {
+      await expect(row.locator('.multipart-file-btn')).toBeVisible();
+    }
+    return this;
+  }
+
+  async setMultipartFile(rowIndex: number, payload: { name: string; mimeType: string; buffer: Buffer }) {
+    const row = this.multipartRows.nth(rowIndex);
+    await row.locator('input[type="file"]').setInputFiles(payload);
     return this;
   }
 }

@@ -211,7 +211,7 @@ function preparePipelineRequest(
   let { url, headers, params, bodyStr } = resolveTemplateVariables(input, variableService, resolveContext);
 
   // Step 1.5: Build actual body for proxy
-  const { proxyBody, originalBodyForHistory } = buildProxyBody(input.body, input.body_type, headers, bodyStr);
+  let { proxyBody, originalBodyForHistory } = buildProxyBody(input.body, input.body_type, headers, bodyStr);
   const bodyType = input.body_type;
 
   // Step 2: Pre-request script
@@ -239,7 +239,13 @@ function preparePipelineRequest(
 
     headers = { ...headers, ...scriptResult.headers };
     params = { ...params, ...scriptResult.params };
-    if (scriptResult.body !== undefined) bodyStr = scriptResult.body;
+    if (scriptResult.body !== undefined) {
+      bodyStr = scriptResult.body;
+      // 重建 proxyBody 以反映脚本对 body 的修改（仅非 multipart/binary 类型）
+      if (bodyType !== 'multipart' && bodyType !== 'binary') {
+        proxyBody = bodyStr;
+      }
+    }
     scriptLogs = scriptResult.logs;
     scriptVariables = scriptResult.variables;
   }

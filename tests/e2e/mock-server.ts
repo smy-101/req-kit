@@ -240,12 +240,13 @@ const server = Bun.serve({
       const params = getQueryParams(url.toString());
       const cookiePairs = Object.entries(params).map(([k, v]) => `${k}=${v}; Path=/`);
       const body = JSON.stringify({ cookies: params });
-      return new Response(body, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Set-Cookie': cookiePairs,
-        },
-      });
+      // 使用 Headers 对象以支持多个 Set-Cookie 头（对象字面量不支持同键多值）
+      const headers = new Headers();
+      headers.set('Content-Type', 'application/json');
+      for (const pair of cookiePairs) {
+        headers.append('Set-Cookie', pair);
+      }
+      return new Response(body, { headers });
     }
 
     // /response-headers
