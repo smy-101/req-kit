@@ -108,11 +108,67 @@ test.describe('标签页高级功能', () => {
     await expect(page.locator('.confirm-dialog')).not.toBeVisible();
   });
 
+  test('脏标签页关闭对话框 — 保存更改并关闭', async ({ page }) => {
+    const colName = `脏保存_${Date.now()}`;
+    await coll.createCollection(colName);
+
+    await rp.setMockUrl('/get');
+    await page.locator('#save-btn').click();
+    await expect(page.locator('#modal')).toBeVisible();
+    await page.locator('#modal #save-col-select').selectOption({ label: colName });
+    await page.locator('#modal #save-confirm').click();
+    await waitForModalClose(page);
+
+    // 修改请求使其变为脏状态
+    await rp.urlInput.click();
+    await rp.urlInput.pressSequentially('123');
+    await expect(page.locator('.request-tab-title').first()).toContainText('●');
+
+    await page.locator('.request-tab-close').first().click();
+    await expect(page.locator('.confirm-dialog')).toBeVisible();
+
+    // 点击"保存"按钮 — 应触发快速保存并关闭标签页
+    await page.locator('#dirty-save').click();
+
+    // 对话框关闭，标签页被关闭
+    await expect(page.locator('.confirm-dialog')).not.toBeVisible();
+    await expect(page.locator('.request-tab')).toHaveCount(1);
+  });
+
   test('鼠标中键关闭标签页', async ({ page }) => {
     await tabBar.addTab();
     await expect(page.locator('.request-tab')).toHaveCount(2);
 
     await page.locator('.request-tab').first().click({ button: 'middle' });
+    await expect(page.locator('.request-tab')).toHaveCount(1);
+  });
+
+  test('中键关闭脏标签页显示确认对话框', async ({ page }) => {
+    const colName = `中键脏_${Date.now()}`;
+    await coll.createCollection(colName);
+
+    await rp.setMockUrl('/get');
+    await page.locator('#save-btn').click();
+    await expect(page.locator('#modal')).toBeVisible();
+    await page.locator('#modal #save-col-select').selectOption({ label: colName });
+    await page.locator('#modal #save-confirm').click();
+    await waitForModalClose(page);
+
+    // 修改请求使其变为脏状态
+    await rp.urlInput.click();
+    await rp.urlInput.pressSequentially('xyz');
+    await expect(page.locator('.request-tab-title').first()).toContainText('●');
+
+    // 中键点击脏标签页
+    await page.locator('.request-tab').first().click({ button: 'middle' });
+
+    // 应弹出未保存确认对话框
+    await expect(page.locator('.confirm-dialog')).toBeVisible();
+    await expect(page.locator('.confirm-dialog-title')).toContainText('未保存的变更');
+
+    // 点击取消后标签页仍存在
+    await page.locator('#dirty-cancel').click();
+    await expect(page.locator('.confirm-dialog')).not.toBeVisible();
     await expect(page.locator('.request-tab')).toHaveCount(1);
   });
 

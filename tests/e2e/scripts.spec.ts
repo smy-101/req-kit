@@ -135,4 +135,25 @@ test.describe('脚本与测试', () => {
     // 验证新标签页的脚本是空的
     await expect(page.locator('#script-textarea')).toHaveValue('');
   });
+
+  test('Pre-request Script 抛错阻止请求发送', async ({ page }) => {
+    const rp = new RequestPage(page);
+
+    // 设置 URL（send 按钮在 URL 为空时不会发送请求）
+    await rp.setMockUrl('/get');
+
+    await rp.switchTab('script');
+
+    const textarea = page.locator('#script-textarea');
+    await textarea.fill('throw new Error("script crash")');
+
+    await rp.clickSend();
+
+    // 应显示 Error 状态
+    await expect(page.locator('#response-status')).toContainText('Error');
+    await expect(page.locator('#response-status')).toHaveClass(/status-5xx/);
+
+    // 响应体应包含错误信息
+    await expect(page.locator('#response-body')).toContainText('script crash');
+  });
 });

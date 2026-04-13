@@ -204,4 +204,26 @@ test.describe('集合变量', () => {
     const treeItem = coll.tree.locator('.tree-item').filter({ hasText: colName });
     await expect(treeItem.locator('.coll-var-indicator')).toBeVisible();
   });
+
+  test('集合变量 badge 显示正确数量', async ({ page }) => {
+    const colName = `变量数量_${Date.now()}`;
+    await coll.createCollection(colName);
+
+    await coll.openCollectionVars(colName);
+
+    // 添加 3 个变量
+    for (let i = 1; i <= 3; i++) {
+      await page.locator('#modal .kv-add-btn').click();
+      const row = page.locator('#modal .kv-row').nth(i);
+      await row.locator('.kv-key').fill(`key${i}`);
+      await row.locator('.kv-value').fill(`val${i}`);
+    }
+
+    await page.locator('#modal #save-coll-vars').click();
+    await waitForModalClose(page);
+
+    // 验证 badge 显示 {3}
+    const treeItem = coll.tree.locator('.tree-item').filter({ hasText: colName });
+    await expect(treeItem.locator('.coll-var-indicator')).toContainText('{3}');
+  });
 });

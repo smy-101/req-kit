@@ -167,4 +167,21 @@ test.describe('保存与加载请求', () => {
     await expect(rp.urlInput).toHaveValue(updatedUrl);
     await expect(rp.methodSelect).toHaveValue('PUT');
   });
+
+  test('加载集合请求时已有匹配标签页则切换而非新建', async ({ page }) => {
+    const colName = `去重测试_${Date.now()}`;
+    await coll.createCollection(colName);
+
+    const testUrl = `${MOCK_BASE_URL}/get`;
+    await rp.setUrl(testUrl);
+    await saveDialog.save(colName);
+
+    await expect(coll.tree.locator('.method-badge.method-GET').first()).toBeVisible();
+    await expect(page.locator('.request-tab')).toHaveCount(1);
+
+    // 点击侧边栏已打开的请求 — 应切换到已有标签页而非新建
+    await coll.tree.locator('.method-badge.method-GET').first().click();
+    await expect(page.locator('.request-tab')).toHaveCount(1);
+    await expect(rp.urlInput).toHaveValue(testUrl);
+  });
 });
