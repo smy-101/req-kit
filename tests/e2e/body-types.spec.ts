@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures';
 import { MOCK_BASE_URL } from './helpers/mock';
-import { sendRequestAndWait } from './helpers/wait';
+import { sendRequestAndWait, waitForToast } from './helpers/wait';
 import { RequestPage } from './pages/request-page';
 import { ResponsePage } from './pages/response-page';
 
@@ -170,5 +170,36 @@ test.describe('Body 类型发送验证', () => {
     const responsePage = new ResponsePage(page);
     await expect(responsePage.formatContent).toContainText('GetUser');
     await expect(responsePage.formatContent).toContainText('variables');
+  });
+});
+
+test.describe('Body 格式化错误处理', () => {
+  let rp: RequestPage;
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    rp = new RequestPage(page);
+  });
+
+  test('Format JSON 对无效 JSON 显示错误 toast', async ({ page }) => {
+    await rp.switchTab('body');
+    await rp.bodyTextarea.fill('not valid json');
+
+    await rp.formatBody();
+
+    await waitForToast(page);
+  });
+
+  test('Format GraphQL Variables 对无效 JSON 显示错误 toast', async ({ page }) => {
+    await rp.switchTab('body');
+    await rp.selectBodyType('graphql');
+
+    await rp.graphqlQuery.fill('{ __typename }');
+    await rp.graphqlVariables.fill('{ invalid }');
+
+    // 点击 "Format Variables"
+    await rp.formatBody();
+
+    await waitForToast(page);
   });
 });

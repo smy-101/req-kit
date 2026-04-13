@@ -132,6 +132,43 @@ test.describe('环境未保存更改警告', () => {
     await page.locator('#close-env-modal').click();
   });
 
+  test('切换环境时确认丢弃未保存变量', async ({ page }) => {
+    const envPage = new EnvironmentPage(page);
+
+    // 打开环境管理弹窗
+    await envPage.open();
+
+    // 创建两个环境
+    const env1 = `丢弃A_${Date.now()}`;
+    const env2 = `丢弃B_${Date.now()}`;
+    await envPage.createEnv(env1);
+    await envPage.createEnv(env2);
+
+    // 选择第一个环境
+    await envPage.selectEnv(env1);
+    await expect(page.locator('#env-vars-editor .kv-editor')).toBeVisible({ timeout: 5000 });
+
+    // 添加变量（不保存）
+    await page.locator('#env-vars-editor .kv-key').first().fill('discard_key');
+    await page.locator('#env-vars-editor .kv-value').first().fill('discard_value');
+
+    // 尝试切换到第二个环境
+    await page.locator('#modal .env-item').filter({ hasText: env2 }).dispatchEvent('click');
+
+    // 验证确认对话框出现
+    await expect(page.locator('.confirm-dialog')).toBeVisible({ timeout: 5000 });
+
+    // 点击确认（丢弃更改）
+    await page.locator('.confirm-dialog .modal-btn-primary').click();
+    await expect(page.locator('.confirm-dialog')).not.toBeVisible();
+
+    // 验证已切换到第二个环境
+    await expect(page.locator('#env-vars-editor .kv-key').first()).not.toHaveValue('discard_key');
+
+    // 关闭弹窗
+    await page.locator('#close-env-modal').click();
+  });
+
   test('环境变量保存后切换不弹出确认', async ({ page }) => {
     const envPage = new EnvironmentPage(page);
 

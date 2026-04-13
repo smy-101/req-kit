@@ -34,9 +34,12 @@ test.describe('集合 Runner', () => {
     await saveDialog.save(colName);
 
     await runCollection(page, colName);
-
     await expect(runner.panel).toBeVisible();
     await expect(page.locator('#modal .runner-title')).toContainText(colName);
+
+    // 点击运行按钮
+    await runner.run();
+
     await expect(runner.progressText).toBeVisible();
 
     // 等待运行完成
@@ -56,6 +59,7 @@ test.describe('集合 Runner', () => {
     await runCollection(page, colName);
     await expect(runner.panel).toBeVisible();
 
+    await runner.run();
     await expect(runner.summary).toBeVisible({ timeout: 30000 });
 
     await expect(runner.closeBtn).toBeVisible();
@@ -73,6 +77,7 @@ test.describe('集合 Runner', () => {
     await runCollection(page, colName);
     await expect(runner.panel).toBeVisible();
 
+    await runner.run();
     await expect(runner.summary).toBeVisible({ timeout: 30000 });
 
     const resultItem = page.locator('.runner-result-item').first();
@@ -104,13 +109,14 @@ test.describe('集合 Runner', () => {
     await expect(runner.retryCount).toHaveValue('0');
     await expect(runner.retryDelay).toHaveValue('1000');
 
+    await runner.run();
     await expect(runner.summary).toBeVisible({ timeout: 30000 });
 
     await runner.close();
     await waitForModalClose(page);
   });
 
-  test('Runner 停止按钮存在', async ({ page }) => {
+  test('Runner 停止按钮在运行中出现', async ({ page }) => {
     const colName = `Runner停止_${Date.now()}`;
     await coll.createCollection(colName);
 
@@ -120,6 +126,8 @@ test.describe('集合 Runner', () => {
     await runCollection(page, colName);
     await expect(runner.panel).toBeVisible();
 
+    // 点击运行，然后立即检查停止按钮
+    await runner.run();
     await expect(runner.stopBtn).toBeVisible();
 
     await expect(runner.summary).toBeVisible({ timeout: 30000 });
@@ -149,8 +157,9 @@ test.describe('集合 Runner', () => {
     await runCollection(page, colName);
     await expect(runner.panel).toBeVisible();
 
-    await expect(runner.progressText).toBeVisible();
+    await runner.run();
 
+    // 等待停止按钮出现
     await expect(runner.stopBtn).toBeVisible();
 
     await runner.stop();
@@ -206,6 +215,8 @@ test.describe('Runner 多请求与停止验证', () => {
     // 验证 Runner 面板出现
     await expect(runner.panel).toBeVisible();
 
+    await runner.run();
+
     // 验证结果数量达到 2
     await expect(page.locator('.runner-result-item')).toHaveCount(2, { timeout: 30000 });
 
@@ -235,7 +246,8 @@ test.describe('Runner 多请求与停止验证', () => {
     await runCollection(page, colName);
 
     await expect(runner.panel).toBeVisible();
-    await expect(runner.progressText).toBeVisible();
+
+    await runner.run();
 
     // 等待第一个请求完成（出现结果项），而不是用固定 sleep
     await expect(page.locator('.runner-result-item').first()).toBeVisible({ timeout: 10000 });
@@ -271,5 +283,197 @@ test.describe('Runner 多请求与停止验证', () => {
       expect(hasResultItems || hasSummary).toBeTruthy();
     }
     // 如果面板已自动关闭，也是可接受的行为
+  });
+
+  test('Runner 重试 — 全部失败（网络错误）', async ({ page }) => {
+    const colName = `Runner重试失败_${Date.now()}`;
+    await coll.createCollection(colName);
+
+    // 使用不可达 URL 触发网络错误（retryable）
+    await rp.setUrl('http://this-host-does-not-exist-12345.invalid/get');
+    await saveDialog.save(colName);
+
+    await runCollection(page, colName);
+    await expect(runner.panel).toBeVisible();
+
+    // 设置重试（运行前配置）
+    await runner.setRetry('2');
+    await runner.setRetryDelay('500');
+
+    // 点击运行
+    await runner.run();
+
+    // 等待运行完成
+    await expect(runner.summary).toBeVisible({ timeout: 30000 });
+
+    // 验证结果为失败（网络错误导致失败）
+    await expect(runner.summary).toContainText('失败');
+
+    // 验证重试徽章出现
+    const retryBadge = page.locator('.runner-retry-badge').first();
+    await expect(retryBadge).toBeVisible();
+  });
+
+  test('Runner 重试 — 间歇性失败后成功', async ({ page }) => {
+    const colName = `Runner重试成功_${Date.now()}`;
+    await coll.createCollection(colName);
+
+    // flaky 端点：前 2 次返回 500，第 3 次返回 200
+    const flakyUrl = `${MOCK_BASE_URL}/flaky?fail_count=2`;
+    await rp.setUrl(flakyUrl);
+    await saveDialog.save(colName);
+
+    await runCollection(page, colName);
+    await expect(runner.panel).toBeVisible();
+
+    // 设置重试 2 次
+    await runner.setRetry('2');
+    await runner.setRetryDelay('500');
+
+    // 点击运行
+    await runner.run();
+
+    // 等待运行完成
+    await expect(runner.summary).toBeVisible({ timeout: 30000 });
+
+    // 验证结果为通过
+    await expect(runner.summary).toContainText('通过');
+  });
+
+  test('Runner 重试 — 4xx 不触发重试', async ({ page }) => {
+    const colName = `Runner4xx不重试_${Date.now()}`;
+    await coll.createCollection(colName);
+
+    await rp.setUrl(`${MOCK_BASE_URL}/status/404`);
+    await saveDialog.save(colName);
+
+    await runCollection(page, colName);
+    await expect(runner.panel).toBeVisible();
+
+    // 设置重试
+    await runner.setRetry('2');
+
+    // 点击运行
+    await runner.run();
+
+    // 等待运行完成
+    await expect(runner.summary).toBeVisible({ timeout: 30000 });
+
+    // 4xx 不应触发重试，不应出现重试徽章
+    const retryBadge = page.locator('.runner-retry-badge').first();
+    await expect(retryBadge).not.toBeVisible();
+  });
+
+  test('Runner 运行中配置不可修改', async ({ page }) => {
+    const colName = `Runner配置禁用_${Date.now()}`;
+    await coll.createCollection(colName);
+
+    await rp.setUrl(`${MOCK_BASE_URL}/delay/3`);
+    await saveDialog.save(colName);
+
+    await runCollection(page, colName);
+    await expect(runner.panel).toBeVisible();
+
+    // 运行前配置应该可编辑
+    await expect(runner.retryCount).toBeEnabled();
+    await expect(runner.retryDelay).toBeEnabled();
+
+    // 点击运行
+    await runner.run();
+
+    // 运行中验证配置输入框被禁用
+    await expect(runner.retryCount).toBeDisabled();
+    await expect(runner.retryDelay).toBeDisabled();
+
+    await expect(runner.summary).toBeVisible({ timeout: 30000 });
+
+    // 运行完成后配置应恢复可编辑
+    await expect(runner.retryCount).toBeEnabled();
+    await expect(runner.retryDelay).toBeEnabled();
+
+    await runner.close();
+    await waitForModalClose(page);
+  });
+});
+
+test.describe('Runner 断言与结果展示', () => {
+  let coll: CollectionPage;
+  let rp: RequestPage;
+  let runner: RunnerPage;
+  let tabBar: TabBar;
+  let saveDialog: SaveDialogPage;
+
+  test.describe.configure({ timeout: 60_000 });
+
+  test.beforeEach(async ({ page }) => {
+    coll = new CollectionPage(page);
+    rp = new RequestPage(page);
+    runner = new RunnerPage(page);
+    tabBar = new TabBar(page);
+    saveDialog = new SaveDialogPage(page);
+    await page.goto('/');
+  });
+
+  test('Runner 含断言的请求显示测试结果', async ({ page }) => {
+    const colName = `Runner断言_${Date.now()}`;
+    await coll.createCollection(colName);
+
+    // 配置请求并添加 post-response test
+    await rp.setMockUrl('/get');
+    await rp.switchTab('tests');
+    await page.locator('#post-script-textarea').fill('tests["Status is 200"] = response.status === 200;');
+
+    await saveDialog.save(colName);
+
+    // 运行集合
+    await runCollection(page, colName);
+    await expect(runner.panel).toBeVisible();
+
+    await runner.run();
+
+    // 等待运行完成
+    await expect(runner.summary).toBeVisible({ timeout: 30000 });
+
+    // 展开结果查看断言
+    const resultItem = page.locator('.runner-result-item').first();
+    await resultItem.locator('.runner-result-summary').click();
+    await expect(resultItem.locator('.runner-assertion')).toBeVisible();
+    await expect(resultItem.locator('.runner-assertion.pass')).toContainText('Status is 200');
+
+    await runner.close();
+    await waitForModalClose(page);
+  });
+
+  test('Runner 断言失败的请求显示失败状态', async ({ page }) => {
+    const colName = `Runner断言失败_${Date.now()}`;
+    await coll.createCollection(colName);
+
+    // 配置请求并添加会失败的 post-response test
+    await rp.setMockUrl('/get');
+    await rp.switchTab('tests');
+    await page.locator('#post-script-textarea').fill('tests["Should be 404"] = response.status === 404;');
+
+    await saveDialog.save(colName);
+
+    // 运行集合
+    await runCollection(page, colName);
+    await expect(runner.panel).toBeVisible();
+
+    await runner.run();
+
+    // 等待运行完成
+    await expect(runner.summary).toBeVisible({ timeout: 30000 });
+
+    // 验证结果包含失败
+    await expect(runner.summary).toContainText('失败');
+
+    // 展开结果查看断言
+    const resultItem = page.locator('.runner-result-item').first();
+    await resultItem.locator('.runner-result-summary').click();
+    await expect(resultItem.locator('.runner-assertion.fail')).toBeVisible();
+    await expect(resultItem.locator('.runner-assertion.fail')).toContainText('Should be 404');
+
+    await runner.close();
+    await waitForModalClose(page);
   });
 });

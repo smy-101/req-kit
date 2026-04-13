@@ -101,9 +101,24 @@ test.describe('响应状态码样式', () => {
     await expect(rp.statusEl).toHaveClass(/status-4xx/);
   });
 
+  test('4xx 其他状态码样式（401、403）', async ({ page }) => {
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/status/401`, '401');
+    await expect(rp.statusEl).toHaveClass(/status-4xx/);
+
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/status/403`, '403');
+    await expect(rp.statusEl).toHaveClass(/status-4xx/);
+  });
+
   test('5xx 响应状态码样式', async ({ page }) => {
     await sendRequestAndWait(page, `${MOCK_BASE_URL}/status/500`, '500');
     await expect(rp.statusEl).toHaveClass(/status-5xx/);
+  });
+
+  test('2xx 成功状态码无错误样式', async ({ page }) => {
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/status/200`, '200');
+    await expect(rp.statusEl).not.toHaveClass(/status-4xx/);
+    await expect(rp.statusEl).not.toHaveClass(/status-5xx/);
+    await expect(rp.statusEl).not.toHaveClass(/status-3xx/);
   });
 
   test('3xx 重定向响应状态码样式', async ({ page }) => {

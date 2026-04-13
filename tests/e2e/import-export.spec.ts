@@ -145,4 +145,22 @@ test.describe('导入边界情况', () => {
 
     await waitForToast(page);
   });
+
+  test('导入 Postman v1.0 格式失败', async ({ page }) => {
+    await imexPage.open();
+
+    // Postman v1.0 格式 — schema 不是 v2.1
+    const postmanV1 = JSON.stringify({
+      info: { name: 'Old Collection', schema: 'https://schema.getpostman.com/json/collection/v1.0.0/collection.json' },
+      item: [
+        { name: 'Old Request', request: { method: 'GET', url: 'http://example.com' } },
+      ],
+    });
+
+    await imexPage.importType.selectOption('postman');
+    await imexPage.importContent.fill(postmanV1);
+    await imexPage.importActionBtn.click();
+
+    await waitForToast(page);
+  });
 });

@@ -5,6 +5,7 @@ export class RunnerPage {
   readonly panel: Locator;
   readonly closeBtn: Locator;
   readonly stopBtn: Locator;
+  readonly runBtn: Locator;
   readonly retryCount: Locator;
   readonly retryDelay: Locator;
   readonly summary: Locator;
@@ -13,8 +14,9 @@ export class RunnerPage {
   constructor(page: Page) {
     this.page = page;
     this.panel = page.locator('.runner-panel');
-    this.closeBtn = page.locator('.runner-close-btn');
+    this.closeBtn = page.locator('#runner-close-btn');
     this.stopBtn = page.locator('#runner-stop-btn');
+    this.runBtn = page.locator('#runner-run-btn');
     this.retryCount = page.locator('#runner-retry-count');
     this.retryDelay = page.locator('#runner-retry-delay');
     this.summary = page.locator('#runner-summary');
@@ -23,6 +25,11 @@ export class RunnerPage {
 
   async waitForPanel() {
     await this.panel.waitFor({ state: 'visible' });
+    return this;
+  }
+
+  async run() {
+    await this.runBtn.click();
     return this;
   }
 

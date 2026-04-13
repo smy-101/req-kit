@@ -65,6 +65,20 @@ test.describe('历史记录高级功能', () => {
     await history.clearAllWithConfirm();
   });
 
+  test('清空历史记录取消后保留数据', async ({ page }) => {
+    await history.expand();
+    await expect(history.items.first()).toBeVisible();
+
+    // 点击清空按钮，弹出确认对话框
+    await history.clearAll();
+
+    // 点击取消
+    await page.locator('#modal .modal-btn-secondary').click();
+
+    // 验证历史记录仍然存在
+    await expect(history.items.first()).toBeVisible();
+  });
+
   test('点击历史记录项加载请求', async ({ page }) => {
     const tabBar = new TabBar(page);
     await history.expand();

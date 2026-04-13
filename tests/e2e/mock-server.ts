@@ -274,7 +274,49 @@ const server = Bun.serve({
       });
     }
 
-    return json({ error: 'Not Found' }, 404);
+    // /flaky — 间歇性失败端点，前 N 次返回 500，之后返回 200
+// 用法: GET /flaky?fail_count=2
+const flakyCounts = new Map<string, number>();
+const flakyMatch = path.match(/^\/flaky$/);
+if (flakyMatch && method === 'GET') {
+  const params = getQueryParams(url.toString());
+  const failCount = parseInt(params['fail_count'] || '1', 10);
+  const key = url.toString();
+  const current = flakyCounts.get(key) || 0;
+  flakyCounts.set(key, current + 1);
+  if (current < failCount) {
+    return json({ error: 'Internal Server Error', attempt: current + 1 }, 500);
+  }
+  return json({ message: 'OK', attempts: current + 1 });
+}
+
+// /stream — SSE 流式响应端点
+// 用法: GET /stream?count=5
+const streamMatch = path.match(/^\/stream$/);
+if (streamMatch && method === 'GET') {
+  const params = getQueryParams(url.toString());
+  const count = Math.min(Math.max(parseInt(params['count'] || '5', 10), 1), 100);
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      for (let i = 1; i <= count; i++) {
+        const event = `event: message\ndata: ${JSON.stringify({ id: i, message: `chunk ${i}` })}\n\n`;
+        controller.enqueue(encoder.encode(event));
+        if (i < count) await Bun.sleep(100);
+      }
+      controller.close();
+    },
+  });
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    },
+  });
+}
+
+return json({ error: 'Not Found' }, 404);
   },
 });
 

@@ -16,7 +16,11 @@ export function init() {
         <svg class="runner-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         <span>${escapeHtml(collectionName)}</span>
       </div>
-      <button class="runner-stop-btn" id="runner-stop-btn">停止</button>
+      <div class="runner-header-actions">
+        <button class="runner-run-btn" id="runner-run-btn">运行</button>
+        <button class="runner-stop-btn hidden" id="runner-stop-btn">停止</button>
+        <button class="runner-close-btn hidden" id="runner-close-btn">关闭</button>
+      </div>
     </div>
     <div class="runner-config">
       <label class="runner-config-label">重试次数
@@ -29,7 +33,7 @@ export function init() {
     <div class="runner-progress-bar">
       <div class="runner-progress-fill" id="runner-progress-fill"></div>
     </div>
-    <div class="runner-progress-text" id="runner-progress-text">加载中...</div>
+    <div class="runner-progress-text" id="runner-progress-text">就绪</div>
     <div class="runner-results" id="runner-results"></div>
     <div class="runner-summary hidden" id="runner-summary"></div>`;
 
@@ -44,7 +48,9 @@ export function init() {
   const progressText = panel.querySelector('#runner-progress-text');
   const resultsEl = panel.querySelector('#runner-results');
   const summaryEl = panel.querySelector('#runner-summary');
+  const runBtn = panel.querySelector('#runner-run-btn');
   const stopBtn = panel.querySelector('#runner-stop-btn');
+  const closeBtn = panel.querySelector('#runner-close-btn');
   const retryCountInput = panel.querySelector('#runner-retry-count');
   const retryDelayInput = panel.querySelector('#runner-retry-delay');
 
@@ -53,20 +59,43 @@ export function init() {
     retryDelayInput.disabled = true;
   }
 
+  function enableConfig() {
+    retryCountInput.disabled = false;
+    retryDelayInput.disabled = false;
+  }
+
+  function showRunView() {
+    runBtn.classList.remove('hidden');
+    stopBtn.classList.add('hidden');
+    closeBtn.classList.add('hidden');
+    enableConfig();
+  }
+
+  function showRunningView() {
+    runBtn.classList.add('hidden');
+    stopBtn.classList.remove('hidden');
+    closeBtn.classList.add('hidden');
+    disableConfig();
+  }
+
+  function showDoneView() {
+    runBtn.classList.remove('hidden');
+    stopBtn.classList.add('hidden');
+    closeBtn.classList.remove('hidden');
+    enableConfig();
+  }
+
   stopBtn.addEventListener('click', () => {
     if (currentRun) { currentRun.abort(); currentRun = null; }
     stopBtn.textContent = '关闭中...'; stopBtn.disabled = true;
   });
 
-  function switchToClose() {
-    stopBtn.textContent = '关闭';
-    stopBtn.className = 'runner-close-btn';
-    stopBtn.disabled = false;
-    stopBtn.onclick = () => {
-      Modal.close();
-      if (currentRun) { currentRun.abort(); currentRun = null; }
-    };
-  }
+  closeBtn.addEventListener('click', () => {
+    Modal.close();
+    if (currentRun) { currentRun.abort(); currentRun = null; }
+  });
+
+  runBtn.addEventListener('click', () => startRun());
 
   function updateProgress() {
     const pct = totalRequests > 0 ? (completedRequests / totalRequests * 100) : 0;
@@ -155,18 +184,36 @@ export function init() {
     if (detailHtml) detailEl.innerHTML = detailHtml;
   }
 
-  const retryCount = Math.max(0, Math.min(5, parseInt(retryCountInput.value) || 0));
-  const retryDelayMs = Math.max(500, Math.min(10000, parseInt(retryDelayInput.value) || 1000));
-  disableConfig();
+  function startRun() {
+    // 重置状态
+    completedRequests = 0;
+    totalRequests = 0;
+    requestItems = [];
+    resultsEl.innerHTML = '';
+    summaryEl.classList.add('hidden');
+    summaryEl.innerHTML = '';
+    progressFill.style.width = '0%';
+    progressText.textContent = '运行中...';
+    stopBtn.textContent = '停止';
+    stopBtn.disabled = false;
 
-  currentRun = api.runCollection(collectionId, environmentId, {
-    onStart(data) { totalRequests = data.totalRequests; updateProgress(); if (totalRequests === 0) { progressText.textContent = '集合中没有请求'; switchToClose(); } },
-    onRequestStart(data) { const item = addRequestItem(data.index, data.name, data.method, data.url); requestItems[data.index] = item; item.el.classList.add('running'); item.el.querySelector('.runner-result-icon').textContent = '⏳'; },
-    onRequestRetry(data) { const item = requestItems[data.index]; if (!item) return; item.el.querySelector('.runner-result-icon').textContent = '\u{1F504}'; item.el.querySelector('.runner-result-status').textContent = `\u91CD\u8BD5 ${data.attempt}/${data.maxRetries}`; item.el.querySelector('.runner-result-status').className = 'runner-result-status retry'; },
-    onRequestComplete(data) { completedRequests++; updateProgress(); if (requestItems[data.index]) updateRequestItem(requestItems[data.index], data); },
-    onDone(data) { progressFill.style.width = '100%'; progressText.textContent = `完成 — ${completedRequests} / ${totalRequests} 个请求`; summaryEl.classList.remove('hidden'); summaryEl.innerHTML = `${data.stopped ? '<span class="summary-stopped">已停止</span>' : ''}<span class="summary-pass">${data.passed} 通过</span>${data.failed > 0 ? `<span class="summary-fail">${data.failed} 失败</span>` : ''}<span class="summary-total">共 ${data.total} 个</span><span class="summary-time">${data.totalTime}ms</span>`; switchToClose(); currentRun = null; },
-    onError(data) { progressText.textContent = '连接错误'; summaryEl.classList.remove('hidden'); summaryEl.innerHTML = `<span class="summary-fail">连接错误</span><span class="summary-total">已完成 ${completedRequests} / ${totalRequests} 个</span>`; switchToClose(); currentRun = null; },
-  }, { retryCount, retryDelayMs });
+    showRunningView();
+
+    const retryCount = Math.max(0, Math.min(5, parseInt(retryCountInput.value) || 0));
+    const retryDelayMs = Math.max(500, Math.min(10000, parseInt(retryDelayInput.value) || 1000));
+
+    currentRun = api.runCollection(collectionId, environmentId, {
+      onStart(data) { totalRequests = data.totalRequests; updateProgress(); if (totalRequests === 0) { progressText.textContent = '集合中没有请求'; showDoneView(); } },
+      onRequestStart(data) { const item = addRequestItem(data.index, data.name, data.method, data.url); requestItems[data.index] = item; item.el.classList.add('running'); item.el.querySelector('.runner-result-icon').textContent = '⏳'; },
+      onRequestRetry(data) { const item = requestItems[data.index]; if (!item) return; item.el.querySelector('.runner-result-icon').textContent = '\u{1F504}'; item.el.querySelector('.runner-result-status').textContent = `\u91CD\u8BD5 ${data.attempt}/${data.maxRetries}`; item.el.querySelector('.runner-result-status').className = 'runner-result-status retry'; },
+      onRequestComplete(data) { completedRequests++; updateProgress(); if (requestItems[data.index]) updateRequestItem(requestItems[data.index], data); },
+      onDone(data) { progressFill.style.width = '100%'; progressText.textContent = `完成 — ${completedRequests} / ${totalRequests} 个请求`; summaryEl.classList.remove('hidden'); summaryEl.innerHTML = `${data.stopped ? '<span class="summary-stopped">已停止</span>' : ''}<span class="summary-pass">${data.passed} 通过</span>${data.failed > 0 ? `<span class="summary-fail">${data.failed} 失败</span>` : ''}<span class="summary-total">共 ${data.total} 个</span><span class="summary-time">${data.totalTime}ms</span>`; showDoneView(); currentRun = null; },
+      onError(data) { progressText.textContent = '连接错误'; summaryEl.classList.remove('hidden'); summaryEl.innerHTML = `<span class="summary-fail">连接错误</span><span class="summary-total">已完成 ${completedRequests} / ${totalRequests} 个</span>`; showDoneView(); currentRun = null; },
+    }, { retryCount, retryDelayMs });
+  }
+
+  // 初始状态：显示运行按钮
+  showRunView();
   }
 
   return { openRunnerPanel };

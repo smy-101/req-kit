@@ -124,4 +124,25 @@ test.describe('认证面板', () => {
     await expect(auth.apiKeyValue).toHaveValue('secret123');
     await expect(auth.apiKeyIn).toHaveValue('query');
   });
+
+  test('API Key Query 参数发送请求出现在 URL 中', async ({ page }) => {
+    const rp = new RequestPage(page);
+    const auth = new AuthPage(page);
+    await rp.switchTab('auth');
+    await auth.selectType('apikey');
+
+    await auth.apiKeyKey.fill('api_key');
+    await page.waitForTimeout(200);
+    await auth.apiKeyValue.fill('secret123');
+    await page.waitForTimeout(200);
+    await auth.apiKeyIn.selectOption('query');
+    await page.waitForTimeout(200);
+
+    await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
+
+    // 验证 URL 中包含 api_key 参数
+    const responseBody = page.locator('#response-format-content');
+    await expect(responseBody).toContainText('api_key');
+    await expect(responseBody).toContainText('secret123');
+  });
 });

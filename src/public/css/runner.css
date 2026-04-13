@@ -57,6 +57,13 @@
   flex-shrink: 0;
 }
 
+.runner-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.runner-run-btn,
 .runner-stop-btn,
 .runner-close-btn {
   padding: 6px 16px;
@@ -69,6 +76,12 @@
   cursor: pointer;
   transition: all 150ms var(--ease);
   letter-spacing: 0.3px;
+}
+
+.runner-run-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
 }
 
 .runner-stop-btn:hover {
