@@ -229,3 +229,130 @@ describe('ScriptService', () => {
     expect(result.error).toBeDefined();
   });
 });
+
+describe('Sandbox security', () => {
+  let service: ScriptService;
+
+  beforeAll(() => {
+    service = new ScriptService(500);
+  });
+
+  // --- Prototype chain escape ---
+
+  test('blocks prototype chain constructor escape', () => {
+    const result = service.execute("this.constructor.constructor('return process')().exit()");
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+
+  test('blocks __proto__ access', () => {
+    const result = service.execute("this.__proto__.constructor('return process')()");
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+
+  // --- Indirect access ---
+
+  test('blocks indirect eval via comma operator', () => {
+    const result = service.execute("(0, eval)('1+1')");
+    expect(result.success).toBe(false);
+  });
+
+  // --- Blocked globals ---
+
+  test('blocks Proxy access', () => {
+    const result = service.execute("new Proxy({}, {})");
+    expect(result.success).toBe(false);
+  });
+
+  test('blocks Reflect access', () => {
+    const result = service.execute("Reflect.get({}, 'key')");
+    expect(result.success).toBe(false);
+  });
+
+  test('blocks WebAssembly access', () => {
+    const result = service.execute("WebAssembly.compile(new ArrayBuffer(0))");
+    expect(result.success).toBe(false);
+  });
+
+  test('blocks setTimeout', () => {
+    const result = service.execute("setTimeout(() => {}, 1000)");
+    expect(result.success).toBe(false);
+  });
+
+  test('blocks setInterval', () => {
+    const result = service.execute("setInterval(() => {}, 1000)");
+    expect(result.success).toBe(false);
+  });
+
+  test('blocks structuredClone', () => {
+    const result = service.execute("structuredClone({})");
+    expect(result.success).toBe(false);
+  });
+
+  // --- Safe globals still work ---
+
+  test('still allows JSON.parse', () => {
+    const result = service.execute("const obj = JSON.parse('{\"a\":1}'); request.setHeader('X', String(obj.a))");
+    expect(result.success).toBe(true);
+    expect(result.headers['X']).toBe('1');
+  });
+
+  test('still allows Date and Math', () => {
+    const result = service.execute("request.setHeader('X', String(Math.floor(Date.now() / 1000)))");
+    expect(result.success).toBe(true);
+    expect(result.headers['X']).toBeDefined();
+  });
+
+  test('still allows encodeURIComponent', () => {
+    const result = service.execute("request.setHeader('X', encodeURIComponent('hello world'))");
+    expect(result.success).toBe(true);
+    expect(result.headers['X']).toBe('hello%20world');
+  });
+
+  // --- Post-script security ---
+
+  test('executePostScript blocks constructor escape', () => {
+    const result = service.executePostScript(
+      "this.constructor.constructor('return process')().exit()",
+      { response: { status: 200, headers: {}, body: '', time: 100, size: 0 } }
+    );
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+
+  test('executePostScript blocks Proxy', () => {
+    const result = service.executePostScript(
+      "new Proxy({}, {})",
+      { response: { status: 200, headers: {}, body: '', time: 100, size: 0 } }
+    );
+    expect(result.success).toBe(false);
+  });
+
+  test('executePostScript still allows tests Proxy', () => {
+    const result = service.executePostScript(
+      'tests["a"] = true',
+      { response: { status: 200, headers: {}, body: '', time: 100, size: 0 } }
+    );
+    expect(result.success).toBe(true);
+    expect(result.tests['a']).toBe(true);
+  });
+
+  test('executePostScript still allows response.json()', () => {
+    const result = service.executePostScript(
+      'tests["id"] = response.json().id === 42',
+      { response: { status: 200, headers: {}, body: '{"id":42}', time: 100, size: 0 } }
+    );
+    expect(result.success).toBe(true);
+    expect(result.tests['id']).toBe(true);
+  });
+
+  test('executePostScript still allows variables.set()', () => {
+    const result = service.executePostScript(
+      'variables.set("token", response.json().token)',
+      { response: { status: 200, headers: {}, body: '{"token":"abc"}', time: 100, size: 0 } }
+    );
+    expect(result.success).toBe(true);
+    expect(result.variables['token']).toBe('abc');
+  });
+});

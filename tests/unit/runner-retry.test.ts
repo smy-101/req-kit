@@ -237,7 +237,7 @@ describe('Pipeline retryable 标记', () => {
   });
 
   test('超时错误标记为 retryable', async () => {
-    const { executeRequestPipeline } = await import('../../src/routes/proxy');
+    const { executeRequestPipeline } = await import('../../src/services/pipeline');
     const result = await executeRequestPipeline({
       url: `${baseUrl}/slow`,
       method: 'GET',
@@ -250,7 +250,7 @@ describe('Pipeline retryable 标记', () => {
   });
 
   test('不可达错误标记为 retryable', async () => {
-    const { executeRequestPipeline } = await import('../../src/routes/proxy');
+    const { executeRequestPipeline } = await import('../../src/services/pipeline');
     // 使用不存在的端口触发网络错误（可能是连接拒绝或超时，取决于系统）
     const result = await executeRequestPipeline({
       url: 'http://127.0.0.1:1/unreachable',
@@ -265,7 +265,7 @@ describe('Pipeline retryable 标记', () => {
   });
 
   test('HTTP 4xx 不标记为 retryable', async () => {
-    const { executeRequestPipeline } = await import('../../src/routes/proxy');
+    const { executeRequestPipeline } = await import('../../src/services/pipeline');
     // 使用一个返回 404 的服务器
     const notFoundApp = new Hono();
     notFoundApp.get('/not-found', (c) => c.json({ error: 'not found' }, 404));
@@ -286,7 +286,7 @@ describe('Pipeline retryable 标记', () => {
   });
 
   test('前置脚本失败不标记为 retryable', async () => {
-    const { executeRequestPipeline } = await import('../../src/routes/proxy');
+    const { executeRequestPipeline } = await import('../../src/services/pipeline');
     const result = await executeRequestPipeline({
       url: `${baseUrl}/ok`,
       method: 'GET',
@@ -299,7 +299,7 @@ describe('Pipeline retryable 标记', () => {
   });
 
   test('后置脚本断言失败不触发重试（即使 HTTP 5xx）', async () => {
-    const { executeRequestPipeline } = await import('../../src/routes/proxy');
+    const { executeRequestPipeline } = await import('../../src/services/pipeline');
     // 创建一个返回 500 的服务器
     const errApp = new Hono();
     errApp.get('/err', (c) => c.json({ error: 'server error' }, 500));

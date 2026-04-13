@@ -5,7 +5,7 @@ import { ScriptService } from './script';
 import { ProxyService } from './proxy';
 import { CookieService } from './cookie';
 import type { AuthConfig } from './auth';
-import { executeRequestPipeline, type PipelineInput, type PipelineResult, type PipelineServices } from '../routes/proxy';
+import { executeRequestPipeline, type PipelineInput, type PipelineResult, type PipelineServices } from './pipeline';
 import { findInTree } from '../lib/tree-utils';
 
 export interface RunnerRequestItem {

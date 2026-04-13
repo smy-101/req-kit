@@ -69,15 +69,28 @@ export class ScriptService {
           logs.push(args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' '));
         },
       },
+      // Safe globals
       JSON,
       Date,
       Math,
+      String,
+      Number,
+      Boolean,
+      Array,
+      Object,
+      RegExp,
+      Map,
+      Set,
+      Symbol,
       parseInt,
       parseFloat,
       isNaN,
       isFinite,
       encodeURIComponent,
       decodeURIComponent,
+      undefined,
+      NaN,
+      Infinity,
       // Explicitly block dangerous APIs
       require: undefined,
       import: undefined,
@@ -87,7 +100,55 @@ export class ScriptService {
       Function: undefined,
       fetch: undefined,
       XMLHttpRequest: undefined,
+      // Block sandbox escape vectors
+      Proxy: undefined,
+      Reflect: undefined,
+      WeakRef: undefined,
+      FinalizationRegistry: undefined,
+      SharedArrayBuffer: undefined,
+      Atomics: undefined,
+      WebAssembly: undefined,
+      queueMicrotask: undefined,
+      structuredClone: undefined,
+      setTimeout: undefined,
+      setInterval: undefined,
+      clearTimeout: undefined,
+      clearInterval: undefined,
     };
+  }
+
+  /**
+   * 创建安全沙箱：用 Proxy 包装白名单，阻止原型链逃逸和未授权属性访问
+   */
+  private createSecureSandbox(
+    logs: string[],
+    scriptVars: Record<string, string>,
+    context?: ScriptContext | PostScriptContext,
+    extraBindings?: Record<string, unknown>
+  ): Record<string, unknown> {
+    const baseSandbox = this.createBaseSandbox(logs, scriptVars, context);
+    const merged: Record<string, unknown> = { ...baseSandbox, ...extraBindings };
+
+    // 从 sandbox 对象的 keys 动态构建白名单
+    const allowed = new Set(Object.keys(merged));
+
+    return new Proxy(merged, {
+      has(_target, prop) {
+        if (typeof prop === 'symbol') return false;
+        return allowed.has(prop);
+      },
+      get(target, prop) {
+        if (typeof prop === 'symbol') return undefined;
+        // 阻止原型链逃逸
+        if (prop === 'constructor' || prop === '__proto__' || prop === 'prototype') return undefined;
+        if (!allowed.has(prop)) return undefined;
+        return (target as Record<string, unknown>)[prop];
+      },
+      set(_target, prop) {
+        // 允许通过 tests["name"] = value、variables.set() 等操作写入
+        return true;
+      },
+    });
   }
 
   execute(script: string, context?: ScriptContext): ScriptResult {
@@ -97,8 +158,7 @@ export class ScriptService {
     let requestBody: string | undefined;
     const scriptVars: Record<string, string> = {};
 
-    const sandbox = {
-      ...this.createBaseSandbox(logs, scriptVars, context),
+    const sandbox = this.createSecureSandbox(logs, scriptVars, context, {
       request: {
         setHeader(key: string, value: string) {
           requestHeaders[key] = value;
@@ -110,7 +170,7 @@ export class ScriptService {
           requestParams[key] = value;
         },
       },
-    };
+    });
 
     try {
       runInNewContext(script, sandbox, { timeout: this.timeout });
@@ -157,8 +217,7 @@ export class ScriptService {
       },
     });
 
-    const sandbox = {
-      ...this.createBaseSandbox(logs, scriptVars, context),
+    const sandbox = this.createSecureSandbox(logs, scriptVars, context, {
       response: {
         status: context.response.status,
         headers: Object.freeze({ ...context.response.headers }),
@@ -170,7 +229,7 @@ export class ScriptService {
         size: context.response.size,
       },
       tests: testsProxy,
-    };
+    });
 
     try {
       runInNewContext(script, sandbox, { timeout: this.timeout });
