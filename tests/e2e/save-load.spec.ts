@@ -157,7 +157,7 @@ test.describe('保存与加载请求', () => {
     await rp.setUrl(updatedUrl);
 
     // 第二次保存 — 直接更新（不弹 modal）
-    await saveDialog.saveBtn.click();
+    await saveDialog.quickSave();
 
     await rp.setUrl('https://example.com');
     await tabBar.addTab();

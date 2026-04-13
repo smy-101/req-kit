@@ -38,6 +38,12 @@ export class SaveDialogPage {
     return this;
   }
 
+  /** 快速保存（已保存过的请求，不弹 modal 直接覆盖） */
+  async quickSave() {
+    await this.saveBtn.click();
+    return this;
+  }
+
   async cancel() {
     await this.open();
     await this.cancelBtn.click();

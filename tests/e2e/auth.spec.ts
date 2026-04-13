@@ -132,11 +132,10 @@ test.describe('认证面板', () => {
     await auth.selectType('apikey');
 
     await auth.apiKeyKey.fill('api_key');
-    await page.waitForTimeout(200);
+    await expect(auth.apiKeyValue).toBeEditable();
     await auth.apiKeyValue.fill('secret123');
-    await page.waitForTimeout(200);
+    await expect(auth.apiKeyIn).toBeEditable();
     await auth.apiKeyIn.selectOption('query');
-    await page.waitForTimeout(200);
 
     await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
 

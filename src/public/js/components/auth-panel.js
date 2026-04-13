@@ -26,10 +26,13 @@ export function init() {
 
     const fieldsEl = document.getElementById('auth-fields');
 
+    let pendingAuthUpdates = {};
     function debouncedAuthUpdate(updates) {
+      Object.assign(pendingAuthUpdates, updates);
       InputDebounce.schedule('auth', () => {
         const t = store.getActiveTab();
-        store.setState({ authConfig: { ...(t ? t.authConfig : {}), ...updates } });
+        store.setState({ authConfig: { ...(t ? t.authConfig : {}), ...pendingAuthUpdates } });
+        pendingAuthUpdates = {};
       });
     }
 
