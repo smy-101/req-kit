@@ -43,6 +43,7 @@ interface ProxyApiSuccessResponse {
   post_script_variables?: Record<string, string>;
   set_cookies?: SetCookieInfo[];
   cleaned?: number;
+  truncated?: boolean;
   error?: string;
 }
 
@@ -80,6 +81,7 @@ export interface PipelineResult {
   error?: string;
   /** 标记此错误是否可重试（网络超时、不可达等），脚本错误不设置此字段 */
   retryable?: boolean;
+  truncated?: boolean;
 }
 
 export interface PipelineServices {
@@ -364,6 +366,7 @@ export async function executeRequestPipeline(
         setCookies,
         cleaned,
         error: postResult.error,
+        ...(result.truncated ? { truncated: result.truncated } : {}),
       };
     }
   }
@@ -382,6 +385,7 @@ export async function executeRequestPipeline(
     setCookies,
     cleaned,
   };
+  if (result.truncated) response.truncated = result.truncated;
   if (input.post_response_script) {
     response.scriptTests = scriptTests ?? {};
     response.postScriptLogs = postScriptLogs;
@@ -442,6 +446,7 @@ export function createProxyRoutes(
     if (result.postScriptVariables) response.post_script_variables = result.postScriptVariables;
     if (result.setCookies?.length) response.set_cookies = result.setCookies;
     if (result.cleaned) response.cleaned = result.cleaned;
+    if (result.truncated) response.truncated = result.truncated;
 
     if (result.error) {
       // Post-response script error — HTTP 400 with full response data
