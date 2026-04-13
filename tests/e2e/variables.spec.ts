@@ -160,7 +160,7 @@ test.describe('全局变量编辑和删除', () => {
     await firstRow.locator('.kv-key').fill(key);
     await firstRow.locator('.kv-value').fill('original_value');
 
-    await page.locator('#modal #save-global-vars').click({ force: true });
+    await page.locator('#modal #save-global-vars').click();
     await waitForModalClose(page);
 
     // 再次打开编辑
@@ -181,7 +181,7 @@ test.describe('全局变量编辑和删除', () => {
     expect(targetRow).not.toBeNull();
     await targetRow!.locator('.kv-value').fill('updated_value');
 
-    await page.locator('#modal #save-global-vars').click({ force: true });
+    await page.locator('#modal #save-global-vars').click();
     await waitForModalClose(page);
 
     // 打开变量预览面板验证
@@ -207,7 +207,7 @@ test.describe('全局变量编辑和删除', () => {
     await page.locator('#modal .kv-row').nth(1).locator('.kv-key').fill(key2);
     await page.locator('#modal .kv-row').nth(1).locator('.kv-value').fill('val2');
 
-    await page.locator('#modal #save-global-vars').click({ force: true });
+    await page.locator('#modal #save-global-vars').click();
     await waitForModalClose(page);
 
     // 再次打开并删除第一个变量
@@ -219,7 +219,7 @@ test.describe('全局变量编辑和删除', () => {
     await firstRow.locator('.kv-delete').click();
 
     // 保存
-    await page.locator('#modal #save-global-vars').click({ force: true });
+    await page.locator('#modal #save-global-vars').click();
     await waitForModalClose(page);
 
     // 验证全局变量数量减少了
@@ -256,13 +256,13 @@ test.describe('环境变量管理', () => {
     await kvEditor.locator('.kv-row').nth(1).locator('.kv-key').fill('remove_var');
     await kvEditor.locator('.kv-row').nth(1).locator('.kv-value').fill('remove');
 
-    await kvEditor.locator('.kv-save-btn').click({ force: true });
+    await kvEditor.locator('.kv-save-btn').click();
 
     // 删除第二个行（remove_var）
     await kvEditor.locator('.kv-row').nth(1).locator('.kv-delete').click();
 
     // 保存
-    await kvEditor.locator('.kv-save-btn').click({ force: true });
+    await kvEditor.locator('.kv-save-btn').click();
     await envPage.close();
 
     // 验证：选择该环境，重新打开编辑器，确认只剩一个变量

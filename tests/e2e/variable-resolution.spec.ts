@@ -89,7 +89,7 @@ test.describe('变量解析增强', () => {
     await kvEditor.locator('.kv-row').first().locator('.kv-key').fill(collKey);
     await kvEditor.locator('.kv-row').first().locator('.kv-value').fill('localhost:4000');
     // 集合变量保存按钮是 #save-coll-vars
-    await page.locator('#modal #save-coll-vars').click({ force: true });
+    await page.locator('#modal #save-coll-vars').click();
     await waitForModalClose(page);
 
     // 保存一个请求到该集合（使标签关联集合）

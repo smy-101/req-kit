@@ -34,11 +34,7 @@ export class EnvironmentPage {
 
   async createEnv(name: string) {
     await this.newNameInput.fill(name);
-    // Use dispatchEvent to trigger a native click on the button element.
-    // Playwright's .click() fails because the button is intercepted by the
-    // env-panel-right overlay in the modal, and .click({ force: true }) does not
-    // reliably dispatch a real click event.
-    await this.createBtn.dispatchEvent('click');
+    await this.createBtn.click();
     await this.page.locator('#modal .env-item').filter({ hasText: name }).waitFor({ state: 'visible', timeout: 10_000 });
     return this;
   }
@@ -46,9 +42,8 @@ export class EnvironmentPage {
   async selectEnv(name: string) {
     const envItem = this.page.locator('#modal .env-item').filter({ hasText: name });
     await envItem.waitFor({ state: 'visible' });
-    // Use dispatchEvent because the env item can be intercepted by the
-    // env-panel-right overlay in the split-panel modal layout.
-    await envItem.dispatchEvent('click');
+    // 点击 .env-name 而非 .env-item，因为 item 中心可能落在右侧的 Rename/Delete 按钮上
+    await envItem.locator('.env-name').click();
     return this;
   }
 
@@ -84,7 +79,7 @@ export class EnvironmentPage {
 
   async saveVariables() {
     const kvEditor = this.page.locator('#modal #env-vars-editor');
-    await kvEditor.locator('.kv-save-btn').click({ force: true });
+    await kvEditor.locator('.kv-save-btn').click();
     return this;
   }
 

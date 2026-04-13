@@ -1,7 +1,6 @@
 import { test, expect } from './fixtures';
-import type { Page } from '@playwright/test';
 import { MOCK_BASE_URL } from './helpers/mock';
-import { waitForModalClose } from './helpers/wait';
+import { waitForModalClose, runCollection } from './helpers/wait';
 import { CollectionPage } from './pages/collection-page';
 import { RequestPage } from './pages/request-page';
 import { RunnerPage } from './pages/runner-page';
@@ -23,14 +22,6 @@ test.describe('集合 Runner', () => {
     tabBar = new TabBar(page);
     await page.goto('/');
   });
-
-  async function runCollection(page: Page, colName: string) {
-    const treeItem = coll.tree.locator('.tree-item').filter({ hasText: colName }).first();
-    const runBtn = treeItem.locator('.tree-run-btn');
-    await treeItem.hover();
-    await expect(runBtn).toBeVisible();
-    await runBtn.click();
-  }
 
   test('运行集合', async ({ page }) => {
     const colName = `Runner测试_${Date.now()}`;
@@ -209,14 +200,6 @@ test.describe('Runner 多请求与停止验证', () => {
     await page.goto('/');
   });
 
-  async function runCollection(page: Page, colName: string) {
-    const treeItem = coll.tree.locator('.tree-item').filter({ hasText: colName }).first();
-    const runBtn = treeItem.locator('.tree-run-btn');
-    await treeItem.hover();
-    await expect(runBtn).toBeVisible();
-    await runBtn.click();
-  }
-
   test('Runner 多请求集合运行', async ({ page }) => {
     const colName = `RunnerMulti_${Date.now()}`;
 
@@ -286,8 +269,8 @@ test.describe('Runner 多请求与停止验证', () => {
     await expect(runner.panel).toBeVisible();
     await expect(runner.progressText).toBeVisible();
 
-    // 等待 2 秒让第一个请求完成或接近完成
-    await page.waitForTimeout(2000);
+    // 等待第一个请求完成（出现结果项），而不是用固定 sleep
+    await expect(page.locator('.runner-result-item').first()).toBeVisible({ timeout: 10000 });
 
     // 点击停止按钮
     await expect(runner.stopBtn).toBeVisible();
@@ -298,7 +281,6 @@ test.describe('Runner 多请求与停止验证', () => {
     await expect(runner.stopBtn).toBeDisabled();
 
     // 等待停止完成（面板关闭或出现总结/关闭按钮）
-    // 使用 Promise.race 等待面板关闭或关闭按钮出现
     await Promise.race([
       page.locator('#modal-overlay').waitFor({ state: 'hidden', timeout: 30000 }).catch(() => {}),
       runner.closeBtn.waitFor({ state: 'visible', timeout: 30000 }).catch(() => {}),

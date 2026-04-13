@@ -109,3 +109,14 @@ export async function switchResponseTab(page: Page, tabName: string) {
     .locator(`#response-panel .tab[data-response-tab="${tabName}"]`)
     .click();
 }
+
+/**
+ * 运行集合：悬停集合节点并点击运行按钮
+ */
+export async function runCollection(page: Page, colName: string) {
+  const treeItem = page.locator('#collection-tree .tree-item').filter({ hasText: colName }).first();
+  const runBtn = treeItem.locator('.tree-run-btn');
+  await treeItem.hover();
+  await expect(runBtn).toBeVisible();
+  await runBtn.click();
+}

@@ -172,7 +172,8 @@ test.describe('变量自动补全', () => {
     await expect(headersContainer.locator('.kv-row').last()).toBeVisible();
 
     const valueInput = headersContainer.locator('.kv-row').first().locator('.kv-value');
-    await valueInput.click({ force: true });
+    await valueInput.scrollIntoViewIfNeeded();
+    await valueInput.click();
     // 使用慢速逐字符输入以触发 input 事件，给 UI 时间处理滚动事件
     await valueInput.pressSequentially(`{{hdr_auto_`, { delay: 50 });
     await waitForAutocompletePopup(page);
