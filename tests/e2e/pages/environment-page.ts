@@ -9,6 +9,7 @@ export class EnvironmentPage {
   readonly closeBtn: Locator;
   readonly activeEnvSelect: Locator;
   readonly modal: Locator;
+  readonly kvEditor: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -18,6 +19,7 @@ export class EnvironmentPage {
     this.closeBtn = page.locator('#modal #close-env-modal');
     this.activeEnvSelect = page.locator('#active-env');
     this.modal = page.locator('#modal');
+    this.kvEditor = page.locator('#modal #env-vars-editor');
   }
 
   async open() {
@@ -68,18 +70,21 @@ export class EnvironmentPage {
   }
 
   async addVariable(key: string, value: string) {
-    const kvEditor = this.page.locator('#modal #env-vars-editor');
-    await kvEditor.locator('.kv-add-btn').waitFor({ state: 'visible' });
-    await kvEditor.locator('.kv-add-btn').click();
-    const lastRow = kvEditor.locator('.kv-row').last();
+    await this.kvEditor.locator('.kv-add-btn').waitFor({ state: 'visible' });
+    await this.kvEditor.locator('.kv-add-btn').click();
+    const lastRow = this.kvEditor.locator('.kv-row').last();
     await lastRow.locator('.kv-key').fill(key);
     await lastRow.locator('.kv-value').fill(value);
     return this;
   }
 
+  async deleteVariable(index: number) {
+    await this.kvEditor.locator('.kv-row').nth(index).locator('.kv-delete').click();
+    return this;
+  }
+
   async saveVariables() {
-    const kvEditor = this.page.locator('#modal #env-vars-editor');
-    await kvEditor.locator('.kv-save-btn').click();
+    await this.kvEditor.locator('.kv-save-btn').click();
     return this;
   }
 

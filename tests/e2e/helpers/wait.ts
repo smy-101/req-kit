@@ -120,3 +120,30 @@ export async function runCollection(page: Page, colName: string) {
   await expect(runBtn).toBeVisible();
   await runBtn.click();
 }
+
+/**
+ * 等待响应搜索计数更新（搜索导航后等待计数刷新）
+ */
+export async function waitForSearchCount(page: Page, expectedCount?: string) {
+  if (expectedCount !== undefined) {
+    await page.waitForFunction(
+      ([selector, expected]) => document.querySelector(selector)?.textContent === expected,
+      ['#response-search-count', expectedCount],
+    );
+  } else {
+    await page.waitForFunction(
+      ([selector]) => {
+        const text = document.querySelector(selector)?.textContent ?? '';
+        return text !== '' && text.includes('/');
+      },
+      ['#response-search-count'],
+    );
+  }
+}
+
+/**
+ * 生成唯一标识符，用于并行测试中避免命名冲突
+ */
+export function uniqueId(prefix = '') {
+  return `${prefix}${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}

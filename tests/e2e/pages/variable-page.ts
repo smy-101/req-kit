@@ -60,4 +60,9 @@ export class VariablePage {
     await waitForAutocompleteClose(this.page);
     return this;
   }
+
+  async deleteGlobalVar(index: number) {
+    await this.page.locator('#modal .kv-row').nth(index).locator('.kv-delete').click();
+    return this;
+  }
 }

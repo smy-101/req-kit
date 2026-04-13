@@ -2,7 +2,9 @@ import { test, expect } from './fixtures';
 import { MOCK_BASE_URL } from './helpers/mock';
 import { waitForModal, waitForModalClose } from './helpers/wait';
 import { CollectionPage } from './pages/collection-page';
+import { ImportExportPage } from './pages/import-export-page';
 import { RequestPage } from './pages/request-page';
+import { SaveDialogPage } from './pages/save-dialog-page';
 
 test.describe('集合管理', () => {
   let coll: CollectionPage;
@@ -56,16 +58,7 @@ test.describe('集合管理', () => {
     const colName = `右键菜单_${Date.now()}`;
     await coll.createCollection(colName);
 
-    const treeItem = coll.tree.locator('.tree-item').filter({ hasText: colName }).first();
-    await treeItem.click({ button: 'right' });
-
-    // 验证弹出确认删除对话框
-    await expect(page.locator('#modal')).toBeVisible();
-    await expect(page.locator('#modal .confirm-dialog-title')).toContainText('Delete Collection');
-
-    // 取消删除
-    await page.locator('#modal .modal-btn-secondary').click();
-    await waitForModalClose(page);
+    await coll.cancelDeleteCollection(colName);
 
     // 验证集合仍然存在
     await expect(coll.tree.locator('.tree-item').filter({ hasText: colName })).toBeVisible();
@@ -94,84 +87,69 @@ test.describe('集合管理', () => {
 
   test('集合中的请求右键显示复制和删除选项', async ({ page }) => {
     const rp = new RequestPage(page);
+    const saveDialog = new SaveDialogPage(page);
     const colName = `请求右键_${Date.now()}`;
     await coll.createCollection(colName);
 
     await rp.setMockUrl('/get');
-    await page.locator('#save-btn').click();
-    await expect(page.locator('#modal')).toBeVisible();
-    await page.locator('#modal #save-col-select').selectOption({ label: colName });
-    await page.locator('#modal #save-confirm').click();
-    await waitForModalClose(page);
+    await saveDialog.save(colName);
 
     // 右键点击请求项
     await coll.tree.locator('.method-badge').first().click({ button: 'right' });
 
-    const ctxMenu = page.locator('.context-menu');
-    await expect(ctxMenu).toBeVisible();
-    await expect(ctxMenu.locator('.context-menu-item')).toHaveCount(2);
-    await expect(ctxMenu.locator('.context-menu-item').filter({ hasText: '复制' })).toBeVisible();
-    await expect(ctxMenu.locator('.context-menu-item').filter({ hasText: '删除' })).toBeVisible();
+    await expect(coll.contextMenu).toBeVisible();
+    await expect(coll.contextMenu.locator('.context-menu-item')).toHaveCount(2);
+    await expect(coll.contextMenu.locator('.context-menu-item').filter({ hasText: '复制' })).toBeVisible();
+    await expect(coll.contextMenu.locator('.context-menu-item').filter({ hasText: '删除' })).toBeVisible();
   });
 });
 
 test.describe('集合请求上下文菜单与 curl 导入', () => {
   let coll: CollectionPage;
+  let imexPage: ImportExportPage;
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     coll = new CollectionPage(page);
+    imexPage = new ImportExportPage(page);
   });
 
   test('右键复制请求在集合中创建副本', async ({ page }) => {
     const rp = new RequestPage(page);
+    const saveDialog = new SaveDialogPage(page);
     const colName = `复制测试_${Date.now()}`;
     await coll.createCollection(colName);
 
     await rp.setMockUrl('/get');
 
     // 保存请求到集合
-    await page.locator('#save-btn').click();
-    await waitForModal(page);
-    await page.locator('#modal #save-col-select').selectOption({ label: colName });
-    await page.locator('#modal #save-confirm').click();
-    await waitForModalClose(page);
+    await saveDialog.save(colName);
 
     const colWrapper = coll.tree.locator('[data-collection-id]').filter({ hasText: colName }).first();
     await expect(colWrapper.locator('.method-badge').first()).toBeVisible({ timeout: 10000 });
 
     // 右键请求触发上下文菜单
     await colWrapper.locator('.method-badge').first().click({ button: 'right' });
-    const ctxMenu = page.locator('.context-menu');
-    await expect(ctxMenu).toBeVisible();
+    await expect(coll.contextMenu).toBeVisible();
 
-    await ctxMenu.locator('.context-menu-item').filter({ hasText: '复制' }).click();
-    await expect(ctxMenu).not.toBeVisible();
+    await coll.contextMenu.locator('.context-menu-item').filter({ hasText: '复制' }).click();
+    await expect(coll.contextMenu).not.toBeVisible();
 
     // 验证集合中有两个请求
     await expect(colWrapper.locator('.method-badge')).toHaveCount(2);
   });
 
   test('导入 curl 命令到指定集合', async ({ page }) => {
-    await page.locator('#btn-import').click();
-    await waitForModal(page);
-
-    await page.locator('#import-type').selectOption('curl');
-    await page.locator('#import-content').fill(`curl '${MOCK_BASE_URL}/get'`);
-
-    await page.locator('#import-action-btn').click();
-    await waitForModalClose(page);
+    await imexPage.open();
+    await imexPage.importCurl(`curl '${MOCK_BASE_URL}/get'`);
 
     await expect(coll.tree.locator('.method-badge.method-GET').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('导入 POST curl 命令验证方法', async ({ page }) => {
-    await page.locator('#btn-import').click();
-    await waitForModal(page);
-
-    await page.locator('#import-content').fill(`curl -X POST '${MOCK_BASE_URL}/post' -H 'Content-Type: application/json' -d '{"key":"val"}'`);
-
-    await page.locator('#import-action-btn').click();
+    await imexPage.open();
+    await imexPage.importContent.fill(`curl -X POST '${MOCK_BASE_URL}/post' -H 'Content-Type: application/json' -d '{"key":"val"}'`);
+    await imexPage.importActionBtn.click();
     await waitForModalClose(page);
 
     await expect(coll.tree.locator('.method-badge.method-POST').first()).toBeVisible({ timeout: 10000 });

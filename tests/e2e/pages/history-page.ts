@@ -6,6 +6,9 @@ export class HistoryPage {
   readonly panel: Locator;
   readonly searchInput: Locator;
   readonly clearBtn: Locator;
+  readonly items: Locator;
+  readonly emptyMsg: Locator;
+  readonly methodChips: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -13,6 +16,9 @@ export class HistoryPage {
     this.panel = page.locator('.history-panel');
     this.searchInput = page.locator('.history-search-input');
     this.clearBtn = page.locator('.history-clear-btn');
+    this.items = page.locator('.history-item');
+    this.emptyMsg = page.locator('.history-empty');
+    this.methodChips = page.locator('.history-chip');
   }
 
   async expand() {
@@ -37,8 +43,32 @@ export class HistoryPage {
     return this;
   }
 
-  async loadItem(index: number) {
-    await this.page.locator('.history-item').nth(index).click();
+  async clearAllWithConfirm() {
+    await this.clearBtn.click();
+    await this.page.locator('#modal .modal-btn-danger').click();
+    await this.emptyMsg.waitFor({ state: 'visible' });
     return this;
+  }
+
+  async filterByMethod(method: string) {
+    await this.methodChips.filter({ hasText: method }).click();
+    return this;
+  }
+
+  async loadItem(index: number) {
+    await this.items.nth(index).click();
+    return this;
+  }
+
+  getItemStatus(index: number) {
+    return this.items.nth(index).locator('.history-status');
+  }
+
+  getItemTime(index: number) {
+    return this.items.nth(index).locator('.history-time');
+  }
+
+  getItemAgo(index: number) {
+    return this.items.nth(index).locator('.history-ago');
   }
 }

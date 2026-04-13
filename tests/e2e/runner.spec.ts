@@ -4,6 +4,7 @@ import { waitForModalClose, runCollection } from './helpers/wait';
 import { CollectionPage } from './pages/collection-page';
 import { RequestPage } from './pages/request-page';
 import { RunnerPage } from './pages/runner-page';
+import { SaveDialogPage } from './pages/save-dialog-page';
 import { TabBar } from './pages/tab-bar';
 
 test.describe('集合 Runner', () => {
@@ -11,6 +12,7 @@ test.describe('集合 Runner', () => {
   let rp: RequestPage;
   let runner: RunnerPage;
   let tabBar: TabBar;
+  let saveDialog: SaveDialogPage;
 
   // Runner 测试需要较长时间（包含运行请求 + 等待结果）
   test.describe.configure({ timeout: 60_000 });
@@ -20,6 +22,7 @@ test.describe('集合 Runner', () => {
     rp = new RequestPage(page);
     runner = new RunnerPage(page);
     tabBar = new TabBar(page);
+    saveDialog = new SaveDialogPage(page);
     await page.goto('/');
   });
 
@@ -28,12 +31,7 @@ test.describe('集合 Runner', () => {
     await coll.createCollection(colName);
 
     await rp.setMockUrl('/get');
-    await page.locator('#save-btn').click();
-    const saveModal = page.locator('#modal');
-    await expect(saveModal).toBeVisible();
-    await saveModal.locator('#save-col-select').selectOption({ label: colName });
-    await saveModal.locator('#save-confirm').click();
-    await waitForModalClose(page);
+    await saveDialog.save(colName);
 
     await runCollection(page, colName);
 
@@ -53,11 +51,7 @@ test.describe('集合 Runner', () => {
     await coll.createCollection(colName);
 
     await rp.setMockUrl('/get');
-    await page.locator('#save-btn').click();
-    await expect(page.locator('#modal')).toBeVisible();
-    await page.locator('#modal #save-col-select').selectOption({ label: colName });
-    await page.locator('#modal #save-confirm').click();
-    await waitForModalClose(page);
+    await saveDialog.save(colName);
 
     await runCollection(page, colName);
     await expect(runner.panel).toBeVisible();
@@ -74,12 +68,7 @@ test.describe('集合 Runner', () => {
     await coll.createCollection(colName);
 
     await rp.setMockUrl('/get');
-    await page.locator('#save-btn').click();
-    const saveModal = page.locator('#modal');
-    await expect(saveModal).toBeVisible();
-    await saveModal.locator('#save-col-select').selectOption({ label: colName });
-    await saveModal.locator('#save-confirm').click();
-    await waitForModalClose(page);
+    await saveDialog.save(colName);
 
     await runCollection(page, colName);
     await expect(runner.panel).toBeVisible();
@@ -105,11 +94,7 @@ test.describe('集合 Runner', () => {
     await coll.createCollection(colName);
 
     await rp.setMockUrl('/get');
-    await page.locator('#save-btn').click();
-    await expect(page.locator('#modal')).toBeVisible();
-    await page.locator('#modal #save-col-select').selectOption({ label: colName });
-    await page.locator('#modal #save-confirm').click();
-    await waitForModalClose(page);
+    await saveDialog.save(colName);
 
     await runCollection(page, colName);
     await expect(runner.panel).toBeVisible();
@@ -130,11 +115,7 @@ test.describe('集合 Runner', () => {
     await coll.createCollection(colName);
 
     await rp.setMockUrl('/delay/5');
-    await page.locator('#save-btn').click();
-    await expect(page.locator('#modal')).toBeVisible();
-    await page.locator('#modal #save-col-select').selectOption({ label: colName });
-    await page.locator('#modal #save-confirm').click();
-    await waitForModalClose(page);
+    await saveDialog.save(colName);
 
     await runCollection(page, colName);
     await expect(runner.panel).toBeVisible();
@@ -160,15 +141,10 @@ test.describe('集合 Runner', () => {
     for (const url of urls) {
       await tabBar.addTab();
       await rp.setUrl(url);
-      await page.locator('#save-btn').click();
-      const saveModal = page.locator('#modal');
-      await expect(saveModal).toBeVisible();
-      await saveModal.locator('#save-col-select').selectOption({ label: colName });
-      await saveModal.locator('#save-confirm').click();
-      await waitForModalClose(page);
+      await saveDialog.save(colName);
     }
 
-    await page.locator('.request-tab').first().click();
+    await tabBar.switchToTab(0);
 
     await runCollection(page, colName);
     await expect(runner.panel).toBeVisible();
@@ -189,6 +165,7 @@ test.describe('Runner 多请求与停止验证', () => {
   let rp: RequestPage;
   let runner: RunnerPage;
   let tabBar: TabBar;
+  let saveDialog: SaveDialogPage;
 
   test.describe.configure({ timeout: 60_000 });
 
@@ -197,6 +174,7 @@ test.describe('Runner 多请求与停止验证', () => {
     rp = new RequestPage(page);
     runner = new RunnerPage(page);
     tabBar = new TabBar(page);
+    saveDialog = new SaveDialogPage(page);
     await page.goto('/');
   });
 
@@ -219,12 +197,7 @@ test.describe('Runner 多请求与停止验证', () => {
         await rp.selectBodyType('json');
         await rp.fillBody('{"test":"runner"}');
       }
-      await page.locator('#save-btn').click();
-      const saveModal = page.locator('#modal');
-      await expect(saveModal).toBeVisible();
-      await saveModal.locator('#save-col-select').selectOption({ label: colName });
-      await saveModal.locator('#save-confirm').click();
-      await waitForModalClose(page);
+      await saveDialog.save(colName);
     }
 
     // 运行集合
@@ -255,12 +228,7 @@ test.describe('Runner 多请求与停止验证', () => {
     for (const url of urls) {
       await tabBar.addTab();
       await rp.setUrl(url);
-      await page.locator('#save-btn').click();
-      const saveModal = page.locator('#modal');
-      await expect(saveModal).toBeVisible();
-      await saveModal.locator('#save-col-select').selectOption({ label: colName });
-      await saveModal.locator('#save-confirm').click();
-      await waitForModalClose(page);
+      await saveDialog.save(colName);
     }
 
     // 运行集合
@@ -281,10 +249,17 @@ test.describe('Runner 多请求与停止验证', () => {
     await expect(runner.stopBtn).toBeDisabled();
 
     // 等待停止完成（面板关闭或出现总结/关闭按钮）
-    await Promise.race([
-      page.locator('#modal-overlay').waitFor({ state: 'hidden', timeout: 30000 }).catch(() => {}),
-      runner.closeBtn.waitFor({ state: 'visible', timeout: 30000 }).catch(() => {}),
-    ]);
+    try {
+      const result = await Promise.race([
+        page.locator('#modal-overlay').waitFor({ state: 'hidden', timeout: 30000 })
+          .then(() => 'closed' as const),
+        runner.closeBtn.waitFor({ state: 'visible', timeout: 30000 })
+          .then(() => 'close-btn' as const),
+      ]);
+      expect(['closed', 'close-btn']).toContain(result);
+    } catch {
+      // 超时也是可接受的 — 停止可能需要较长时间
+    }
 
     // 如果面板仍然可见，尝试关闭
     const panelVisible = await runner.panel.isVisible().catch(() => false);

@@ -15,6 +15,14 @@ export class RequestPage {
   readonly bodyTypeSelect: Locator;
   readonly headersEditor: Locator;
   readonly paramsEditor: Locator;
+  readonly saveBtn: Locator;
+  readonly formatBodyBtn: Locator;
+  readonly graphqlQuery: Locator;
+  readonly graphqlVariables: Locator;
+  readonly graphqlOperationName: Locator;
+  readonly multipartEditor: Locator;
+  readonly multipartAddBtn: Locator;
+  readonly multipartRows: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -30,6 +38,14 @@ export class RequestPage {
     this.bodyTypeSelect = page.locator('#body-type-select');
     this.headersEditor = page.locator('#tab-headers .kv-editor');
     this.paramsEditor = page.locator('#tab-params .kv-editor');
+    this.saveBtn = page.locator('#save-btn');
+    this.formatBodyBtn = page.locator('#body-format-btn');
+    this.graphqlQuery = page.locator('#graphql-query');
+    this.graphqlVariables = page.locator('#graphql-variables');
+    this.graphqlOperationName = page.locator('#graphql-operation-name');
+    this.multipartEditor = page.locator('#multipart-editor');
+    this.multipartAddBtn = page.locator('.multipart-add-btn');
+    this.multipartRows = page.locator('.multipart-row');
   }
 
   async navigate() {
@@ -118,6 +134,11 @@ export class RequestPage {
     const lastRow = this.paramsEditor.locator('.kv-row').last();
     await lastRow.locator('.kv-key').fill(key);
     await lastRow.locator('.kv-value').fill(value);
+    return this;
+  }
+
+  async formatBody() {
+    await this.formatBodyBtn.click();
     return this;
   }
 }

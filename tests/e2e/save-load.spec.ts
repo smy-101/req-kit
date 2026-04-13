@@ -3,16 +3,19 @@ import { MOCK_BASE_URL } from './helpers/mock';
 import { waitForModalClose } from './helpers/wait';
 import { CollectionPage } from './pages/collection-page';
 import { RequestPage } from './pages/request-page';
+import { SaveDialogPage } from './pages/save-dialog-page';
 import { TabBar } from './pages/tab-bar';
 
 test.describe('保存与加载请求', () => {
   let coll: CollectionPage;
   let rp: RequestPage;
+  let saveDialog: SaveDialogPage;
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     coll = new CollectionPage(page);
     rp = new RequestPage(page);
+    saveDialog = new SaveDialogPage(page);
   });
 
   test('保存请求到集合', async ({ page }) => {
@@ -22,16 +25,13 @@ test.describe('保存与加载请求', () => {
     await rp.selectMethod('POST');
     await rp.setMockUrl('/post');
 
-    await page.locator('#save-btn').click();
+    await saveDialog.open();
+    await expect(saveDialog.modal.locator('.confirm-dialog-title')).toHaveText('Save Request');
+    await expect(saveDialog.nameInput).toBeVisible();
+    await expect(saveDialog.colSelect).toBeVisible();
 
-    const saveModal = page.locator('#modal');
-    await expect(saveModal).toBeVisible();
-    await expect(saveModal.locator('.confirm-dialog-title')).toHaveText('Save Request');
-    await expect(saveModal.locator('#save-req-name')).toBeVisible();
-    await expect(saveModal.locator('#save-col-select')).toBeVisible();
-
-    await saveModal.locator('#save-col-select').selectOption({ label: colName });
-    await saveModal.locator('#save-confirm').click();
+    await saveDialog.colSelect.selectOption({ label: colName });
+    await saveDialog.confirmBtn.click();
     await waitForModalClose(page);
 
     await expect(coll.tree.locator('.method-badge.method-POST').first()).toBeVisible();
@@ -44,12 +44,7 @@ test.describe('保存与加载请求', () => {
     const testUrl = `${MOCK_BASE_URL}/put`;
     await rp.selectMethod('PUT');
     await rp.setUrl(testUrl);
-    await page.locator('#save-btn').click();
-    const saveModal = page.locator('#modal');
-    await expect(saveModal).toBeVisible();
-    await saveModal.locator('#save-col-select').selectOption({ label: colName });
-    await saveModal.locator('#save-confirm').click();
-    await waitForModalClose(page);
+    await saveDialog.save(colName);
 
     await expect(coll.tree.locator('.method-badge.method-PUT').first()).toBeVisible();
 
@@ -66,23 +61,17 @@ test.describe('保存与加载请求', () => {
 
     await rp.selectMethod('DELETE');
     await rp.setMockUrl('/delete');
-    await page.locator('#save-btn').click();
-    await expect(page.locator('#modal')).toBeVisible();
-    await page.locator('#modal #save-col-select').selectOption({ label: colName });
-    await page.locator('#modal #save-confirm').click();
-    await waitForModalClose(page);
+    await saveDialog.save(colName);
 
     const deleteBadge = coll.tree.locator('.method-badge.method-DELETE');
     await expect(deleteBadge.first()).toBeVisible();
 
     const countBefore = await deleteBadge.count();
 
-    await deleteBadge.first().click({ button: 'right' });
+    await coll.rightClickRequest('DELETE');
 
-    const ctxMenu = page.locator('.context-menu');
-    await expect(ctxMenu).toBeVisible();
-
-    await ctxMenu.locator('.context-menu-item').filter({ hasText: '复制' }).click();
+    await expect(coll.contextMenu).toBeVisible();
+    await coll.contextMenu.locator('.context-menu-item').filter({ hasText: '复制' }).click();
 
     await expect(coll.tree.locator('.method-badge.method-DELETE')).toHaveCount(countBefore + 1);
   });
@@ -93,21 +82,15 @@ test.describe('保存与加载请求', () => {
 
     await rp.selectMethod('PATCH');
     await rp.setMockUrl('/patch');
-    await page.locator('#save-btn').click();
-    await expect(page.locator('#modal')).toBeVisible();
-    await page.locator('#modal #save-col-select').selectOption({ label: colName });
-    await page.locator('#modal #save-confirm').click();
-    await waitForModalClose(page);
+    await saveDialog.save(colName);
 
     const patchBadge = coll.tree.locator('.method-badge.method-PATCH');
     await expect(patchBadge).toBeVisible();
 
-    await patchBadge.first().click({ button: 'right' });
+    await coll.rightClickRequest('PATCH');
 
-    const ctxMenu = page.locator('.context-menu');
-    await expect(ctxMenu).toBeVisible();
-
-    await ctxMenu.locator('.context-menu-item').filter({ hasText: '删除' }).click();
+    await expect(coll.contextMenu).toBeVisible();
+    await coll.contextMenu.locator('.context-menu-item').filter({ hasText: '删除' }).click();
 
     await expect(page.locator('#modal .modal-btn-danger')).toBeVisible();
     await page.locator('#modal .modal-btn-danger').click();
@@ -122,17 +105,8 @@ test.describe('保存与加载请求', () => {
     await rp.selectMethod('GET');
     await rp.setMockUrl('/get');
 
-    await page.locator('#save-btn').click();
-    const saveModal = page.locator('#modal');
-    await expect(saveModal).toBeVisible();
-
     const customName = `我的自定义请求_${Date.now()}`;
-    await saveModal.locator('#save-req-name').clear();
-    await saveModal.locator('#save-req-name').fill(customName);
-
-    await saveModal.locator('#save-col-select').selectOption({ label: colName });
-    await saveModal.locator('#save-confirm').click();
-    await waitForModalClose(page);
+    await saveDialog.save(colName, customName);
 
     await expect(coll.tree.locator('.tree-item').filter({ hasText: customName })).toBeVisible();
   });
@@ -143,12 +117,7 @@ test.describe('保存与加载请求', () => {
 
     await rp.setMockUrl('/get');
 
-    await page.locator('#save-btn').click();
-    const saveModal = page.locator('#modal');
-    await expect(saveModal).toBeVisible();
-
-    await saveModal.locator('#save-cancel').click();
-    await waitForModalClose(page);
+    await saveDialog.cancel();
 
     const colTreeItem = coll.tree.locator('.tree-item').filter({ hasText: colName }).first();
     await expect(colTreeItem.locator('.method-badge')).toHaveCount(0);
@@ -163,16 +132,7 @@ test.describe('保存与加载请求', () => {
 
     await rp.setMockUrl('/get');
 
-    await page.locator('#save-btn').click();
-    const saveModal = page.locator('#modal');
-    await expect(saveModal).toBeVisible();
-
-    const selectEl = saveModal.locator('#save-col-select');
-    await selectEl.waitFor({ state: 'visible' });
-    await selectEl.selectOption({ label: colB });
-
-    await saveModal.locator('#save-confirm').click();
-    await waitForModalClose(page);
+    await saveDialog.save(colB);
 
     await expect(coll.tree.locator('.method-badge').first()).toBeVisible();
   });
@@ -187,12 +147,7 @@ test.describe('保存与加载请求', () => {
     await rp.setUrl(originalUrl);
 
     // 第一次保存
-    await page.locator('#save-btn').click();
-    const saveModal = page.locator('#modal');
-    await expect(saveModal).toBeVisible();
-    await saveModal.locator('#save-col-select').selectOption({ label: colName });
-    await saveModal.locator('#save-confirm').click();
-    await waitForModalClose(page);
+    await saveDialog.save(colName);
 
     await expect(coll.tree.locator('.method-badge.method-POST').first()).toBeVisible();
 
@@ -201,8 +156,8 @@ test.describe('保存与加载请求', () => {
     await rp.selectMethod('PUT');
     await rp.setUrl(updatedUrl);
 
-    // 第二次保存 — 直接更新
-    await page.locator('#save-btn').click();
+    // 第二次保存 — 直接更新（不弹 modal）
+    await saveDialog.saveBtn.click();
 
     await rp.setUrl('https://example.com');
     await tabBar.addTab();

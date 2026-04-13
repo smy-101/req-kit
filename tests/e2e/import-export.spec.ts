@@ -1,55 +1,50 @@
 import { test, expect } from './fixtures';
-import { waitForModal, waitForModalClose } from './helpers/wait';
+import { waitForModalClose, waitForToast } from './helpers/wait';
 import { MOCK_BASE_URL } from './helpers/mock';
 import { CollectionPage } from './pages/collection-page';
+import { ImportExportPage } from './pages/import-export-page';
 import { RequestPage } from './pages/request-page';
+import { SaveDialogPage } from './pages/save-dialog-page';
 
 test.describe('导入导出', () => {
   let coll: CollectionPage;
   let rp: RequestPage;
+  let imexPage: ImportExportPage;
 
   test.beforeEach(async ({ page }) => {
     coll = new CollectionPage(page);
     rp = new RequestPage(page);
+    imexPage = new ImportExportPage(page);
     await page.goto('/');
   });
 
   test('导入/导出弹窗打开', async ({ page }) => {
-    await page.locator('#btn-import').click();
+    await imexPage.open();
 
-    await waitForModal(page);
-    await expect(page.locator('#modal h3')).toHaveText('Import / Export');
+    await expect(imexPage.modalTitle).toHaveText('Import / Export');
 
-    await expect(page.locator('#imex-import')).toBeVisible();
-    await expect(page.locator('#imex-export')).toBeHidden();
+    await expect(imexPage.importTab).toBeVisible();
+    await expect(imexPage.exportTab).toBeHidden();
   });
 
   test('导入/导出弹窗切换标签', async ({ page }) => {
-    await page.locator('#btn-import').click();
-    await waitForModal(page);
+    await imexPage.open();
 
-    await page.locator('[data-imex-tab="export"]').click();
-    await expect(page.locator('#imex-export')).toBeVisible();
-    await expect(page.locator('#imex-import')).toBeHidden();
+    await imexPage.switchTab('export');
+    await expect(imexPage.exportTab).toBeVisible();
+    await expect(imexPage.importTab).toBeHidden();
 
-    await page.locator('[data-imex-tab="import"]').click();
-    await expect(page.locator('#imex-import')).toBeVisible();
-    await expect(page.locator('#imex-export')).toBeHidden();
+    await imexPage.switchTab('import');
+    await expect(imexPage.importTab).toBeVisible();
+    await expect(imexPage.exportTab).toBeHidden();
   });
 
   test('导入 curl 命令', async ({ page }) => {
     const colName = `导入测试_${Date.now()}`;
     await coll.createCollection(colName);
 
-    await page.locator('#btn-import').click();
-    await waitForModal(page);
-
-    await page.locator('#import-type').selectOption('curl');
-    await page.locator('#import-content').fill(`curl '${MOCK_BASE_URL}/get'`);
-
-    await page.locator('#import-action-btn').click();
-
-    await waitForModalClose(page, { timeout: 10000 });
+    await imexPage.open();
+    await imexPage.importCurl(`curl '${MOCK_BASE_URL}/get'`);
 
     await expect(page.locator('#collection-tree .method-badge').first()).toBeVisible();
   });
@@ -57,10 +52,7 @@ test.describe('导入导出', () => {
   test('导入 Postman Collection', async ({ page }) => {
     const colName = `Postman_${Date.now()}`;
 
-    await page.locator('#btn-import').click();
-    await waitForModal(page);
-
-    await page.locator('#import-type').selectOption('postman');
+    await imexPage.open();
 
     const postmanJson = JSON.stringify({
       info: { name: colName, schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json' },
@@ -72,22 +64,15 @@ test.describe('导入导出', () => {
       ],
     });
 
-    await page.locator('#import-content').fill(postmanJson);
-
-    await page.locator('#import-action-btn').click();
-
-    await waitForModalClose(page, { timeout: 10000 });
+    await imexPage.importPostman(postmanJson);
 
     await expect(coll.tree.locator('.tree-item').filter({ hasText: colName }).first()).toBeVisible();
     await expect(coll.tree.locator('.tree-item').filter({ hasText: 'Test Request' }).first()).toBeVisible();
   });
 
   test('关闭导入导出弹窗', async ({ page }) => {
-    await page.locator('#btn-import').click();
-    await waitForModal(page);
-
-    await page.locator('#close-imex-modal').click();
-    await waitForModalClose(page);
+    await imexPage.open();
+    await imexPage.close();
   });
 
   test('导出集合为 Postman 格式', async ({ page }) => {
@@ -96,65 +81,55 @@ test.describe('导入导出', () => {
 
     await rp.selectMethod('POST');
     await rp.setMockUrl('/post');
-    await page.locator('#save-btn').click();
-    const saveModal = page.locator('#modal');
-    await expect(saveModal).toBeVisible();
-    await saveModal.locator('#save-col-select').selectOption({ label: colName });
-    await saveModal.locator('#save-confirm').click();
-    await waitForModalClose(page);
+    const saveDialog = new SaveDialogPage(page);
+    await saveDialog.save(colName);
 
     // 打开导入/导出弹窗并切换到导出标签
-    await page.locator('#btn-import').click();
-    await waitForModal(page);
-    await page.locator('[data-imex-tab="export"]').click();
-    await expect(page.locator('#imex-export')).toBeVisible();
+    await imexPage.open();
+    await imexPage.switchTab('export');
+    await expect(imexPage.exportTab).toBeVisible();
 
-    await expect(page.locator('.export-list-item').filter({ hasText: colName })).toBeVisible();
+    const exportItem = imexPage.exportListItem.filter({ hasText: colName });
+    await expect(exportItem).toBeVisible();
 
     await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
-    const exportItem = page.locator('.export-list-item').filter({ hasText: colName });
-    await exportItem.locator('.export-col-btn').click();
+    await imexPage.exportCollection(colName);
 
     await expect(exportItem.locator('.export-col-btn')).toContainText('Copied!');
   });
 
   test('导出标签页显示空列表', async ({ page }) => {
-    await page.locator('#btn-import').click();
-    await waitForModal(page);
-    await page.locator('[data-imex-tab="export"]').click();
+    await imexPage.open();
+    await imexPage.switchTab('export');
 
-    await expect(page.locator('.export-hint')).toBeVisible();
+    await expect(imexPage.exportHint).toBeVisible();
   });
 });
 
 test.describe('导入边界情况', () => {
-  let coll: CollectionPage;
+  let imexPage: ImportExportPage;
 
   test.beforeEach(async ({ page }) => {
-    coll = new CollectionPage(page);
+    imexPage = new ImportExportPage(page);
     await page.goto('/');
   });
 
   test('导入无效 JSON 显示错误', async ({ page }) => {
-    await page.locator('#btn-import').click();
-    await waitForModal(page);
+    await imexPage.open();
 
-    await page.locator('#import-type').selectOption('postman');
-    await page.locator('#import-content').fill('{ invalid json }}}');
+    await imexPage.importType.selectOption('postman');
+    await imexPage.importContent.fill('{ invalid json }}}');
+    await imexPage.importActionBtn.click();
 
-    await page.locator('#import-action-btn').click();
-
-    await expect(page.locator('.toast')).toBeVisible({ timeout: 5000 });
+    await waitForToast(page);
   });
 
   test('导入空内容不执行导入', async ({ page }) => {
-    await page.locator('#btn-import').click();
-    await waitForModal(page);
+    await imexPage.open();
 
-    await page.locator('#import-type').selectOption('postman');
-    await page.locator('#import-content').fill('');
-
-    await page.locator('#import-action-btn').click();
+    await imexPage.importType.selectOption('postman');
+    await imexPage.importContent.fill('');
+    await imexPage.importActionBtn.click();
 
     // 空内容被静默忽略：模态框保持打开，无 toast 出现
     await expect(page.locator('#modal-overlay')).toBeVisible();
@@ -162,14 +137,12 @@ test.describe('导入边界情况', () => {
   });
 
   test('导入畸形 curl 命令', async ({ page }) => {
-    await page.locator('#btn-import').click();
-    await waitForModal(page);
+    await imexPage.open();
 
-    await page.locator('#import-type').selectOption('curl');
-    await page.locator('#import-content').fill('not a valid curl command');
+    await imexPage.importType.selectOption('curl');
+    await imexPage.importContent.fill('not a valid curl command');
+    await imexPage.importActionBtn.click();
 
-    await page.locator('#import-action-btn').click();
-
-    await expect(page.locator('.toast')).toBeVisible({ timeout: 5000 });
+    await waitForToast(page);
   });
 });

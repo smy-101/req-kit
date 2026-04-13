@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures';
 import { MOCK_BASE_URL } from './helpers/mock';
-import { sendRequestAndWait, switchRequestTab, switchResponseTab } from './helpers/wait';
+import { sendRequestAndWait, switchRequestTab, switchResponseTab, waitForSearchCount } from './helpers/wait';
 import { ResponsePage } from './pages/response-page';
 
 
@@ -205,10 +205,7 @@ test.describe('响应搜索导航', () => {
 
     // 点击下一匹配
     await rp.nextMatch();
-    await page.waitForFunction(
-      ([selector]) => document.querySelector(selector)?.textContent !== '',
-      ['#response-search-count'],
-    );
+    await waitForSearchCount(page);
 
     const afterCount = await rp.getSearchCountText();
     // 计数应该变化（搜索结果包含多个匹配）
@@ -225,19 +222,13 @@ test.describe('响应搜索导航', () => {
 
     // 先前进到第二个匹配
     await rp.nextMatch();
-    await page.waitForFunction(
-      ([selector]) => document.querySelector(selector)?.textContent !== '',
-      ['#response-search-count'],
-    );
+    await waitForSearchCount(page);
 
     const countAfterNext = await rp.getSearchCountText();
 
     // 再后退
     await rp.prevMatch();
-    await page.waitForFunction(
-      ([selector]) => document.querySelector(selector)?.textContent !== '',
-      ['#response-search-count'],
-    );
+    await waitForSearchCount(page);
 
     const countAfterPrev = await rp.getSearchCountText();
     // 应该回到之前的计数
@@ -262,10 +253,7 @@ test.describe('响应搜索导航', () => {
     const total = parseInt(totalMatch!);
     for (let i = 0; i < total; i++) {
       await rp.nextMatch();
-      await page.waitForFunction(
-        ([selector]) => document.querySelector(selector)?.textContent !== '',
-        ['#response-search-count'],
-      );
+      await waitForSearchCount(page);
     }
     // 应该循环回到 1/N
     const finalCount = await rp.getSearchCountText();
@@ -286,10 +274,7 @@ test.describe('响应搜索导航', () => {
 
     // 在第一个匹配时按 prev
     await rp.prevMatch();
-    await page.waitForFunction(
-      ([selector]) => document.querySelector(selector)?.textContent !== '',
-      ['#response-search-count'],
-    );
+    await waitForSearchCount(page);
 
     const finalCount = await rp.getSearchCountText();
     expect(finalCount).toBe(`${totalMatch}/${totalMatch}`);

@@ -1,69 +1,69 @@
 import { test, expect } from './fixtures';
 import { MOCK_BASE_URL } from './helpers/mock';
-import { sendRequestAndWait, switchRequestTab } from './helpers/wait';
+import { sendRequestAndWait } from './helpers/wait';
+import { RequestPage } from './pages/request-page';
+import { ResponsePage } from './pages/response-page';
 
 
 test.describe('Body 编辑器', () => {
+  let rp: RequestPage;
+
   test.beforeEach(async ({ page }) => {
       await page.goto("/");
+      rp = new RequestPage(page);
     });
 
   test('切换 Body 类型显示对应编辑器', async ({ page }) => {
-    await switchRequestTab(page, 'body');
-
-    const textarea = page.locator('#body-textarea');
-    const typeSelect = page.locator('#body-type-select');
+    await rp.switchTab('body');
 
     // 默认 JSON — textarea 可见
-    await expect(textarea).toBeVisible();
+    await expect(rp.bodyTextarea).toBeVisible();
 
     // 切换到 None
-    await typeSelect.selectOption('none');
-    await expect(textarea).toBeHidden();
+    await rp.selectBodyType('none');
+    await expect(rp.bodyTextarea).toBeHidden();
 
     // 切换到 Text
-    await typeSelect.selectOption('text');
-    await expect(textarea).toBeVisible();
+    await rp.selectBodyType('text');
+    await expect(rp.bodyTextarea).toBeVisible();
 
     // 切换到 XML
-    await typeSelect.selectOption('xml');
-    await expect(textarea).toBeVisible();
+    await rp.selectBodyType('xml');
+    await expect(rp.bodyTextarea).toBeVisible();
 
     // 切换到 Form URL Encoded — textarea 仍然可见（KV editor 在 tab-params）
-    await typeSelect.selectOption('form');
-    await expect(textarea).toBeVisible();
+    await rp.selectBodyType('form');
+    await expect(rp.bodyTextarea).toBeVisible();
   });
 
   test('切换到 Multipart 显示分段编辑器', async ({ page }) => {
-    await switchRequestTab(page, 'body');
-    await page.locator('#body-type-select').selectOption('multipart');
+    await rp.switchTab('body');
+    await rp.selectBodyType('multipart');
 
-    const multipartEditor = page.locator('#multipart-editor');
-    await expect(multipartEditor).toBeVisible();
-    await expect(multipartEditor.locator('.multipart-row')).toHaveCount(1);
+    await expect(rp.multipartEditor).toBeVisible();
+    await expect(rp.multipartRows).toHaveCount(1);
   });
 
   test('Multipart 添加和删除字段', async ({ page }) => {
-    await switchRequestTab(page, 'body');
-    await page.locator('#body-type-select').selectOption('multipart');
+    await rp.switchTab('body');
+    await rp.selectBodyType('multipart');
 
-    const addBtn = page.locator('.multipart-add-btn');
-    await addBtn.click();
-    await expect(page.locator('.multipart-row')).toHaveCount(2);
+    await rp.multipartAddBtn.click();
+    await expect(rp.multipartRows).toHaveCount(2);
 
     // 填写字段
-    const firstRow = page.locator('.multipart-row').first();
+    const firstRow = rp.multipartRows.first();
     await firstRow.locator('.multipart-key').fill('field1');
     await firstRow.locator('.multipart-text-value').fill('value1');
 
     // 删除最后一行
-    await page.locator('.multipart-row').last().locator('.multipart-delete-btn').click();
-    await expect(page.locator('.multipart-row')).toHaveCount(1);
+    await rp.multipartRows.last().locator('.multipart-delete-btn').click();
+    await expect(rp.multipartRows).toHaveCount(1);
   });
 
   test('切换到 Binary 显示文件选择器', async ({ page }) => {
-    await switchRequestTab(page, 'body');
-    await page.locator('#body-type-select').selectOption('binary');
+    await rp.switchTab('body');
+    await rp.selectBodyType('binary');
 
     const binaryEditor = page.locator('#binary-editor');
     await expect(binaryEditor).toBeVisible();
@@ -71,103 +71,104 @@ test.describe('Body 编辑器', () => {
   });
 
   test('切换到 GraphQL 显示查询编辑器', async ({ page }) => {
-    await switchRequestTab(page, 'body');
-    await page.locator('#body-type-select').selectOption('graphql');
+    await rp.switchTab('body');
+    await rp.selectBodyType('graphql');
 
     const graphqlEditor = page.locator('#graphql-editor');
     await expect(graphqlEditor).toBeVisible();
-    await expect(page.locator('#graphql-query')).toBeVisible();
-    await expect(page.locator('#graphql-variables')).toBeVisible();
-    await expect(page.locator('#graphql-operation-name')).toBeVisible();
+    await expect(rp.graphqlQuery).toBeVisible();
+    await expect(rp.graphqlVariables).toBeVisible();
+    await expect(rp.graphqlOperationName).toBeVisible();
 
     // Format 按钮文字变为 "Format Variables"
-    await expect(page.locator('#body-format-btn')).toHaveText('Format Variables');
+    await expect(rp.formatBodyBtn).toHaveText('Format Variables');
   });
 
   test('GraphQL 填写查询并发送', async ({ page }) => {
-    await page.locator('#method-select').selectOption('POST');
-    await switchRequestTab(page, 'body');
-    await page.locator('#body-type-select').selectOption('graphql');
+    await rp.selectMethod('POST');
+    await rp.switchTab('body');
+    await rp.selectBodyType('graphql');
 
-    await page.locator('#graphql-query').fill('{ __typename }');
+    await rp.graphqlQuery.fill('{ __typename }');
     await sendRequestAndWait(page, `${MOCK_BASE_URL}/post`, '200');
 
     // 验证响应包含 GraphQL 查询内容
-    const responseBody = page.locator('#response-format-content');
-    await expect(responseBody).toContainText('__typename');
+    const responsePage = new ResponsePage(page);
+    await expect(responsePage.formatContent).toContainText('__typename');
   });
 
   test('Format JSON 按钮格式化 JSON 内容', async ({ page }) => {
-    await switchRequestTab(page, 'body');
+    await rp.switchTab('body');
 
-    const textarea = page.locator('#body-textarea');
-    await textarea.fill('{"a":1,"b":2}');
+    await rp.bodyTextarea.fill('{"a":1,"b":2}');
 
-    await page.locator('#body-format-btn').click();
+    await rp.formatBody();
 
     // 验证格式化后的内容包含缩进
-    const value = await textarea.inputValue();
+    const value = await rp.bodyTextarea.inputValue();
     expect(value).toContain('\n');
     expect(value).toContain('  ');
   });
 });
 
 test.describe('Body 类型发送验证', () => {
+  let rp: RequestPage;
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    rp = new RequestPage(page);
   });
 
   test('Form URL Encoded body 发送', async ({ page }) => {
-    await page.locator('#method-select').selectOption('POST');
-    await switchRequestTab(page, 'body');
-    await page.locator('#body-type-select').selectOption('form');
+    await rp.selectMethod('POST');
+    await rp.switchTab('body');
+    await rp.selectBodyType('form');
 
     // Form 类型使用 textarea 输入 URL 编码格式的数据
-    const textarea = page.locator('#body-textarea');
-    await textarea.fill('username=testuser');
+    await rp.bodyTextarea.fill('username=testuser');
 
     await sendRequestAndWait(page, `${MOCK_BASE_URL}/post`, '200');
 
     // 验证响应包含 form 数据
-    const responseBody = page.locator('#response-format-content');
-    await expect(responseBody).toContainText('username');
-    await expect(responseBody).toContainText('testuser');
+    const responsePage = new ResponsePage(page);
+    await expect(responsePage.formatContent).toContainText('username');
+    await expect(responsePage.formatContent).toContainText('testuser');
   });
 
   test('Multipart body 发送', async ({ page }) => {
-    await page.locator('#method-select').selectOption('POST');
-    await switchRequestTab(page, 'body');
-    await page.locator('#body-type-select').selectOption('multipart');
+    await rp.selectMethod('POST');
+    await rp.switchTab('body');
+    await rp.selectBodyType('multipart');
 
     // 填写 multipart 字段
-    const firstRow = page.locator('.multipart-row').first();
+    const firstRow = rp.multipartRows.first();
     await firstRow.locator('.multipart-key').fill('field1');
     await firstRow.locator('.multipart-text-value').fill('value1');
 
     await sendRequestAndWait(page, `${MOCK_BASE_URL}/post`, '200');
 
     // 验证响应包含 multipart 字段
-    const responseBody = page.locator('#response-format-content');
-    await expect(responseBody).toContainText('field1');
+    const responsePage = new ResponsePage(page);
+    await expect(responsePage.formatContent).toContainText('field1');
   });
 
   test('GraphQL variables 和 operationName 发送', async ({ page }) => {
-    await page.locator('#method-select').selectOption('POST');
-    await switchRequestTab(page, 'body');
-    await page.locator('#body-type-select').selectOption('graphql');
+    await rp.selectMethod('POST');
+    await rp.switchTab('body');
+    await rp.selectBodyType('graphql');
 
     // 填写 GraphQL 查询
-    await page.locator('#graphql-query').fill('query GetUser($id: ID!) { user(id: $id) { name } }');
+    await rp.graphqlQuery.fill('query GetUser($id: ID!) { user(id: $id) { name } }');
     // 填写 variables
-    await page.locator('#graphql-variables').fill('{"id": "1"}');
+    await rp.graphqlVariables.fill('{"id": "1"}');
     // 填写 operationName
-    await page.locator('#graphql-operation-name').fill('GetUser');
+    await rp.graphqlOperationName.fill('GetUser');
 
     await sendRequestAndWait(page, `${MOCK_BASE_URL}/post`, '200');
 
     // 验证响应包含 GraphQL 内容
-    const responseBody = page.locator('#response-format-content');
-    await expect(responseBody).toContainText('GetUser');
-    await expect(responseBody).toContainText('variables');
+    const responsePage = new ResponsePage(page);
+    await expect(responsePage.formatContent).toContainText('GetUser');
+    await expect(responsePage.formatContent).toContainText('variables');
   });
 });
