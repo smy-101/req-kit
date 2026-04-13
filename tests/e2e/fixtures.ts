@@ -46,7 +46,7 @@ const test = base.extend({
     const dbPath = `test-worker-${workerIndex}.db`;
 
     const server = spawn('bun', ['run', 'src/index.ts'], {
-      env: { ...process.env, DB_PATH: dbPath, PORT: String(port) },
+      env: { ...process.env, DB_PATH: dbPath, PORT: String(port), MAX_RESPONSE_SIZE: '51200' },
       stdio: ['pipe', 'pipe', 'pipe'],
     });
 

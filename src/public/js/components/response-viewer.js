@@ -164,7 +164,7 @@ export async function init() {
     bodyEl.appendChild(responseSearch.getSearchBar());
 
     let extrasHtml = '';
-    if (data.truncated) extrasHtml += '<div class="response-warning">⚠ Response truncated (exceeded 50MB)</div>';
+    if (data.truncated) extrasHtml += '<div class="response-warning">⚠ Response truncated (exceeded size limit)</div>';
     if (data.script_logs?.length > 0) extrasHtml += '<div class="response-logs"><strong>Script Logs</strong><div>' + data.script_logs.map(l => `<div>> ${escapeHtml(l)}</div>`).join('') + '</div></div>';
     if (data.post_script_logs?.length > 0) extrasHtml += '<div class="response-logs"><strong>Post-script Logs</strong><div>' + data.post_script_logs.map(l => `<div>> ${escapeHtml(l)}</div>`).join('') + '</div></div>';
     if (extrasHtml) {

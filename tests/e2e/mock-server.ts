@@ -330,6 +330,14 @@ if (largeJsonMatch && method === 'GET') {
   return json(data);
 }
 
+// /oversized — 超过 MAX_RESPONSE_SIZE (50KB) 的纯文本响应，用于截断测试
+const oversizedMatch = path.match(/^\/oversized$/);
+if (oversizedMatch && method === 'GET') {
+  return new Response('x'.repeat(60000), {
+    headers: { 'Content-Type': 'text/plain' },
+  });
+}
+
 return json({ error: 'Not Found' }, 404);
   },
 });

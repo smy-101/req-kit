@@ -172,8 +172,13 @@ export function init(openRunnerPanel, HistoryPanel) {
   newColBtn.addEventListener('click', async () => {
     const { Dialogs } = await import('../utils/dialogs.js');
     const { Toast } = await import('../utils/toast.js');
-    const name = await Dialogs.prompt('New Collection', 'Collection name');
-    if (name) { await api.createCollection(name); Toast.success('Collection created'); refreshCollections(); }
+    const collections = store.getState().collections || [];
+    const result = await Dialogs.promptWithParent('New Collection', collections);
+    if (result) {
+      await api.createCollection(result.name, result.parentId);
+      Toast.success('Collection created');
+      refreshCollections();
+    }
   });
 
   refreshCollections();

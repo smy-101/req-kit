@@ -112,6 +112,50 @@ Dialogs.prompt = function (title, placeholder, defaultValue) {
   });
 };
 
+Dialogs.promptWithParent = function (title, collections) {
+  var wrapper = document.createElement('div');
+
+  var input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = 'Collection name';
+  input.className = 'dialog-input';
+  wrapper.appendChild(input);
+
+  if (collections && collections.length > 0) {
+    var select = document.createElement('select');
+    select.className = 'dialog-input';
+    var defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = '— No parent (top level) —';
+    select.appendChild(defaultOpt);
+    function addOptions(list, depth) {
+      for (var i = 0; i < list.length; i++) {
+        var opt = document.createElement('option');
+        opt.value = String(list[i].id);
+        opt.textContent = '\u00A0\u00A0'.repeat(depth) + list[i].name;
+        select.appendChild(opt);
+        if (list[i].children) addOptions(list[i].children, depth + 1);
+      }
+    }
+    addOptions(collections, 0);
+    wrapper.appendChild(select);
+  }
+
+  return showDialog({
+    title: title,
+    bodyEl: wrapper,
+    actionText: 'OK',
+    actionClass: 'modal-btn-primary',
+    focusAction: false,
+    enterResolves: 'input',
+  }).then(function (name) {
+    if (!name) return null;
+    var selectEl = wrapper.querySelector('select');
+    var parentId = selectEl && selectEl.value ? parseInt(selectEl.value, 10) : null;
+    return { name: name, parentId: parentId };
+  });
+};
+
 Dialogs.confirm = function (title, message) {
   var msgEl = document.createElement('div');
   msgEl.className = 'confirm-dialog-message';

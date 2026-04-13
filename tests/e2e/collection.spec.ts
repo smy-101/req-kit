@@ -18,7 +18,7 @@ test.describe('集合管理', () => {
     const name = `测试集合_${Date.now()}`;
     await coll.newCollectionBtn.click();
 
-    const input = page.locator('#modal .dialog-input');
+    const input = page.locator('#modal .dialog-input').first();
     await expect(input).toBeVisible();
     await input.fill(name);
 
@@ -32,7 +32,7 @@ test.describe('集合管理', () => {
 
     for (const name of [`集合A_${ts}`, `集合B_${ts}`, `集合C_${ts}`]) {
       await coll.newCollectionBtn.click();
-      await page.locator('#modal .dialog-input').fill(name);
+      await page.locator('#modal .dialog-input').first().fill(name);
       await page.locator('#modal .modal-btn-primary').click();
       await expect(coll.tree.locator('.tree-item').filter({ hasText: name })).toBeVisible();
     }

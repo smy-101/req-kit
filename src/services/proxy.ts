@@ -27,7 +27,7 @@ export interface ProxyStreamCallbacks {
   onError: (error: string, detail?: string) => void;
 }
 
-const MAX_RESPONSE_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_RESPONSE_SIZE = parseInt(process.env.MAX_RESPONSE_SIZE || String(50 * 1024 * 1024), 10);
 const REQUEST_TIMEOUT = 30_000; // 30 seconds
 
 export class ProxyService {
