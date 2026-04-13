@@ -54,6 +54,14 @@ app.use('/*', serveStatic({ root: './src/public' }));
 const port = process.env.PORT || 3000;
 console.log(`req-kit running on http://localhost:${port}`);
 
+// 进程退出时关闭数据库连接，让 SQLite 自动清理 WAL 文件
+for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+  process.on(signal, () => {
+    db.close();
+    process.exit(0);
+  });
+}
+
 export default {
   port: Number(port),
   fetch: app.fetch,

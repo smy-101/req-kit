@@ -4,3 +4,4 @@ req-kit.db*
 test.db*
 src/public/dist/
 test-results/
+.mock-server.pid

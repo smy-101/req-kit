@@ -13,9 +13,13 @@
 - **认证注入** — Bearer Token / Basic Auth / API Key
 - **预请求脚本** — VM 沙箱执行 JS，支持 setHeader/setBody/setParam 及变量读写
 - **后置脚本（Tests）** — 断言测试与变量提取
+- **集合运行器** — 按顺序执行集合内请求，支持重试，SSE 实时推送进度
+- **Cookie 管理** — 自动存储代理响应的 Cookie，按域名查询/删除
 - **导入导出** — curl 命令和 Postman Collection v2.1 格式
 
 ## 快速开始
+
+**前提**：安装 [Bun](https://bun.sh/)
 
 ```sh
 bun install
@@ -23,6 +27,22 @@ bun run dev
 ```
 
 打开 http://localhost:3000
+
+### 环境变量
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `PORT` | `3000` | 服务端口 |
+| `DB_PATH` | `req-kit.db` | SQLite 数据库文件路径 |
+
+### 生产构建
+
+```sh
+bun run build   # 构建前端资源到 src/public/dist/
+bun run src/index.ts
+```
+
+构建会生成压缩后的 `dist/bundle.css` 和 `dist/bundle.js`。
 
 ## 技术栈
 
@@ -63,7 +83,9 @@ src/
 ├── routes/               # 薄路由层，委托给 service
 └── public/               # 静态前端
     ├── index.html
-    ├── css/style.css
+    ├── css/
+    │   ├── index.css       # 入口样式
+    │   └── ...             # 按功能拆分的模块样式
     └── js/
         ├── app.js        # 入口 + 快捷键
         ├── store.js      # 事件驱动状态管理（on/off/emit/setState）
@@ -83,6 +105,16 @@ src/
 | * | `/api/collections[/:id][/...]` | 集合树 CRUD、请求管理、集合变量 |
 | * | `/api/environments[/:id][/variables]` | 环境 CRUD、变量管理 |
 | GET/PUT | `/api/global-variables` | 全局变量 |
+| GET/DELETE | `/api/cookies[/:id]` | Cookie 查询/删除 |
+| POST | `/api/runners/run` | 集合运行器（SSE 实时进度） |
 | POST | `/api/import` | 导入 curl / Postman Collection |
 | GET | `/api/export/collections/:id` | 导出 Postman Collection v2.1 |
 | GET | `/api/export/requests/:id/curl` | 导出 curl 命令 |
+
+## 测试
+
+```sh
+bun test                 # 单元测试 + 集成测试
+bun test tests/unit/     # 仅单元测试
+bun run test:e2e         # Playwright E2E 测试（自动启停测试服务器）
+```

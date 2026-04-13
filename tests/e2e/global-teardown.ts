@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { readFileSync, unlinkSync } from 'fs';
 
 export default async function globalTeardown() {
   // 关闭 mock 服务器
@@ -7,6 +7,7 @@ export default async function globalTeardown() {
     if (mockPid) {
       process.kill(mockPid, 'SIGTERM');
     }
+    unlinkSync('.mock-server.pid');
   } catch {
     // PID 文件不存在或进程已退出
   }
