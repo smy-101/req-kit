@@ -5,7 +5,7 @@ export default defineConfig({
   timeout: 30_000,
   retries: process.env.CI ? 1 : 0,
   fullyParallel: true,
-  workers: process.env.CI ? 4 : '75%',
+  workers: process.env.CI ? 4 : 1,
   globalSetup: './tests/e2e/global-setup.ts',
   globalTeardown: './tests/e2e/global-teardown.ts',
   expect: {
