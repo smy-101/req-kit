@@ -35,6 +35,12 @@ export class CookiePage {
   async open() {
     await this.manageBtn.click();
     await waitForModal(this.page);
+    // 等待 Cookie 列表从 API 加载完毕
+    // cookie-manager.js 的 showCookieModal() 调用 loadCookies() 是异步的，
+    // 需要等待列表区域出现（有 cookie）或空状态消息出现（无 cookie）
+    await expect(
+      this.page.locator('.cookie-domain-group, .cookie-empty-msg'),
+    ).toBeVisible();
     return this;
   }
 

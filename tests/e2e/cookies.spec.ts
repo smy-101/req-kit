@@ -2,7 +2,6 @@ import { test, expect } from './fixtures';
 import { MOCK_BASE_URL } from './helpers/mock';
 import { sendRequestAndWait } from './helpers/wait';
 import { CookiePage } from './pages/cookie-page';
-import { RequestPage } from './pages/request-page';
 import { ResponsePage } from './pages/response-page';
 
 test.describe('Cookie 管理', () => {
@@ -88,21 +87,15 @@ test.describe('Cookie 管理高级功能', () => {
 
 test.describe('Cookie 高级管理', () => {
   let cookiePage: CookiePage;
-  let rp: RequestPage;
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     cookiePage = new CookiePage(page);
-    rp = new RequestPage(page);
   });
 
   test('删除单个 Cookie', async ({ page }) => {
     // 清除所有已有 cookie，确保干净状态
     await page.request.delete('/api/cookies');
-
-    // 增加超时避免不稳定
-    await rp.openOptions();
-    await rp.setTimeout(60000);
 
     // 设置 cookie（使用唯一名称避免冲突）
     const ck = `ck_del_${Date.now()}`;
@@ -110,28 +103,21 @@ test.describe('Cookie 高级管理', () => {
 
     await cookiePage.open();
 
-    // 等待 cookie 列表加载
-    await expect(cookiePage.cookieItems.first()).toBeVisible({ timeout: 10000 });
-
     // 确认目标 cookie 存在
-    await expect(cookiePage.cookieItems.filter({ hasText: ck })).toBeVisible({ timeout: 10000 });
+    await expect(cookiePage.cookieItems.filter({ hasText: ck })).toBeVisible();
 
     // 删除 cookie
     await cookiePage.deleteCookie(0);
 
     // 等待该 cookie 消失
-    await expect(cookiePage.cookieItems.filter({ hasText: ck })).not.toBeVisible({ timeout: 10000 });
+    await expect(cookiePage.cookieItems.filter({ hasText: ck })).not.toBeVisible();
   });
 
   test('Cookie 管理弹窗总数显示', async ({ page }) => {
-    // 增加超时避免不稳定
-    await rp.openOptions();
-    await rp.setTimeout(60000);
-
     await sendRequestAndWait(page, `${MOCK_BASE_URL}/cookies/set?count_test=yes`, '200');
 
     await cookiePage.open();
-    await expect(cookiePage.totalBadge).toBeVisible({ timeout: 10000 });
+    await expect(cookiePage.totalBadge).toBeVisible();
   });
 });
 

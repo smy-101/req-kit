@@ -78,7 +78,7 @@ test.describe('脚本与测试', () => {
 
     // 验证测试通过 — 使用 .test-passed 类名
     await expect(resp.testResults).toContainText('Status is 200');
-    await expect(resp.testResults.locator('.test-passed')).toBeVisible({ timeout: 5000 });
+    await expect(resp.testResults.locator('.test-passed')).toBeVisible();
     await expect(resp.testResults).toContainText('1 passed');
   });
 
@@ -96,7 +96,7 @@ test.describe('脚本与测试', () => {
     await resp.switchTab('test-results');
 
     await expect(resp.testResults).toContainText('Should be 404');
-    await expect(resp.testResults.locator('.test-failed')).toBeVisible({ timeout: 5000 });
+    await expect(resp.testResults.locator('.test-failed')).toBeVisible();
     await expect(resp.testResults).toContainText('1 failed');
   });
 

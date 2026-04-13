@@ -107,7 +107,7 @@ test.describe('环境未保存更改警告', () => {
     await envPage.selectEnv(env1);
 
     // 验证变量编辑器已渲染
-    await expect(page.locator('#env-vars-editor .kv-editor')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#env-vars-editor .kv-editor')).toBeVisible();
 
     // 在变量编辑器中添加一个变量（不保存）
     await page.locator('#env-vars-editor .kv-key').first().fill('key1');
@@ -121,7 +121,7 @@ test.describe('环境未保存更改警告', () => {
     await page.locator('#modal .env-item').filter({ hasText: env2 }).dispatchEvent('click');
 
     // 验证确认对话框出现
-    await expect(page.locator('.confirm-dialog')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.confirm-dialog')).toBeVisible();
     await expect(page.locator('.confirm-dialog-title')).toContainText('Unsaved Changes');
 
     // 使用更精确的选择器点击 Cancel
@@ -146,7 +146,7 @@ test.describe('环境未保存更改警告', () => {
 
     // 选择第一个环境
     await envPage.selectEnv(env1);
-    await expect(page.locator('#env-vars-editor .kv-editor')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#env-vars-editor .kv-editor')).toBeVisible();
 
     // 添加变量（不保存）
     await page.locator('#env-vars-editor .kv-key').first().fill('discard_key');
@@ -156,7 +156,7 @@ test.describe('环境未保存更改警告', () => {
     await page.locator('#modal .env-item').filter({ hasText: env2 }).dispatchEvent('click');
 
     // 验证确认对话框出现
-    await expect(page.locator('.confirm-dialog')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.confirm-dialog')).toBeVisible();
 
     // 点击确认（丢弃更改）
     await page.locator('.confirm-dialog .modal-btn-primary').click();
@@ -183,7 +183,7 @@ test.describe('环境未保存更改警告', () => {
 
     // 选择第一个环境
     await envPage.selectEnv(env1);
-    await expect(page.locator('#env-vars-editor .kv-editor')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#env-vars-editor .kv-editor')).toBeVisible();
 
     // 添加变量并保存
     await page.locator('#env-vars-editor .kv-key').first().fill('saved_key');

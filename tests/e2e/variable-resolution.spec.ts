@@ -36,7 +36,7 @@ test.describe('变量在 Headers 和 Body 中的替换', () => {
     await rp.selectMethod('POST');
     await sendRequestAndWait(page, `${MOCK_BASE_URL}/post`, '200');
     const responseBody = page.locator('#response-format-content');
-    await expect(responseBody).toContainText('hello-from-env', { timeout: 5000 });
+    await expect(responseBody).toContainText('hello-from-env');
   });
 
   test('环境变量在 Body 中替换', async ({ page }) => {
@@ -83,7 +83,7 @@ test.describe('变量解析增强', () => {
 
     // 集合变量编辑器使用 #coll-var-editor
     const kvEditor = page.locator('#modal #coll-var-editor');
-    await kvEditor.locator('.kv-add-btn').waitFor({ state: 'visible', timeout: 5000 });
+    await kvEditor.locator('.kv-add-btn').waitFor({ state: 'visible' });
     await kvEditor.locator('.kv-add-btn').click();
     const collKey = `coll_host_${Date.now()}`;
     await kvEditor.locator('.kv-row').first().locator('.kv-key').fill(collKey);
@@ -104,7 +104,7 @@ test.describe('变量解析增强', () => {
     await sendRequestAndWait(page, `http://{{${collKey}}}/get`, '200');
 
     const responseBody = page.locator('#response-format-content');
-    await expect(responseBody).toContainText('localhost:4000', { timeout: 5000 });
+    await expect(responseBody).toContainText('localhost:4000');
   });
 
   test('环境变量优先于全局变量', async ({ page }) => {

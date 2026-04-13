@@ -218,7 +218,7 @@ test.describe('环境变量管理', () => {
     await envPage.createEnv(envName);
     await envPage.selectEnv(envName);
 
-    await expect(envPage.kvEditor.locator('.kv-add-btn')).toBeVisible({ timeout: 5000 });
+    await expect(envPage.kvEditor.locator('.kv-add-btn')).toBeVisible();
 
     // 添加两个变量
     await envPage.addVariable('keep_var', 'keep');
@@ -238,6 +238,6 @@ test.describe('环境变量管理', () => {
     await envPage.open();
     await envPage.selectEnv(envName);
 
-    await expect(envPage.kvEditor.locator('.kv-row')).toHaveCount(1, { timeout: 5000 });
+    await expect(envPage.kvEditor.locator('.kv-row')).toHaveCount(1);
   });
 });

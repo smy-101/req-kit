@@ -23,7 +23,7 @@ export class HistoryPage {
 
   async expand() {
     await this.header.click();
-    await this.page.locator('.history-panel.expanded').waitFor({ state: 'visible', timeout: 5_000 });
+    await this.page.locator('.history-panel.expanded').waitFor({ state: 'visible' });
     return this;
   }
 

@@ -37,7 +37,7 @@ export class EnvironmentPage {
   async createEnv(name: string) {
     await this.newNameInput.fill(name);
     await this.createBtn.click();
-    await this.page.locator('#modal .env-item').filter({ hasText: name }).waitFor({ state: 'visible', timeout: 10_000 });
+    await this.page.locator('#modal .env-item').filter({ hasText: name }).waitFor({ state: 'visible' });
     return this;
   }
 

@@ -54,14 +54,14 @@ export async function waitForPanelLoad(page: Page) {
  * 等待变量自动补全弹窗出现
  */
 export async function waitForAutocompletePopup(page: Page) {
-  await expect(page.locator('#var-autocomplete-popup')).not.toHaveClass(/hidden/);
+  await expect(page.locator('#var-autocomplete-popup')).toBeVisible();
 }
 
 /**
  * 等待变量自动补全弹窗关闭
  */
 export async function waitForAutocompleteClose(page: Page) {
-  await expect(page.locator('#var-autocomplete-popup')).toHaveClass(/hidden/);
+  await expect(page.locator('#var-autocomplete-popup')).not.toBeVisible();
 }
 
 /**
@@ -83,9 +83,9 @@ export async function triggerAutocomplete(
 export async function waitForToast(page: Page, text?: string) {
   const toast = page.locator('.toast');
   if (text !== undefined) {
-    await expect(toast).toContainText(text, { timeout: 5000 });
+    await expect(toast).toContainText(text);
   } else {
-    await expect(toast).toBeVisible({ timeout: 5000 });
+    await expect(toast).toBeVisible();
   }
 }
 
@@ -102,12 +102,15 @@ export async function switchRequestTab(page: Page, tabName: string) {
 }
 
 /**
- * 切换响应面板标签页
+ * 切换响应面板标签页并等待内容加载
  */
 export async function switchResponseTab(page: Page, tabName: string) {
   await page
     .locator(`#response-panel .tab[data-response-tab="${tabName}"]`)
     .click();
+  await expect(
+    page.locator(`#response-${tabName}`),
+  ).toBeVisible();
 }
 
 /**
@@ -125,25 +128,18 @@ export async function runCollection(page: Page, colName: string) {
  * 等待响应搜索计数更新（搜索导航后等待计数刷新）
  */
 export async function waitForSearchCount(page: Page, expectedCount?: string) {
+  const locator = page.locator('#response-search-count');
   if (expectedCount !== undefined) {
-    await page.waitForFunction(
-      ([selector, expected]) => document.querySelector(selector)?.textContent === expected,
-      ['#response-search-count', expectedCount],
-    );
+    await expect(locator).toHaveText(expectedCount);
   } else {
-    await page.waitForFunction(
-      ([selector]) => {
-        const text = document.querySelector(selector)?.textContent ?? '';
-        return text !== '' && text.includes('/');
-      },
-      ['#response-search-count'],
-    );
+    await expect(locator).not.toHaveText('');
   }
 }
 
 /**
  * 生成唯一标识符，用于并行测试中避免命名冲突
+ * 使用 crypto.randomUUID() 保证唯一性
  */
 export function uniqueId(prefix = '') {
-  return `${prefix}${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return `${prefix}${crypto.randomUUID()}`;
 }

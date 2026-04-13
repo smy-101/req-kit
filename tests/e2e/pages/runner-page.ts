@@ -1,4 +1,5 @@
 import type { Page, Locator } from '../fixtures';
+import { expect } from '../fixtures';
 
 export class RunnerPage {
   readonly page: Page;
@@ -41,6 +42,9 @@ export class RunnerPage {
 
   async stop() {
     await this.stopBtn.click();
+    // 等待停止操作完成：按钮变为"关闭中..."是同步的
+    await expect(this.stopBtn).toContainText('关闭中');
+    await expect(this.stopBtn).toBeDisabled();
     return this;
   }
 

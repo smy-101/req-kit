@@ -64,7 +64,7 @@ test.describe('边界情况', () => {
     await page.locator('#send-btn').click();
 
     // 发送按钮文字应保持 "Send"（不会进入 loading 状态）
-    await expect(page.locator('#send-btn')).toHaveText('Send', { timeout: 3000 });
+    await expect(page.locator('#send-btn')).toHaveText('Send');
   });
 
   test('无效 URL 发送请求显示错误', async ({ page }) => {
@@ -76,7 +76,7 @@ test.describe('边界情况', () => {
     // 应显示 5xx 错误样式
     await expect(page.locator('#response-status')).toHaveClass(/status-5xx/);
     // 响应体应显示错误信息
-    await expect(page.locator('.response-error')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.response-error')).toBeVisible();
   });
 
   test('不可达主机发送请求显示错误', async ({ page }) => {
@@ -88,7 +88,7 @@ test.describe('边界情况', () => {
     // 应显示 5xx 错误样式
     await expect(page.locator('#response-status')).toHaveClass(/status-5xx/);
     // 响应体应显示错误内容
-    await expect(page.locator('.response-error')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.response-error')).toBeVisible();
   });
 });
 
@@ -134,7 +134,7 @@ test.describe('侧边栏历史记录区域', () => {
 
     // 点击展开
     await historyHeader.click();
-    await expect(page.locator('.history-panel.expanded')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.history-panel.expanded')).toBeVisible();
 
     // 再次点击折叠
     await historyHeader.click();

@@ -8,6 +8,9 @@ export default defineConfig({
   workers: process.env.CI ? 4 : 1,
   globalSetup: './tests/e2e/global-setup.ts',
   globalTeardown: './tests/e2e/global-teardown.ts',
+  reporter: process.env.CI
+    ? [['html', { open: 'never' }], ['list']]
+    : [['list']],
   expect: {
     timeout: 10_000,
   },

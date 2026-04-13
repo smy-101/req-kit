@@ -24,7 +24,7 @@ test.describe('集合管理', () => {
 
     await page.locator('#modal .modal-btn-primary').click();
 
-    await expect(coll.tree.locator('.tree-item').filter({ hasText: name })).toBeVisible({ timeout: 10000 });
+    await expect(coll.tree.locator('.tree-item').filter({ hasText: name })).toBeVisible();
   });
 
   test('创建多个集合', async ({ page }) => {
@@ -34,7 +34,7 @@ test.describe('集合管理', () => {
       await coll.newCollectionBtn.click();
       await page.locator('#modal .dialog-input').fill(name);
       await page.locator('#modal .modal-btn-primary').click();
-      await expect(coll.tree.locator('.tree-item').filter({ hasText: name })).toBeVisible({ timeout: 10000 });
+      await expect(coll.tree.locator('.tree-item').filter({ hasText: name })).toBeVisible();
     }
   });
 
@@ -71,7 +71,7 @@ test.describe('集合管理', () => {
     }
 
     for (const name of names) {
-      await expect(coll.tree.locator('.tree-item').filter({ hasText: name })).toBeVisible({ timeout: 5000 });
+      await expect(coll.tree.locator('.tree-item').filter({ hasText: name })).toBeVisible();
     }
 
     // 删除第二个集合
@@ -126,7 +126,7 @@ test.describe('集合请求上下文菜单与 curl 导入', () => {
     await saveDialog.save(colName);
 
     const colWrapper = coll.tree.locator('[data-collection-id]').filter({ hasText: colName }).first();
-    await expect(colWrapper.locator('.method-badge').first()).toBeVisible({ timeout: 10000 });
+    await expect(colWrapper.locator('.method-badge').first()).toBeVisible();
 
     // 右键请求触发上下文菜单
     await colWrapper.locator('.method-badge').first().click({ button: 'right' });
@@ -143,7 +143,7 @@ test.describe('集合请求上下文菜单与 curl 导入', () => {
     await imexPage.open();
     await imexPage.importCurl(`curl '${MOCK_BASE_URL}/get'`);
 
-    await expect(coll.tree.locator('.method-badge.method-GET').first()).toBeVisible({ timeout: 10000 });
+    await expect(coll.tree.locator('.method-badge.method-GET').first()).toBeVisible();
   });
 
   test('导入 POST curl 命令验证方法', async ({ page }) => {
@@ -152,7 +152,7 @@ test.describe('集合请求上下文菜单与 curl 导入', () => {
     await imexPage.importActionBtn.click();
     await waitForModalClose(page);
 
-    await expect(coll.tree.locator('.method-badge.method-POST').first()).toBeVisible({ timeout: 10000 });
+    await expect(coll.tree.locator('.method-badge.method-POST').first()).toBeVisible();
   });
 });
 

@@ -49,7 +49,7 @@ export class ImportExportPage {
     await this.importType.selectOption('curl');
     await this.importContent.fill(curlCommand);
     await this.importActionBtn.click();
-    await waitForModalClose(this.page, { timeout: 10000 });
+    await waitForModalClose(this.page);
     return this;
   }
 
@@ -57,7 +57,7 @@ export class ImportExportPage {
     await this.importType.selectOption('postman');
     await this.importContent.fill(json);
     await this.importActionBtn.click();
-    await waitForModalClose(this.page, { timeout: 10000 });
+    await waitForModalClose(this.page);
     return this;
   }
 

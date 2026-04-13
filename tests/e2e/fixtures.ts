@@ -3,17 +3,19 @@ import { spawn } from 'child_process';
 import { unlinkSync, existsSync } from 'fs';
 import http from 'http';
 
-const MAX_WORKERS = 20;
-
 function waitForServer(port: number, timeoutMs = 30_000): Promise<void> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
+      abortController.abort();
       reject(new Error(`Worker server on port ${port} failed to start within ${timeoutMs}ms`));
     }, timeoutMs);
 
+    let abortController: AbortController;
+
     const check = () => {
+      abortController = new AbortController();
       http
-        .get(`http://localhost:${port}/`, () => {
+        .get(`http://localhost:${port}/`, { signal: abortController.signal }, () => {
           clearTimeout(timer);
           resolve();
         })
@@ -29,7 +31,9 @@ function cleanupDb(dbPath: string) {
   for (const ext of ['', '-wal', '-shm']) {
     const file = `${dbPath}${ext}`;
     if (existsSync(file)) {
-      try { unlinkSync(file); } catch {}
+      try { unlinkSync(file); } catch (e) {
+        process.stderr.write(`[cleanupDb] 删除 ${file} 失败: ${e}\n`);
+      }
     }
   }
 }

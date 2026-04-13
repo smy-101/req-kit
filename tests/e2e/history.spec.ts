@@ -96,7 +96,7 @@ test.describe('历史记录高级功能', () => {
     await sendRequestAndWait(page, uniqueUrl, '200');
 
     await history.expand();
-    await expect(history.items.first()).toBeVisible({ timeout: 10000 });
+    await expect(history.items.first()).toBeVisible();
 
     await history.search('nonexistent-url-xyz_unique_prefix');
     await expect(history.emptyMsg).toBeVisible();
@@ -227,8 +227,8 @@ test.describe('历史记录加载验证', () => {
       await tabBar.switchToTab(tabCount - 1);
     }
 
-    await expect(rp.methodSelect).toHaveValue('POST', { timeout: 10000 });
-    await expect(rp.urlInput).toHaveValue(new RegExp(`post/${uniqueId}`), { timeout: 10000 });
+    await expect(rp.methodSelect).toHaveValue('POST');
+    await expect(rp.urlInput).toHaveValue(new RegExp(`post/${uniqueId}`));
 
     await rp.switchTab('body');
     await expect(rp.bodyTextarea).toHaveValue(new RegExp(uniqueMarker));

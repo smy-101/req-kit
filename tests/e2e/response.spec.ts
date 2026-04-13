@@ -38,35 +38,35 @@ test.describe('响应格式切换', () => {
     await sendRequestAndWait(page, `${MOCK_BASE_URL}/html`, '200');
 
     // HTML 响应应自动选择 Preview
-    await expect(page.locator('.format-tab[data-format="preview"]')).toHaveClass(/active/, { timeout: 5000 });
+    await expect(page.locator('.format-tab[data-format="preview"]')).toHaveClass(/active/);
 
     // 验证 iframe 预览
     const iframe = page.locator('#response-format-content .html-preview-frame');
-    await expect(iframe).toBeVisible({ timeout: 5000 });
+    await expect(iframe).toBeVisible();
   });
 
   test('HTML 响应切换到 Raw 显示原始 HTML', async ({ page }) => {
     await sendRequestAndWait(page, `${MOCK_BASE_URL}/html`, '200');
 
     // 等待 Preview 模式加载
-    await expect(page.locator('.format-tab[data-format="preview"]')).toHaveClass(/active/, { timeout: 5000 });
+    await expect(page.locator('.format-tab[data-format="preview"]')).toHaveClass(/active/);
 
     // 切换到 Raw
     await rp.switchFormat('raw');
     await expect(page.locator('.format-tab[data-format="raw"]')).toHaveClass(/active/);
 
     // 验证内容包含 HTML 标签
-    await expect(rp.formatContent).toContainText('<html', { timeout: 5000 });
+    await expect(rp.formatContent).toContainText('<html');
   });
 
   test('XML 响应 Pretty 格式化', async ({ page }) => {
     await sendRequestAndWait(page, `${MOCK_BASE_URL}/xml`, '200');
 
     // 默认 Pretty
-    await expect(page.locator('.format-tab[data-format="pretty"]')).toHaveClass(/active/, { timeout: 5000 });
+    await expect(page.locator('.format-tab[data-format="pretty"]')).toHaveClass(/active/);
 
     // 验证内容包含 XML 结构
-    await expect(rp.formatContent).toContainText('<?xml', { timeout: 5000 });
+    await expect(rp.formatContent).toContainText('<?xml');
     await expect(rp.formatContent).toContainText('<slideshow');
 
     // 切换到 Raw
@@ -80,11 +80,11 @@ test.describe('响应格式切换', () => {
     await sendRequestAndWait(page, `${MOCK_BASE_URL}/image/png`, '200');
 
     // 图片响应应自动选择 Preview
-    await expect(page.locator('.format-tab[data-format="preview"]')).toHaveClass(/active/, { timeout: 5000 });
+    await expect(page.locator('.format-tab[data-format="preview"]')).toHaveClass(/active/);
 
     // 验证图片预览
     const previewImg = page.locator('#response-format-content .preview-img');
-    await expect(previewImg).toBeVisible({ timeout: 5000 });
+    await expect(previewImg).toBeVisible();
   });
 });
 
@@ -206,7 +206,7 @@ test.describe('响应搜索导航', () => {
 
     // 搜索 "localhost" — mock /get 响应中 Host 和 url 各出现一次
     await rp.search('localhost');
-    await expect(rp.searchCount).not.toHaveText('', { timeout: 5000 });
+    await expect(rp.searchCount).not.toHaveText('');
   });
 
   test('点击下一匹配按钮导航', async ({ page }) => {
@@ -303,7 +303,7 @@ test.describe('响应搜索导航', () => {
 
     await rp.searchInput.fill('localhost');
     // 等待搜索高亮出现
-    await expect(page.locator('#response-format-content .search-highlight').first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#response-format-content .search-highlight').first()).toBeVisible();
 
     // 验证有高亮
     const highlights = page.locator('#response-format-content .search-highlight');
@@ -313,7 +313,7 @@ test.describe('响应搜索导航', () => {
     // 清空搜索
     await rp.searchInput.fill('');
     // 等待高亮清除
-    await expect(page.locator('#response-format-content .search-highlight')).toHaveCount(0, { timeout: 5000 });
+    await expect(page.locator('#response-format-content .search-highlight')).toHaveCount(0);
   });
 
   test('按 Escape 关闭搜索栏', async ({ page }) => {
@@ -384,7 +384,7 @@ test.describe('脚本日志', () => {
     await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
 
     // 验证脚本日志显示
-    await expect(page.locator('.response-logs')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.response-logs')).toBeVisible();
     await expect(page.locator('.response-logs')).toContainText('hello from script');
     await expect(page.locator('.response-logs')).toContainText('second log');
   });
@@ -399,7 +399,7 @@ test.describe('脚本日志', () => {
     await sendRequestAndWait(page, `${MOCK_BASE_URL}/get`, '200');
 
     // 验证 post-response 脚本日志显示
-    await expect(page.locator('.response-logs')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.response-logs')).toBeVisible();
     await expect(page.locator('.response-logs')).toContainText('post log');
   });
 });
